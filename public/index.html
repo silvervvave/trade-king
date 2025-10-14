@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>나는 무역왕이 될 남자다! - 플레이어</title>
+  <style>
+    body { font-family: sans-serif; padding:20px; background:#f9f9fc; }
+    button { margin:5px; padding:8px 12px; border-radius:5px; cursor:pointer; }
+    button:disabled { background:#ccc; cursor:not-allowed; }
+    table { border-collapse: collapse; width:100%; margin-top:10px; }
+    th, td { border:1px solid #333; padding:6px 12px; text-align:center; }
+    th { background:#eee; }
+    #timer { font-size:1.2rem; margin:10px 0; padding:10px; background:#e8f4fd; border-radius:5px; }
+    #game { margin-top:20px; }
+    #finalScreen { display:none; border:2px solid #333; padding:15px; margin-top:20px; background:white; }
+    .phase-section { margin:15px 0; padding:15px; border:2px solid #ddd; border-radius:8px; }
+    .phase-section.active { border-color:#4CAF50; background:#f0f8f0; }
+    .nation-ability { background:#fff3cd; padding:8px; margin:5px 0; border-radius:5px; border-left:4px solid #ffc107; }
+    .trade-goods { display:flex; gap:10px; margin:10px 0; }
+    .trade-good { background:#e7f3ff; padding:8px; border-radius:5px; border:1px solid #b3d9ff; }
+    .player-info { background:#f8f9fa; padding:15px; border-radius:8px; margin:10px 0; }
+    .rps-section { background:#fff5f5; padding:15px; border-radius:8px; margin:10px 0; }
+    .departure-section { background:#f0f8ff; padding:15px; border-radius:8px; margin:10px 0; }
+    .investment-section { background:#f5f0ff; padding:15px; border-radius:8px; margin:10px 0; }
+    .arrival-section { background:#f0fff0; padding:15px; border-radius:8px; margin:10px 0; }
+    .event-result { background:#fff3cd; padding:10px; margin:10px 0; border-radius:5px; border-left:4px solid #ffc107; }
+  </style>
+</head>
+<body>
+  <h1>🏴‍☠️ 나는 무역왕이 될 남자다! 🏴‍☠️</h1>
+
+  <!-- 참가 입력창 -->
+  <div id="joinForm">
+    <h2>게임 참가</h2>
+    <label>이름: <input id="name" placeholder="플레이어 이름"></label>
+    <label>국가:
+      <select id="nation">
+        <option value="스페인">🇪🇸 스페인 (자원 부국 - 2배 생산)</option>
+        <option value="네덜란드">🇳🇱 네덜란드 (기술 국가 - 1.5% 보너스)</option>
+        <option value="영국">🇬🇧 영국 (무역 국가 - 가위바위보 리셋 2장)</option>
+        <option value="프랑스">🇫🇷 프랑스 (중상주의 - 중상주의권)</option>
+      </select>
+    </label>
+    <button id="joinBtn">게임 참가</button>
+  </div>
+
+  <!-- 게임 화면 -->
+  <div id="game" style="display:none;">
+    <h2 id="status">대기중...</h2>
+
+    <div id="timer">00:00</div>
+
+    <div class="player-info">
+      <h3>👤 플레이어 정보</h3>
+      <div id="playerInfo">-</div>
+      <div id="nationAbility" class="nation-ability"></div>
+    </div>
+
+    <!-- 생산 단계 -->
+    <div id="productionPhase" class="phase-section">
+      <h3>💰 생산 단계</h3>
+      <p>화면을 클릭하여 생산하세요!</p>
+      <button id="produceBtn">💰 생산 (클릭)</button>
+      <div id="productionInfo"></div>
+      
+      <div class="rps-section">
+        <h4>✊ 가위바위보 (부가가치 획득)</h4>
+        <button onclick="playRPS('rock')">✊ 바위</button>
+        <button onclick="playRPS('paper')">✋ 보</button>
+        <button onclick="playRPS('scissors')">✌️ 가위</button>
+        <div id="rpsInfo"></div>
+      </div>
+    </div>
+
+    <!-- 출항 단계 -->
+    <div id="departurePhase" class="phase-section">
+      <h3>🚢 출항 단계</h3>
+      <div class="departure-section">
+        <p>출항할 목적지를 선택하세요:</p>
+        <button onclick="depart('중국', 500)">🇨🇳 중국 (비단) - 500PA</button>
+        <button onclick="depart('중국', 1000)">🇨🇳 중국 (비단) - 1000PA</button>
+        <button onclick="depart('인도', 500)">🇮🇳 인도 (후추) - 500PA</button>
+        <button onclick="depart('인도', 1000)">🇮🇳 인도 (후추) - 1000PA</button>
+        <button onclick="depart('none', 0)">❌ 출항하지 않음</button>
+        <div id="departureInfo"></div>
+      </div>
+    </div>
+
+    <!-- 투자 단계 -->
+    <div id="investmentPhase" class="phase-section">
+      <h3>💼 투자 단계</h3>
+      <div class="investment-section">
+        <p>다른 국가의 출항에 투자하세요:</p>
+        <div id="investmentTargets"></div>
+        <div id="investmentInfo"></div>
+      </div>
+    </div>
+
+    <!-- 입항 단계 -->
+    <div id="arrivalPhase" class="phase-section">
+      <h3>🏝️ 입항 단계</h3>
+      <div class="arrival-section">
+        <p>입항 결과를 확인하세요!</p>
+        <div id="arrivalInfo"></div>
+      </div>
+    </div>
+
+    <!-- 무역품 보유 현황 -->
+    <div class="trade-goods">
+      <div class="trade-good">🧵 비단: <span id="silkCount">0</span>개</div>
+      <div class="trade-good">🌶️ 후추: <span id="pepperCount">0</span>개</div>
+    </div>
+
+    <!-- 현재 라운드 성적 -->
+    <h3>📊 현재 라운드 성적</h3>
+    <div id="currentRoundTable"></div>
+
+    <!-- 팀별 성적 -->
+    <h3>🏆 팀별 성적</h3>
+    <div id="teamTable"></div>
+
+    <!-- 라운드 히스토리 -->
+    <h3>📈 라운드 히스토리</h3>
+    <div id="historyTable"></div>
+  </div>
+
+  <!-- 최종 우승 화면 -->
+  <div id="finalScreen">
+    <h2>🏆 최종 결과</h2>
+    <div id="finalTeam"></div>
+    <div id="finalPlayer"></div>
+    <h3>라운드 히스토리</h3>
+    <div id="finalHistory"></div>
+    <button id="restartPlayer">🔄 다시 시작</button>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    let myPlayer = null;
+    let gameState = null;
+    let roundCount = 0;
+    let roundHistory = [];
+    let previousTeamScores = {};
+    const allTeams = ["스페인","네덜란드","영국","프랑스"];
+
+    // 국가별 특수 능력 설명
+    const nationAbilities = {
+      "스페인": "2배 생산 (라운드당 최대 1000PA)",
+      "네덜란드": "생산 시 현재 PA의 1.5% 보너스",
+      "영국": "가위바위보 리셋권 2장 (라운드당 1회)",
+      "프랑스": "중상주의권 (입항/투자 성공 시 +50PA, 라운드당 1회)"
+    };
+
+    // 참가
+    document.getElementById("joinBtn").addEventListener("click",()=>{
+      const name=document.getElementById("name").value;
+      const nation=document.getElementById("nation").value;
+      if(!name.trim()) {
+        alert("이름을 입력해주세요!");
+        return;
+      }
+      socket.emit("joinGame",{name,nation});
+    });
+
+    socket.on("joined",(player)=>{
+      myPlayer=player;
+      document.getElementById("joinForm").style.display="none";
+      document.getElementById("game").style.display="block";
+      updatePlayerInfo();
+      
+      // 초기 상태에서 생산 버튼 비활성화
+      const produceBtn = document.getElementById("produceBtn");
+      produceBtn.disabled = true;
+      produceBtn.style.opacity = "0.5";
+      produceBtn.style.cursor = "not-allowed";
+    });
+
+    socket.on("updateState",(p)=>{
+      myPlayer=p;
+      updatePlayerInfo();
+    });
+
+    socket.on("gameStateUpdate",(state)=>{
+      gameState = state;
+      updateGameUI();
+    });
+
+    function updatePlayerInfo() {
+      if(!myPlayer) return;
+      
+      // PA 변화 애니메이션 효과
+      const paElement = document.getElementById("playerInfo");
+      const currentPA = parseInt(paElement.textContent.match(/PA: (\d+)/)?.[1] || "0");
+      const newPA = myPlayer.PA;
+      
+      if (newPA > currentPA) {
+        // PA 증가 시 녹색 플래시 효과
+        paElement.style.backgroundColor = "#d4edda";
+        setTimeout(() => {
+          paElement.style.backgroundColor = "";
+        }, 1000);
+      } else if (newPA < currentPA) {
+        // PA 감소 시 빨간색 플래시 효과
+        paElement.style.backgroundColor = "#f8d7da";
+        setTimeout(() => {
+          paElement.style.backgroundColor = "";
+        }, 1000);
+      }
+      
+      document.getElementById("playerInfo").innerHTML = 
+        `<strong>${myPlayer.name}</strong> (${myPlayer.nation})<br>
+         💰 PA: <span style="font-size:1.2em; font-weight:bold; color:#007bff;">${myPlayer.PA}</span><br>
+         🧵 비단: ${myPlayer.tradeGoods.비단}개<br>
+         🌶️ 후추: ${myPlayer.tradeGoods.후추}개`;
+      
+      document.getElementById("nationAbility").textContent = nationAbilities[myPlayer.nation];
+      
+      // 무역품 카운트 업데이트
+      document.getElementById("silkCount").textContent = myPlayer.tradeGoods.비단;
+      document.getElementById("pepperCount").textContent = myPlayer.tradeGoods.후추;
+    }
+
+    function updateGameUI() {
+      if(!gameState) return;
+      
+      // 현재 라운드 정보
+      document.getElementById("status").textContent = 
+        `라운드 ${gameState.currentRound} - ${getPhaseName(gameState.roundPhase)}`;
+      
+      // 단계별 활성화
+      updatePhaseVisibility();
+      
+      // 투자 대상 업데이트
+      updateInvestmentTargets();
+      
+      // 현재 라운드 성적 업데이트
+      updateCurrentRoundTable();
+    }
+
+    function getPhaseName(phase) {
+      const phaseNames = {
+        "production": "생산",
+        "departure": "출항",
+        "investment": "투자", 
+        "arrival": "입항"
+      };
+      return phaseNames[phase] || "대기";
+    }
+
+    function updatePhaseVisibility() {
+      const phases = ["productionPhase", "departurePhase", "investmentPhase", "arrivalPhase"];
+      phases.forEach(phaseId => {
+        const element = document.getElementById(phaseId);
+        element.classList.remove("active");
+      });
+
+      if(gameState.roundPhase) {
+        const activePhase = gameState.roundPhase + "Phase";
+        const element = document.getElementById(activePhase);
+        if(element) {
+          element.classList.add("active");
+        }
+      }
+      
+      // 생산 단계일 때 생산 버튼 활성화
+      const produceBtn = document.getElementById("produceBtn");
+      if (gameState && gameState.roundActive && gameState.roundPhase === "production") {
+        produceBtn.disabled = false;
+        produceBtn.style.opacity = "1";
+        produceBtn.style.cursor = "pointer";
+      } else {
+        produceBtn.disabled = true;
+        produceBtn.style.opacity = "0.5";
+        produceBtn.style.cursor = "not-allowed";
+      }
+    }
+
+    function updateInvestmentTargets() {
+      const container = document.getElementById("investmentTargets");
+      container.innerHTML = "";
+      
+      if(!gameState || !gameState.players) return;
+      
+      Object.values(gameState.players).forEach(player => {
+        if(player.socketId === socket.id || !player.departure) return;
+        
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <button onclick="invest('${player.socketId}', 100)">
+            ${player.name} (${player.nation}) - 100PA 투자
+          </button>
+          <button onclick="invest('${player.socketId}', 200)">
+            ${player.name} (${player.nation}) - 200PA 투자
+          </button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function updateCurrentRoundTable() {
+      if(!gameState || !gameState.players) return;
+      
+      const playerArray = Object.values(gameState.players).sort((a,b) => b.PA - a.PA);
+      
+      let html = "<table><tr><th>순위</th><th>이름</th><th>국가</th><th>PA</th><th>비단</th><th>후추</th></tr>";
+      playerArray.forEach((p,i) => {
+        const crown = i === 0 ? "👑" : "";
+        html += `<tr><td>${i+1}</td><td>${p.name}${crown}</td><td>${p.nation}</td><td>${p.PA}</td><td>${p.tradeGoods.비단}</td><td>${p.tradeGoods.후추}</td></tr>`;
+      });
+      html += "</table>";
+      document.getElementById("currentRoundTable").innerHTML = html;
+    }
+
+    // 생산
+    document.getElementById("produceBtn").addEventListener("click",()=>{
+      if(!gameState || !gameState.roundActive || gameState.roundPhase !== "production") return;
+      
+      // 버튼 클릭 시 즉시 시각적 피드백
+      const btn = document.getElementById("produceBtn");
+      btn.style.backgroundColor = "#28a745";
+      btn.textContent = "💰 생산 중...";
+      btn.disabled = true;
+      
+      setTimeout(() => {
+        btn.style.backgroundColor = "";
+        btn.textContent = "💰 생산 (클릭)";
+        btn.disabled = false;
+      }, 200);
+      
+      socket.emit("produce");
+    });
+
+    // 가위바위보
+    function playRPS(card) {
+      if(!gameState || !gameState.roundActive || gameState.roundPhase !== "production") return;
+      socket.emit("playRPS",{card});
+    }
+
+    socket.on("rpsResult",({result,bonus,gmCard,msg})=>{
+      if(result==="skip"){
+        alert(msg);
+      } else {
+        alert(msg);
+      }
+    });
+
+    // 출항
+    function depart(destination, cost) {
+      if(!gameState || !gameState.roundActive || gameState.roundPhase !== "departure") return;
+      if(destination === "none") {
+        socket.emit("depart", { destination: null, cost: 0 });
+      } else {
+        socket.emit("depart", { destination, cost });
+      }
+    }
+
+    // 투자
+    function invest(targetId, amount) {
+      if(!gameState || !gameState.roundActive || gameState.roundPhase !== "investment") return;
+      socket.emit("invest", { targetId, amount });
+    }
+
+    // 라운드 종료
+    socket.on("roundEnd",({round,players})=>{
+      roundCount = round;
+      document.getElementById("status").textContent = `라운드 ${roundCount} 종료`;
+
+      // 팀 점수 계산
+      const teamScores = {};
+      Object.values(players).forEach(p => {
+        if(!teamScores[p.nation]) teamScores[p.nation] = 0;
+        teamScores[p.nation] += p.PA;
+      });
+
+      // 이번 라운드 획득 점수 계산
+      const gains = {};
+      allTeams.forEach(n => {
+        const prev = previousTeamScores[n] || 0;
+        gains[n] = (teamScores[n] || 0) - prev;
+      });
+      previousTeamScores = {...teamScores};
+
+      roundHistory.push({round: roundCount, gains});
+
+      // 팀별 성적표 업데이트
+      updateTeamTable(teamScores);
+      
+      // 히스토리 표시
+      buildHistoryTable("historyTable");
+    });
+
+    function updateTeamTable(teamScores) {
+      const teamArray = Object.entries(teamScores).map(([n,s]) => ({nation: n, score: s})).sort((a,b) => b.score - a.score);
+      let teamHtml = "<table><tr><th>순위</th><th>팀</th><th>누적 점수</th></tr>";
+      teamArray.forEach((t,i) => {
+        const crown = i === 0 ? "👑" : "";
+        teamHtml += `<tr><td>${i+1}</td><td>${t.nation}${crown}</td><td>${t.score}</td></tr>`;
+      });
+      teamHtml += "</table>";
+      document.getElementById("teamTable").innerHTML = teamHtml;
+    }
+
+    // 히스토리 테이블 생성 함수
+    function buildHistoryTable(divId) {
+      let html = "<table><tr><th>팀</th>";
+      for(let r = 1; r <= roundCount; r++) { 
+        html += `<th>${r}R</th>`; 
+      }
+      html += "<th>합계</th></tr>";
+
+      allTeams.forEach(n => {
+        let total = 0;
+        let row = `<tr><td>${n}</td>`;
+        for(let r = 1; r <= roundCount; r++) {
+          const s = roundHistory[r-1].gains[n] || 0;
+          total += s;
+          row += `<td>${s}</td>`;
+        }
+        row += `<td>${total}</td></tr>`;
+        html += row;
+      });
+      html += "</table>";
+      document.getElementById(divId).innerHTML = html;
+    }
+
+    // 타이머
+    socket.on("roundTimer",({elapsed,remaining})=>{
+      const m = String(Math.floor(elapsed/60)).padStart(2,"0");
+      const s = String(elapsed%60).padStart(2,"0");
+      document.getElementById("timer").innerText = remaining === null ? 
+        `${m}:${s} 경과` : `${m}:${s} (남은: ${remaining}초)`;
+    });
+    
+    socket.on("roundTimerReset",() => { 
+      document.getElementById("timer").innerText = "00:00"; 
+    });
+
+    // 게임 종료
+    socket.on("gameOver",({topPlayer,topTeam,allPlayers})=>{
+      document.getElementById("game").style.display = "none";
+      const f = document.getElementById("finalScreen");
+      f.style.display = "block";
+      document.getElementById("finalTeam").textContent = `👑 최강 팀: ${topTeam.nation} (${topTeam.score}점)`;
+      document.getElementById("finalPlayer").textContent = `🏆 최종 우승자: ${topPlayer.name} (${topPlayer.nation}, ${topPlayer.finalScore}점)`;
+
+      // 종료 후 전체 히스토리 출력
+      buildHistoryTable("finalHistory");
+    });
+
+    // 플레이어: 다시 시작 버튼
+    document.getElementById("restartPlayer").addEventListener("click",()=>{
+      socket.emit("restartGame");
+    });
+
+    // 재시작 알림 수신
+    socket.on("gameRestart",()=>{
+      document.getElementById("finalScreen").style.display = "none";
+      document.getElementById("joinForm").style.display = "block";
+      roundCount = 0; 
+      roundHistory = []; 
+      previousTeamScores = {};
+      document.getElementById("historyTable").innerHTML = "";
+      document.getElementById("finalHistory").innerHTML = "";
+      document.getElementById("status").textContent = "대기중...";
+      myPlayer = null;
+      gameState = null;
+    });
+  </script>
+</body>
+</html>

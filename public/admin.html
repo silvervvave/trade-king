@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>사회자 패널</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    button { margin: 5px; padding: 10px; font-size: 1rem; }
+    #log { margin-top: 20px; white-space: pre-line; background: #f9f9f9; padding: 10px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>사회자 패널</h1>
+
+  <button id="startProduction">▶ 생산 라운드 시작</button>
+  <button id="endRound">⏹ 라운드 종료</button>
+
+  <h2>로그</h2>
+  <div id="log"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const logEl = document.getElementById("log");
+
+    // 생산 라운드 시작 버튼
+    document.getElementById("startProduction").addEventListener("click", () => {
+      socket.emit("startRound", { phase: "production" }); // 서버로 startRound 전송
+      addLog("🎬 생산 라운드 시작 명령 전송");
+    });
+
+    // 라운드 종료 버튼
+    document.getElementById("endRound").addEventListener("click", () => {
+      socket.emit("endRound"); // 서버로 endRound 전송
+      addLog("⏹ 라운드 종료 명령 전송");
+    });
+
+    // 서버가 라운드 종료 후 결과를 돌려주면 로그에 표시
+    socket.on("roundEnd", ({ players }) => {
+      addLog("📊 라운드 종료 결과\n" + JSON.stringify(players, null, 2));
+    });
+
+    function addLog(msg) {
+      logEl.textContent += msg + "\n";
+    }
+  </script>
+</body>
+</html>
