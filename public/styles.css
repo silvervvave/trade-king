@@ -793,15 +793,17 @@ body {
 .team-sidebar {
     position: fixed;
     top: 0;
-    right: -300px; /* 초기에는 숨김 */
+    right: -320px; /* 초기에는 숨김 */
     width: 300px;
     height: 100%;
-    background: var(--color-surface);
-    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    background: rgba(61, 30, 30, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: -2px 0 15px rgba(0,0,0,0.2);
     padding: var(--spacing-lg);
     transition: right 0.4s ease;
     z-index: 1000;
-    border-left: 2px solid var(--color-border);
+    border-left: 1px solid rgba(255, 255, 240, 0.2);
     overflow-y: auto;
 }
 
@@ -810,9 +812,9 @@ body {
 }
 
 .team-sidebar h3 {
-    color: var(--color-primary);
+    color: var(--color-ivory);
     margin-bottom: var(--spacing-lg);
-    border-bottom: 2px solid var(--color-border);
+    border-bottom: 1px solid rgba(255, 255, 240, 0.2);
     padding-bottom: var(--spacing-md);
 }
 
@@ -827,11 +829,17 @@ body {
     color: var(--color-ivory);
     border: 2px solid var(--color-border);
     border-radius: 50%;
-    font-size: 1.5em;
     cursor: pointer;
     box-shadow: var(--shadow-md);
     z-index: 1001;
     transition: right 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.team-sidebar-toggle svg {
+    stroke: var(--color-ivory);
 }
 
 .team-sidebar.open + .team-sidebar-toggle {
@@ -842,7 +850,8 @@ body {
     display: flex;
     align-items: center;
     padding: var(--spacing-sm) 0;
-    border-bottom: 1px solid var(--color-ivory);
+    border-bottom: 1px solid rgba(255, 255, 240, 0.1);
+    color: var(--color-ivory);
 }
 
 #myTeamStatus .member-status:last-child {
@@ -857,11 +866,11 @@ body {
 }
 
 #myTeamStatus .status-indicator.connected {
-    background-color: #79C9A7;
+    background-color: #7CFC00; /* LimeGreen for better visibility */
 }
 
 #myTeamStatus .status-indicator.disconnected {
-    background-color: var(--color-danger);
+    background-color: #FF6347; /* Tomato for better visibility */
 }
 
 /* ============================================
