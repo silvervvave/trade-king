@@ -147,6 +147,19 @@ socket.on('action_result', (data) => {
             resultDiv.className = 'result-display';
         }
     }
+    if (data.action === 'final_rps_reroll') {
+        const finalRpsButtons = document.querySelectorAll('.final-rps-btn');
+        finalRpsButtons.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        });
+
+        const resultDiv = document.getElementById('finalRpsResult');
+        if (resultDiv) {
+            resultDiv.innerHTML = '';
+            resultDiv.className = 'result-display';
+        }
+    }
 });
 
 socket.on('event_result', (data) => {
@@ -393,17 +406,7 @@ function updateTokenDisplay() {
     // 프랑스 중상주의 토큰 표시
     const mercantilismInfo = document.getElementById('mercantilismTokenInfo');
     if (mercantilismInfo) {
-        if (gameState.player.country === 'france') {
-            mercantilismInfo.style.display = 'block';
-            mercantilismInfo.innerHTML = `
-                <div class="token-info">
-                    <span class="token-icon"></span>
-                    <span class="token-text">중상주의 토큰: ${gameState.team.mercantilismTokens}개</span>
-                </div>
-            `;
-        } else {
-            mercantilismInfo.style.display = 'none';
-        }
+        mercantilismInfo.style.display = 'none';
     }
 }
 
@@ -750,24 +753,16 @@ function playFinalRPS(choice) {
 function rerollFinalRPS() {
     if (!playerRoomId || !gameState.player.country) return;
     
-    if (gameState.player.country !== 'france') {
-        return showNotification('프랑스만 중상주의 토큰을 사용할 수 있습니다!');
+    if (gameState.player.country !== 'england') {
+        return showNotification('영국만 리롤 토큰을 사용할 수 있습니다!');
     }
     
-    if (gameState.team.mercantilismTokens <= 0) {
-        return alert('중상주의 토큰이 없습니다!\n\n프랑스는 라운드당 1개의 중상주의 토큰을 보유합니다.');
+    if (gameState.team.resetTokens <= 0) {
+        return alert('리롤 토큰이 없습니다!');
     }
 
-    if (confirm(`중상주의 토큰을 사용하시겠습니까?\n\n남은 토큰: ${gameState.team.mercantilismTokens}개`)) {
+    if (confirm(`리롤 토큰을 사용하시겠습니까?\n\n남은 토큰: ${gameState.team.resetTokens}개`)) {
         socket.emit('reroll_final_rps', { roomId: playerRoomId });
-        
-        const finalRpsButtons = document.querySelectorAll('.final-rps-btn');
-        finalRpsButtons.forEach(btn => {
-            btn.disabled = false;
-            btn.style.opacity = '1';
-        });
-        
-    showNotification('중상주의 토큰을 사용했습니다. 최종 가위바위보를 다시 선택하세요!');
     }
 }
 

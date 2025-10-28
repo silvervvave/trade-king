@@ -42,6 +42,7 @@ function createInitialTeamState(country, config) {
     rpsPlayedThisRound: false, 
     eventDrawnThisRound: false, 
     finalRpsPlayedThisRound: false, 
+    rerollUsedThisRound: false,
     rpsRerolls: config.resetTokens, 
     mercantilismTokens: config.mercantilismTokens, 
     investmentsMade: [], 

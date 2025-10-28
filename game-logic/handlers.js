@@ -41,19 +41,19 @@ function calculateArrivalResults(io, team, room, roomId) {
 
         const destination = tradeData.type;
         const baseAmount = tradeData.amount;
-        const eventMultiplier = team.eventMultiplier;
+        const { paMultiplier, goodsMultiplier } = team.eventMultipliers;
         const rpsGoodsChange = team.rpsGoodsChange;
 
-        let goodsAcquired = 0;
+        let goodsAcquired = Math.max(0, Math.floor(baseAmount / 100) + rpsGoodsChange);
+        goodsAcquired *= goodsMultiplier;
+
         if (destination === 'china') { // 비단
-            goodsAcquired = Math.max(0, Math.floor(baseAmount / 100) + rpsGoodsChange);
             if (goodsAcquired > 0) team.silk += goodsAcquired;
         } else if (destination === 'india') { // 후추
-            goodsAcquired = Math.max(0, Math.floor(baseAmount / 100) + rpsGoodsChange);
             if (goodsAcquired > 0) team.pepper += goodsAcquired;
         }
 
-        const profit = (baseAmount * eventMultiplier) - baseAmount;
+        const profit = (baseAmount * paMultiplier) - baseAmount;
         
         if (profit > 0 && team.investmentsReceived.length > 0) {
             const totalInvestments = team.investmentsReceived.reduce((acc, inv) => acc + inv.amount, 0);
@@ -69,7 +69,12 @@ function calculateArrivalResults(io, team, room, roomId) {
             }
         }
         
-        team.totalPA += (baseAmount * eventMultiplier);
+        team.totalPA += (baseAmount * paMultiplier);
+
+        // 프랑스 중상주의 특성 적용
+        if (team.country === 'france' && paMultiplier > 0) {
+            team.totalPA += 50;
+        }
 
         io.to(roomId).emit('arrival_summary', {
             country: team.country,
@@ -151,6 +156,7 @@ function startPhase(io, socket, data, room, roomId) {
     if (phase === 'production') {
       Object.values(room.teams).forEach(t => { 
         t.rpsPlayedThisRound = false; 
+        t.rerollUsedThisRound = false; // 리롤 토큰 사용 여부 초기화
         t.rpsPaChange = 0; 
       });
     }
@@ -222,8 +228,8 @@ function tradeSelection(io, socket, data, room, roomId) {
     }
     const amount = parseInt(data.amount);
 
-    if (!isValidAmount(amount) || amount > team.totalPA) {
-      return socket.emit('error', { message: '유효하지 않은 금액입니다.' });
+    if (!isValidAmount(amount) || amount > team.totalPA || amount < 200 || amount % 100 !== 0) {
+      return socket.emit('error', { message: '유효하지 않은 금액입니다. (200 PA 이상, 100 PA 단위로 입력)' });
     }
 
     if (!team.tradeSelection) {
@@ -282,10 +288,7 @@ function playRPS(io, socket, data, room, roomId) {
       return socket.emit('error', { message: '팀 정보를 찾을 수 없습니다.' });
     }
 
-    if (data.reroll) {
-      if (team.country !== 'england' || team.rpsRerolls <= 0) return;
-      team.rpsRerolls--;
-    } else if (team.rpsPlayedThisRound) {
+    if (team.rpsPlayedThisRound) {
       return;
     }
 
@@ -317,6 +320,11 @@ function rerollRPS(io, socket, data, room, roomId) {
       return socket.emit('error', { message: '리롤 토큰이 없거나 사용할 수 없습니다.' });
     }
 
+    if (team.rerollUsedThisRound) {
+        return socket.emit('error', { message: '이번 라운드에 이미 리롤 토큰을 사용했습니다.' });
+    }
+
+    team.rerollUsedThisRound = true;
     team.rpsRerolls--;
     team.totalPA -= (team.rpsPaChange || 0);
     team.rpsPaChange = 0;
@@ -337,7 +345,7 @@ function drawEvent(io, socket, data, room, roomId) {
     if (team.eventDrawnThisRound || !team.tradeSelection) return;
 
     const event = determineEvent(EVENT_CONFIG);
-    team.eventMultiplier = event.multiplier;
+    team.eventMultipliers = { paMultiplier: event.paMultiplier, goodsMultiplier: event.goodsMultiplier };
     team.eventDrawnThisRound = true;
 
     io.to(socket.id).emit('event_result', { 
@@ -353,11 +361,6 @@ function playFinalRPS(io, socket, data, room, roomId) {
     const team = room.teams[player.team];
 
     if (team.finalRpsPlayedThisRound || !team.tradeSelection) return;
-
-    if (data.reroll) {
-      if (team.country !== 'england' || team.rpsRerolls <= 0) return;
-      team.rpsRerolls--;
-    }
 
   // computerChoice uses emoji-only choices for consistency
   const computerChoice = ['✌️', '✊', '✋'][Math.floor(Math.random() * 3)];
@@ -376,6 +379,32 @@ function playFinalRPS(io, socket, data, room, roomId) {
       teamState: team 
     });
     calculateArrivalResults(io, team, room, roomId);
+}
+
+function rerollFinalRPS(io, socket, data, room, roomId) {
+    const player = room.players[socket.id];
+    if (!player) return;
+    const team = room.teams[player.team];
+
+    if (team.country !== 'england' || team.rpsRerolls <= 0) {
+      return socket.emit('error', { message: '리롤 토큰이 없거나 사용할 수 없습니다.' });
+    }
+
+    if (team.rerollUsedThisRound) {
+        return socket.emit('error', { message: '이번 라운드에 이미 리롤 토큰을 사용했습니다.' });
+    }
+
+    team.rerollUsedThisRound = true;
+    team.rpsRerolls--;
+    team.finalRpsPlayedThisRound = false;
+    team.rpsGoodsChange = 0;
+
+    socket.emit('action_result', { 
+      message: '리롤 토큰을 사용했습니다. 다시 선택하세요!', 
+      teamState: team, 
+      action: 'final_rps_reroll'
+    });
+    broadcastTeamsUpdate(io, room, roomId);
 }
 
 function resetGame(io, socket, data, room, roomId) {
@@ -442,6 +471,7 @@ module.exports = {
     rerollRPS,
     drawEvent,
     playFinalRPS,
+    rerollFinalRPS,
     resetGame,
     disconnect
 };

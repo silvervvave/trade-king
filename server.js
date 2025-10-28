@@ -14,6 +14,7 @@ const {
     rerollRPS, 
     drawEvent, 
     playFinalRPS, 
+    rerollFinalRPS, 
     resetGame, 
     disconnect 
 } = require('./game-logic/handlers');
@@ -62,6 +63,8 @@ io.on('connection', (socket) => {
   const safeHandler = (handler) => (data) => {
     try {
       const roomId = data?.roomId || socket.roomId;
+      console.log(`[safeHandler] Checking for room: ${roomId}`);
+      console.log(`[safeHandler] Room exists: ${!!rooms[roomId]}`);
       if (!roomId || !rooms[roomId]) {
         socket.emit('error', { message: '유효하지 않은 방입니다.' });
         return;
@@ -127,6 +130,7 @@ io.on('connection', (socket) => {
   socket.on('reroll_rps', safeHandler(rerollRPS));
   socket.on('draw_event', safeHandler(drawEvent));
   socket.on('play_final_rps', safeHandler(playFinalRPS));
+  socket.on('reroll_final_rps', safeHandler(rerollFinalRPS));
   socket.on('reset_game', safeHandler(resetGame));
   socket.on('disconnect', () => disconnect(io, socket, rooms[socket.roomId], socket.roomId));
 });
