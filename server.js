@@ -121,6 +121,12 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('check_room', (data) => {
+    const { roomId, playerName } = data;
+    const roomExists = !!rooms[roomId];
+    socket.emit('room_check_result', { exists: roomExists, roomId, playerName });
+  });
+
   socket.on('register_player', safeHandler(registerPlayer));
   socket.on('start_phase', safeHandler(startPhase));
   socket.on('production_click', safeHandler(productionClick));

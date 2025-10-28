@@ -190,6 +190,27 @@ socket.on('game_ended', (data) => {
     displayFinalResults(data);
 });
 
+socket.on('room_check_result', (data) => {
+    const joinButton = document.querySelector('#joinRoomSection button');
+    joinButton.disabled = false;
+    joinButton.textContent = '게임 참가하기';
+
+    if (data.exists) {
+        localPlayerName = data.playerName;
+        playerRoomId = data.roomId;
+        gameState.player.name = data.playerName;
+
+        log('info', '방 참가 준비', { name: data.playerName, roomId: data.roomId });
+
+        document.getElementById('joinRoomSection').classList.add('hidden');
+        document.getElementById('countrySelection').classList.remove('hidden');
+        showNotification(`안녕하세요, ${data.playerName}님! 이제 국가를 선택하세요.`);
+    } else {
+        showNotification('존재하지 않는 방 코드입니다. 다시 확인해주세요.');
+        document.getElementById('roomCodeInput').focus();
+    }
+});
+
 socket.on('game_reset', () => {
     console.log('게임 리셋');
     location.reload();
@@ -202,11 +223,11 @@ socket.on('game_reset', () => {
 function joinRoom() {
     const nameInput = document.getElementById('playerNameInput');
     const roomInput = document.getElementById('roomCodeInput');
+    const joinButton = document.querySelector('#joinRoomSection button');
 
     const name = nameInput.value.trim();
     const roomId = roomInput.value.trim().toUpperCase();
 
-    // 🆕 개선된 검증 로직
     if (!validatePlayerName(name)) {
         showNotification('이름은 1~20자의 한글, 영문, 숫자만 가능합니다.');
         nameInput.focus();
@@ -219,15 +240,9 @@ function joinRoom() {
         return;
     }
 
-    localPlayerName = name;
-    playerRoomId = roomId;
-    gameState.player.name = name;
-
-    log('info', '방 참가 준비', { name, roomId });
-
-    document.getElementById('joinRoomSection').classList.add('hidden');
-    document.getElementById('countrySelection').classList.remove('hidden');
-    showNotification(`안녕하세요, ${name}님! 이제 국가를 선택하세요.`);
+    joinButton.disabled = true;
+    joinButton.textContent = '확인 중...';
+    socket.emit('check_room', { roomId, playerName: name });
 }
 
 function selectCountry(country) {
@@ -606,6 +621,8 @@ function getRPSEmoji(choice) {
     return map[choice] || '';
 }
 
+let selectedTradeDestination = null;
+
 // ============================================
 // 무역 단계
 // ============================================
@@ -615,32 +632,60 @@ function setupTradeScreen() {
     if (selectionDiv) {
         selectionDiv.innerHTML = '<p>선택 대기중...</p>';
     }
+    document.getElementById('tradeConfirmation').classList.add('hidden');
+    document.querySelector('.destination-grid').classList.remove('hidden');
 }
 
-function setDestination(destination) {
+function selectTradeDestination(destination) {
+    selectedTradeDestination = destination;
+    document.getElementById('tradeDestinationTitle').textContent = `${destination === 'china' ? '중국' : '인도'}에 투자할 금액`;
+    document.querySelector('.destination-grid').classList.add('hidden');
+    document.getElementById('tradeConfirmation').classList.remove('hidden');
+    document.getElementById('tradeAmount').focus();
+}
+
+function confirmTrade(type) {
     if (!playerRoomId) {
         return showNotification('게임에 참가하지 않았습니다.');
     }
 
+    let tradeType = type;
+    let amount = 0;
+
+    if (type !== 'none') {
+        tradeType = selectedTradeDestination;
+        amount = parseInt(document.getElementById('tradeAmount').value);
+
+        if (isNaN(amount) || amount < 200 || amount % 100 !== 0) {
+            return showNotification('유효하지 않은 금액입니다. (200 PA 이상, 100 PA 단위로 입력)');
+        }
+        if (amount > gameState.team.totalPA) {
+            return showNotification('보유한 PA가 부족합니다.');
+        }
+    }
+
     socket.emit('trade_selection', {
         roomId: playerRoomId,
-        destination: destination
+        type: tradeType,
+        amount: amount
     });
 
+    const destText = tradeType === 'china' ? '중국 (비단)' : 
+                     tradeType === 'india' ? '인도 (후추)' : 
+                     '출항하지 않음';
     const selectionDiv = document.getElementById('tradeSelection');
-    if (selectionDiv) {
-        const destText = destination === 'china' ? '중국 (비단)' : 
-                        destination === 'india' ? '인도 (후추)' : 
-                        '출항하지 않음';
-        selectionDiv.innerHTML = `<p>선택: ${destText}</p>`;
-    }
+    selectionDiv.innerHTML = `<p>선택: ${destText}${amount > 0 ? ` / ${amount} PA` : ''}</p>`;
     
     showNotification('무역 선택이 완료되었습니다!');
+    document.getElementById('tradeConfirmation').classList.add('hidden');
 }
 
-function selectTrade(type) {
-    setDestination(type);
+function cancelTrade() {
+    document.getElementById('tradeConfirmation').classList.add('hidden');
+    document.querySelector('.destination-grid').classList.remove('hidden');
+    selectedTradeDestination = null;
 }
+
 
 // ============================================
 // 투자 단계
@@ -658,8 +703,11 @@ function setupInvestmentScreen(voyages) {
     }
 
     voyages.forEach(voyage => {
-        const card = createInvestmentCard(voyage);
-        container.appendChild(card);
+        // 자기 자신에게는 투자할 수 없음
+        if (voyage.country !== gameState.player.country) {
+            const card = createInvestmentCard(voyage);
+            container.appendChild(card);
+        }
     });
 }
 
@@ -668,13 +716,16 @@ function createInvestmentCard(voyage) {
     card.className = 'investment-card';
     
     const config = countryConfig[voyage.country];
+    const destinationText = voyage.destination === 'china' ? '중국' : '인도';
+
     card.innerHTML = `
         <h4>${config.name}</h4>
-        <p>목적지: ${voyage.destination === 'china' ? '중국' : '인도'}</p>
-        <p>투자 금액: ${voyage.amount} PA</p>
-        <button class="game-btn" onclick="makeInvestment('${voyage.country}')">
-            투자하기
-        </button>
+        <p>목적지: ${destinationText}</p>
+        <p>기본 투자액: ${voyage.amount} PA</p>
+        <div class="input-group">
+            <input type="number" id="investAmount-${voyage.country}" placeholder="투자할 PA (100 이상)" min="100" step="100">
+            <button class="game-btn" onclick="makeInvestment('${voyage.country}')">투자하기</button>
+        </div>
     `;
     
     return card;
@@ -685,13 +736,26 @@ function makeInvestment(targetCountry) {
         return showNotification('게임에 참가하지 않았습니다.');
     }
 
+    const amountInput = document.getElementById(`investAmount-${targetCountry}`);
+    const amount = parseInt(amountInput.value);
+
+    if (isNaN(amount) || amount < 100) {
+        return showNotification('유효하지 않은 투자 금액입니다. (100 PA 이상)');
+    }
+
+    if (amount > gameState.team.totalPA) {
+        return showNotification('보유한 PA가 부족합니다.');
+    }
+
     socket.emit('make_investment', {
         roomId: playerRoomId,
-        targetCountry: targetCountry
+        targetCountry: targetCountry,
+        amount: amount
     });
 
     const config = countryConfig[targetCountry];
-    showNotification(`${config.name}에 투자했습니다!`);
+    showNotification(`${config.name}에 ${amount} PA 투자 완료!`);
+    amountInput.value = ''; // 입력 필드 초기화
 }
 
 // ============================================

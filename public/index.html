@@ -181,36 +181,35 @@
                 
                 <div class="trade-panel">
                     <h3>항해지 선택</h3>
-                    <p class="info-text">중국과 인도 중 한 곳을 선택하여 무역품을 획득하세요</p>
+                    <p class="info-text">중국과 인도 중 한 곳을 선택하여 무역품을 획득하세요. 혹은 이번 라운드를 쉴 수 있습니다.</p>
                     
                     <div class="destination-grid">
-                        <div class="destination-card">
+                        <div class="destination-card" onclick="selectTradeDestination('china')">
                             <div class="destination-icon"></div>
                             <h4>중국</h4>
                             <p class="destination-trait">비단 획득 기회</p>
-                            <button class="game-btn btn-primary" onclick="setDestination('china')">
-                                중국으로 출항
-                            </button>
                         </div>
                         
-                        <div class="destination-card">
+                        <div class="destination-card" onclick="selectTradeDestination('india')">
                             <div class="destination-icon"></div>
                             <h4>인도</h4>
                             <p class="destination-trait">후추 획득 기회</p>
-                            <button class="game-btn btn-primary" onclick="setDestination('india')">
-                                인도로 출항
-                            </button>
-                        </div>
-                        
-                        <div class="destination-card">
-                            <div class="destination-icon"></div>
-                            <h4>휴식</h4>
-                            <p class="destination-trait">이번 라운드는 쉬기</p>
-                            <button class="game-btn btn-secondary" onclick="setDestination('none')">
-                                출항하지 않음
-                            </button>
                         </div>
                     </div>
+
+                    <div id="tradeConfirmation" class="hidden" style="margin-top: 20px;">
+                        <h3 id="tradeDestinationTitle"></h3>
+                        <div class="input-group">
+                            <label for="tradeAmount">PA 금액 입력 (100 단위)</label>
+                            <input type="number" id="tradeAmount" placeholder="예: 300" step="100" min="200">
+                        </div>
+                        <button class="game-btn btn-primary" onclick="confirmTrade()">이 금액으로 출항하기</button>
+                        <button class="game-btn btn-secondary" onclick="cancelTrade()">취소</button>
+                    </div>
+
+                    <button class="game-btn btn-secondary" style="margin-top: 20px;" onclick="confirmTrade('none')">
+                        이번 라운드는 출항하지 않음
+                    </button>
                     
                     <div id="tradeSelection" class="selection-display">
                         <p>선택 대기중...</p>
@@ -228,6 +227,15 @@
                     
                     <div id="investmentOptions" class="investment-grid">
                         <!-- JavaScript로 동적 생성 -->
+                        <div class="investment-card">
+                            <h4>{국가이름}</h4>
+                            <p>목적지: {목적지}</p>
+                            <p>투자된 금액: {금액} PA</p>
+                            <div class="input-group">
+                                <input type="number" id="investAmount-{country}" placeholder="투자할 PA (100 이상)" min="100" step="100">
+                                <button class="game-btn" onclick="makeInvestment('{country}')">투자하기</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

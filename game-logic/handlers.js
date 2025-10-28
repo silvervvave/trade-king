@@ -266,8 +266,8 @@ function makeInvestment(io, socket, data, room, roomId) {
     }
     const amount = parseInt(data.amount);
 
-    if (!targetTeam || !isValidAmount(amount) || amount > investingTeam.totalPA) {
-      return socket.emit('error', { message: '유효하지 않은 투자입니다.' });
+    if (!targetTeam || !isValidAmount(amount) || amount > investingTeam.totalPA || amount < 100) {
+      return socket.emit('error', { message: '유효하지 않은 투자입니다. (100 PA 이상)' });
     }
 
     investingTeam.totalPA -= amount;
