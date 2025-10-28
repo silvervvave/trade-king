@@ -36,6 +36,7 @@ let playerRegistered = false;
 let playerRoomId = null;
 let localPlayerName = null;
 let currentVisibleArea = null; // 현재 보고 있는 영역 추적
+let clickBuffer = 0;
 
 // ============================================
 // Socket 이벤트 핸들러
@@ -568,7 +569,10 @@ function produce() {
         return showNotification('최대 클릭 수에 도달했습니다!');
     }
     
-    socket.emit('production_click', { roomId: playerRoomId });
+    clickBuffer++;
+    gameState.team.clickCount++;
+    gameState.team.totalPA += config.paPerClick;
+    updatePlayerStats(); // Update UI immediately
 }
 
 function playRPS(choice) {
@@ -935,4 +939,12 @@ document.addEventListener('DOMContentLoaded', () => {
             sidebar.classList.toggle('open');
         });
     }
+
+    // 클릭 묶어보내기 (Batching) 설정
+    setInterval(() => {
+        if (clickBuffer > 0) {
+            socket.emit('production_batch', { roomId: playerRoomId, clicks: clickBuffer });
+            clickBuffer = 0;
+        }
+    }, 200);
 });

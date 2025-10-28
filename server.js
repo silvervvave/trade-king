@@ -7,7 +7,7 @@ const { rooms, generateRoomId, createNewGameState } = require('./game-logic/room
 const { 
     registerPlayer, 
     startPhase, 
-    productionClick, 
+    productionBatch, 
     tradeSelection, 
     makeInvestment, 
     playRPS, 
@@ -129,7 +129,7 @@ io.on('connection', (socket) => {
 
   socket.on('register_player', safeHandler(registerPlayer));
   socket.on('start_phase', safeHandler(startPhase));
-  socket.on('production_click', safeHandler(productionClick));
+  socket.on('production_batch', safeHandler(productionBatch));
   socket.on('trade_selection', safeHandler(tradeSelection));
   socket.on('make_investment', safeHandler(makeInvestment));
   socket.on('play_rps', safeHandler(playRPS));
@@ -138,6 +138,50 @@ io.on('connection', (socket) => {
   socket.on('play_final_rps', safeHandler(playFinalRPS));
   socket.on('reroll_final_rps', safeHandler(rerollFinalRPS));
   socket.on('reset_game', safeHandler(resetGame));
+
+  socket.on('start_timer', (data) => {
+    const { roomId, minutes, seconds } = data;
+    const room = rooms[roomId];
+    if (!room || (socket.id !== room.adminSocketId)) return;
+
+    if (room.timer.intervalId) {
+        clearInterval(room.timer.intervalId);
+    }
+
+    room.timer.running = true;
+    room.timer.minutes = minutes;
+    room.timer.seconds = seconds;
+    let totalSeconds = (minutes * 60) + seconds;
+
+    room.timer.intervalId = setInterval(() => {
+        if (totalSeconds <= 0) {
+            clearInterval(room.timer.intervalId);
+            room.timer.running = false;
+            io.to(roomId).emit('timer_ended');
+            return;
+        }
+        totalSeconds--;
+        room.timer.minutes = Math.floor(totalSeconds / 60);
+        room.timer.seconds = totalSeconds % 60;
+        io.to(roomId).emit('timer_update', { 
+            minutes: room.timer.minutes, 
+            seconds: room.timer.seconds 
+        });
+    }, 1000);
+  });
+
+  socket.on('stop_timer', (data) => {
+      const { roomId } = data;
+      const room = rooms[roomId];
+      if (!room || (socket.id !== room.adminSocketId)) return;
+
+      if (room.timer.intervalId) {
+          clearInterval(room.timer.intervalId);
+          room.timer.intervalId = null;
+          room.timer.running = false;
+      }
+  });
+
   socket.on('disconnect', () => disconnect(io, socket, rooms[socket.roomId], socket.roomId));
 });
 
