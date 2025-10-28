@@ -223,29 +223,41 @@ function productionClick(io, socket, data, room, roomId) {
 function tradeSelection(io, socket, data, room, roomId) {
     const player = room.players[socket.id];
     if (!player) {
-      return socket.emit('error', { message: '플레이어 정보를 찾을 수 없습니다.' });
+        return socket.emit('error', { message: '플레이어 정보를 찾을 수 없습니다.' });
     }
 
     const team = room.teams[player.team];
     if (!team) {
-      return socket.emit('error', { message: '팀 정보를 찾을 수 없습니다.' });
-    }
-    const amount = parseInt(data.amount);
-
-    if (!isValidAmount(amount) || amount > team.totalPA || amount < 200 || amount % 100 !== 0) {
-      return socket.emit('error', { message: '유효하지 않은 금액입니다. (200 PA 이상, 100 PA 단위로 입력)' });
+        return socket.emit('error', { message: '팀 정보를 찾을 수 없습니다.' });
     }
 
-    if (!team.tradeSelection) {
-      team.tradeSelection = { type: data.type, amount };
-      team.totalPA -= amount;
-      updateTeamMembers(io, team, roomId);
-      if(room.adminSocketId) {
-        io.to(room.adminSocketId).emit('player_trade_selection', { 
-          playerName: player.name, 
-          selection: data 
+    const { type, amount } = data;
+    const parsedAmount = parseInt(amount);
+
+    const previousAmount = team.tradeSelection ? team.tradeSelection.amount : 0;
+    const availablePA = team.totalPA + previousAmount;
+
+    if (type === 'none') {
+        team.totalPA = availablePA;
+        team.tradeSelection = null;
+    } else {
+        if (!isValidAmount(parsedAmount) || parsedAmount < 200 || parsedAmount % 100 !== 0) {
+            return socket.emit('error', { message: '유효하지 않은 금액입니다. (200 PA 이상, 100 PA 단위로 입력)' });
+        }
+        if (parsedAmount > availablePA) {
+            return socket.emit('error', { message: '보유한 PA가 부족합니다.' });
+        }
+
+        team.totalPA = availablePA - parsedAmount;
+        team.tradeSelection = { type, amount: parsedAmount };
+    }
+
+    updateTeamMembers(io, team, roomId);
+    if (room.adminSocketId) {
+        io.to(room.adminSocketId).emit('player_trade_selection', {
+            playerName: player.name,
+            selection: data
         });
-      }
     }
 }
 
