@@ -286,12 +286,11 @@ function updateGameState(state) {
         const waitingScreen = document.getElementById('waitingScreen');
         const gameScreen = document.getElementById('gameScreen');
         const gameNav = document.getElementById('gameNav');
-                rerollInfo.innerHTML = `
-                    <div class="token-info">
-                                <span class="token-icon"></span>
-                                <span class="token-text">✊ ✋ ✌️ 리롤 토큰: ${gameState.team.resetTokens}개</span>
-                    </div>
-                `;
+
+        if (waitingScreen) waitingScreen.classList.add('hidden');
+        if (gameScreen) gameScreen.classList.remove('hidden');
+        if (gameNav) gameNav.classList.remove('hidden');
+
         showArea('productionArea');
         currentVisibleArea = 'productionArea';
     }
@@ -775,6 +774,18 @@ function rerollFinalRPS() {
 // ============================================
 // 기타 UI 함수
 // ============================================
+
+function getPhaseKorean(phase) {
+    const phaseMap = {
+        'waiting': '대기',
+        'production': '생산',
+        'trade': '무역',
+        'investment': '투자',
+        'arrival': '입항',
+        'ended': '종료'
+    };
+    return phaseMap[phase] || phase;
+}
 
 function updateAllTeamsStatus(teams) {
     const container = document.getElementById('allTeamsStatusContainer');
