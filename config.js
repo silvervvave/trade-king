@@ -1,9 +1,9 @@
 
 const countryConfig = {
     spain: { name: '스페인', maxClicks: 1000, paPerClick: 1, icon: '🇪🇸', resetTokens: 0, mercantilismTokens: 0 },
-    netherlands: { name: '네덜란드', maxClicks: 500, paPerClick: 1.5, icon: '🇳🇱', resetTokens: 0, mercantilismTokens: 0 },
-    england: { name: '영국', maxClicks: 500, paPerClick: 1, icon: '🇬🇧', resetTokens: 2, mercantilismTokens: 0 },
-    france: { name: '프랑스', maxClicks: 500, paPerClick: 1, icon: '🇫🇷', resetTokens: 0, mercantilismTokens: 1 }
+    netherlands: { name: '네덜란드', maxClicks: 600, paPerClick: 1.5, icon: '🇳🇱', resetTokens: 0, mercantilismTokens: 0 },
+    england: { name: '영국', maxClicks: 600, paPerClick: 1, icon: '🇬🇧', resetTokens: 2, mercantilismTokens: 0 },
+    france: { name: '프랑스', maxClicks: 600, paPerClick: 1, icon: '🇫🇷', resetTokens: 0, mercantilismTokens: 1 }
 };
 
 const EVENT_CONFIG = {

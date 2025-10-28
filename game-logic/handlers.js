@@ -63,6 +63,10 @@ function calculateArrivalResults(io, team, room, roomId) {
                     if (investorTeam) {
                         const share = (investment.amount / totalInvestments) * profit * 0.5; // 50% 분배
                         investorTeam.totalPA += share;
+                        // 프랑스 중상주의 특성 (투자)
+                        if (investorTeam.country === 'france') {
+                            investorTeam.totalPA += 50;
+                        }
                         updateTeamMembers(io, investorTeam, roomId);
                     }
                 });
