@@ -1,48 +1,117 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>사회자 패널</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    button { margin: 5px; padding: 10px; font-size: 1rem; }
-    #log { margin-top: 20px; white-space: pre-line; background: #f9f9f9; padding: 10px; border: 1px solid #ccc; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교수자 관리 패널</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>사회자 패널</h1>
+    <div class="admin-container">
+        <header>
+            <h1>교수자 관리 패널</h1>
+            <p>나는 무역왕이 될거야!</p>
+            <p id="connectionStatus" style="margin-top:10px; color:var(--color-danger);">🔴 서버 연결 대기중...</p>
+        </header>
 
-  <button id="startProduction">▶ 생산 라운드 시작</button>
-  <button id="endRound">⏹ 라운드 종료</button>
+        <!-- 방 생성 섹션 -->
+        <div id="roomCreationSection" class="control-panel">
+            <h2>새로운 게임 시작하기</h2>
+            <p class="info-text" style="text-align: center; margin-bottom: 20px;">아래 버튼을 눌러 새로운 게임을 위한 방을 만드세요.</p>
+            <button id="createRoomBtn" class="admin-btn btn-production" style="width: 100%;" onclick="createRoom()">
+                + 새 게임 방 만들기
+            </button>
+        </div>
 
-  <h2>로그</h2>
-  <div id="log"></div>
+        <!-- 메인 대시보드 (초기에는 숨김) -->
+        <div id="mainDashboard" class="hidden">
+            <div id="roomInfo" class="control-panel" style="text-align: center;">
+                <h2>방 생성 완료!</h2>
+                <p class="info-text">학생들에게 아래 코드를 공유하여 게임에 참여하도록 안내하세요.</p>
+                <div style="background: var(--color-background); padding: 20px; border-radius: var(--radius-lg); margin: 20px 0;">
+                    <p style="font-size: 3em; font-weight: bold; color: var(--color-primary); letter-spacing: 0.1em; margin: 0;">
+                        <span id="roomCodeDisplay">-</span>
+                    </p>
+                </div>
+                <p class="info-text" style="color: var(--color-warning);">모든 학생들의 참가를 기다린 후, 아래 대시보드에서 게임을 시작하세요.</p>
+            </div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    const logEl = document.getElementById("log");
+            <div class="current-status">
+                <h2>현재 게임 상태</h2>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-label">현재 라운드</div>
+                        <div class="status-value" id="currentRound">대기중</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-label">진행 단계</div>
+                        <div class="status-value" id="currentPhase">-</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-label">타이머</div>
+                        <div class="status-value" id="timerDisplay">00:00</div>
+                    </div>
+                </div>
+            </div>
 
-    // 생산 라운드 시작 버튼
-    document.getElementById("startProduction").addEventListener("click", () => {
-      socket.emit("startRound", { phase: "production" }); // 서버로 startRound 전송
-      addLog("🎬 생산 라운드 시작 명령 전송");
-    });
+            <div class="control-panel">
+                <div class="control-grid">
+                    <div id="gameStartSection" class="control-section">
+                        <h2>게임 시작</h2>
+                        <div class="button-group">
+                            <button id="startGameBtn" class="admin-btn btn-production" onclick="startPhase('production')">
+                                게임 시작 (생산)
+                            </button>
+                        </div>
+                    </div>
 
-    // 라운드 종료 버튼
-    document.getElementById("endRound").addEventListener("click", () => {
-      socket.emit("endRound"); // 서버로 endRound 전송
-      addLog("⏹ 라운드 종료 명령 전송");
-    });
+                    <div id="tradeControlSection" class="control-section hidden">
+                        <h2>무역 진행</h2>
+                        <div class="button-group">
+                            <button class="admin-btn btn-trade" onclick="startPhase('trade')">무역 시작</button>
+                            <button class="admin-btn btn-timer" onclick="startPhase('investment')">투자 시작</button>
+                            <button class="admin-btn btn-arrival" onclick="startPhase('arrival')">입항 시작</button>
+                        </div>
+                        <div class="button-group" style="margin-top: 20px;">
+                            <button class="admin-btn btn-end" onclick="endGame()">게임 종료</button>
+                        </div>
+                    </div>
 
-    // 서버가 라운드 종료 후 결과를 돌려주면 로그에 표시
-    socket.on("roundEnd", ({ players }) => {
-      addLog("📊 라운드 종료 결과\n" + JSON.stringify(players, null, 2));
-    });
+                    <div class="control-section">
+                        <h2>타이머 제어</h2>
+                        <div class="timer-controls">
+                            <input type="number" id="timerMinutes" placeholder="분" min="0" max="60" value="3">
+                            <input type="number" id="timerSeconds" placeholder="초" min="0" max="59" value="0">
+                            <button class="admin-btn btn-timer" onclick="startTimer()">시작</button>
+                            <button class="admin-btn btn-end" onclick="stopTimer()">정지</button>
+                            <button class="admin-btn" onclick="resetTimer()">리셋</button>
+                        </div>
+                    </div>
 
-    function addLog(msg) {
-      logEl.textContent += msg + "\n";
-    }
-  </script>
+                    <div class="control-section">
+                        <h2>기타 기능</h2>
+                        <div class="button-group">
+                            <button class="admin-btn" onclick="resetProduction()">생산 리셋</button>
+                            <button class="admin-btn btn-end" onclick="resetGame()">게임 전체 리셋</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="playersContainer" class="control-panel" style="display: none;">
+                <h2>참가자 목록</h2>
+                <div id="playersList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Socket.IO 클라이언트 라이브러리 -->
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- 공통 유틸리티 -->
+    <script src="utils.js"></script>
+    
+    <!-- admin-client.js -->
+    <script src="admin-client.js"></script>
 </body>
 </html>

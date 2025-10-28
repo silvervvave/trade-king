@@ -1,16 +1,27 @@
 {
-  "name": "trade-king",
+  "name": "trade-king-multiplayer",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "나는 무역왕이 될거야! - 실시간 멀티플레이어 서버",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
-  "keywords": [],
+  "keywords": [
+    "socket.io",
+    "multiplayer",
+    "game",
+    "education"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "express": "^5.1.0",
-    "socket.io": "^4.8.1"
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-basic-auth": "^1.2.1",
+    "socket.io": "^4.6.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }
