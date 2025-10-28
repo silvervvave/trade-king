@@ -1,25 +1,23 @@
 /* ============================================
-   기본 설정
+   기본 설정 (New Theme)
    ============================================ */
 :root {
-    /* Mint-Choco Pastel palette */
-    --color-mint: #A8E6CF; /* primary pastel mint */
-    --color-mint-dark: #79C9A7;
-    --color-choco: #6B4F4F; /* chocolate (text / accents) */
-    --color-choco-light: #EAD7CE;
-    --color-cream: #FFF8F2; /* background */
+    --color-mint: #BDFCC9;
+    --color-ivory: #FFFFF0;
+    --color-dark-choco: #3D1E1E;
 
-    --color-primary: var(--color-choco);
+    --color-primary: var(--color-dark-choco);
     --color-secondary: var(--color-mint);
-    --color-success: #D3F8E2;
-    --color-warning: #FFD6A5;
-    --color-danger: #F7C6B8;
-    --color-background: var(--color-cream);
-    --color-surface: #FFFFFF;
-    --color-text: #3E2F2F;
-    /* 다크초코 색상으로 통일: 연한 텍스트(가독성) 대신 다크초코 사용 */
-    --color-text-light: var(--color-choco);
-    --gradient-accent: linear-gradient(135deg, var(--color-mint) 0%, var(--color-cream) 100%);
+    
+    /* Warning/Danger colors can be kept for semantic meaning, but let's make them fit better */
+    --color-warning: #E2B391;
+    --color-danger: #D99A9A;
+
+    --color-background: var(--color-ivory);
+    --color-surface: var(--color-mint);
+    --color-text: var(--color-dark-choco);
+    --color-text-light: var(--color-dark-choco);
+    --color-border: var(--color-dark-choco);
     
     --spacing-xs: 4px;
     --spacing-sm: 8px;
@@ -32,9 +30,9 @@
     --radius-lg: 12px;
     --radius-xl: 16px;
     
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.07);
 }
 
 * {
@@ -45,7 +43,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(180deg, var(--color-cream) 0%, #F0FFF7 60%);
+    background: var(--color-background);
     min-height: 100vh;
     color: var(--color-text);
 }
@@ -72,6 +70,7 @@ body {
     background: var(--color-surface);
     padding: var(--spacing-xl);
     border-radius: var(--radius-xl);
+    border: 2px solid var(--color-border);
     box-shadow: var(--shadow-lg);
     max-width: 500px;
     width: 100%;
@@ -105,15 +104,17 @@ body {
 .input-group input {
     width: 100%;
     padding: var(--spacing-md);
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--color-border);
     border-radius: var(--radius-md);
     font-size: 1em;
     transition: border-color 0.3s;
+    background-color: var(--color-ivory);
+    color: var(--color-text);
 }
 
 .input-group input:focus {
     outline: none;
-    border-color: var(--color-secondary);
+    border-color: var(--color-primary);
 }
 
 /* ============================================
@@ -121,7 +122,7 @@ body {
    ============================================ */
 .game-btn {
     padding: var(--spacing-md) var(--spacing-lg);
-    border: none;
+    border: 2px solid var(--color-border);
     border-radius: var(--radius-md);
     font-size: 1em;
     font-weight: 600;
@@ -131,35 +132,38 @@ body {
 }
 
 .btn-primary {
-    background: var(--color-secondary);
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-ivory);
     width: 100%;
 }
 
 .btn-primary:hover {
-    background: var(--color-mint-dark);
+    background: var(--color-surface);
+    color: var(--color-primary);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
 
 .btn-secondary {
-    background: var(--color-text-light);
-    color: white;
+    background: var(--color-surface);
+    color: var(--color-primary);
 }
 
 .btn-secondary:hover {
-    background: #6c7a89;
+    background: var(--color-primary);
+    color: var(--color-surface);
 }
 
 .btn-click {
-    background: var(--color-success);
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-ivory);
     font-size: 1.2em;
     padding: var(--spacing-lg);
 }
 
 .btn-click:hover {
-    background: #229954;
+    background: var(--color-surface);
+    color: var(--color-primary);
     transform: scale(1.05);
 }
 
@@ -176,6 +180,7 @@ body {
     background: var(--color-surface);
     padding: var(--spacing-xl);
     border-radius: var(--radius-xl);
+    border: 2px solid var(--color-border);
     box-shadow: var(--shadow-lg);
     max-width: 900px;
     width: 100%;
@@ -196,8 +201,8 @@ body {
 }
 
 .country-card {
-    background: white;
-    border: 3px solid #e0e0e0;
+    background: var(--color-ivory);
+    border: 3px solid var(--color-border);
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
     text-align: center;
@@ -206,7 +211,7 @@ body {
 }
 
 .country-card:hover {
-    border-color: var(--color-secondary);
+    border-color: var(--color-primary);
     transform: translateY(-5px);
     box-shadow: var(--shadow-lg);
 }
@@ -222,7 +227,7 @@ body {
 }
 
 .country-trait {
-    color: var(--color-secondary);
+    color: var(--color-primary);
     font-weight: 600;
     margin-bottom: var(--spacing-md);
 }
@@ -246,6 +251,7 @@ body {
     background: var(--color-surface);
     padding: var(--spacing-xl);
     border-radius: var(--radius-xl);
+    border: 2px solid var(--color-border);
     box-shadow: var(--shadow-lg);
     text-align: center;
     max-width: 500px;
@@ -259,8 +265,8 @@ body {
 .loading-spinner {
     width: 50px;
     height: 50px;
-    border: 5px solid #e0e0e0;
-    border-top-color: var(--color-secondary);
+    border: 5px solid var(--color-border);
+    border-top-color: var(--color-primary);
     border-radius: 50%;
     margin: var(--spacing-xl) auto;
     animation: spin 1s linear infinite;
@@ -294,29 +300,31 @@ body {
     box-shadow: var(--shadow-md);
     z-index: 100;
     border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
 }
 
 .nav-btn {
     flex: 1;
     padding: var(--spacing-md);
-    background: white;
-    border: 2px solid #e0e0e0;
+    background: var(--color-ivory);
+    border: 2px solid var(--color-border);
     border-radius: var(--radius-md);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
+    color: var(--color-text);
 }
 
 .nav-btn:hover {
-    background: var(--color-secondary);
-    color: white;
-    border-color: var(--color-secondary);
+    background: var(--color-primary);
+    color: var(--color-ivory);
+    border-color: var(--color-border);
 }
 
 .nav-btn.active {
-    background: var(--color-secondary);
-    color: white;
-    border-color: var(--color-secondary);
+    background: var(--color-primary);
+    color: var(--color-ivory);
+    border-color: var(--color-border);
 }
 
 .game-header {
@@ -324,18 +332,18 @@ body {
     padding: var(--spacing-lg);
     margin-top: var(--spacing-lg);
     border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
     box-shadow: var(--shadow-sm);
 }
 
-/* 연결 상태 배지 스타일 */
 #connectionStatus {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     padding: 6px 12px;
     border-radius: 999px;
-    background: linear-gradient(90deg, rgba(168,230,207,0.12), rgba(255,248,242,0.12));
-    border: 1px solid rgba(0,0,0,0.04);
+    background: var(--color-ivory);
+    border: 1px solid var(--color-border);
     font-weight: 700;
     color: var(--color-text);
 }
@@ -358,9 +366,9 @@ body {
     flex-direction: column;
     align-items: center;
     padding: var(--spacing-md);
-    background: var(--gradient-accent);
+    background: var(--color-primary);
     border-radius: var(--radius-md);
-    color: white;
+    color: var(--color-ivory);
     min-width: 100px;
 }
 
@@ -379,7 +387,7 @@ body {
    게임 영역
    ============================================ */
 .game-area {
-    max-width: 1000px; /* 최대 너비 조정 */
+    max-width: 1000px;
     margin: var(--spacing-xl) auto;
     padding: 0 var(--spacing-lg);
 }
@@ -411,6 +419,7 @@ body {
     background: var(--color-surface);
     padding: var(--spacing-lg);
     border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
     box-shadow: var(--shadow-md);
 }
 
@@ -435,15 +444,16 @@ body {
 .progress-bar {
     width: 100%;
     height: 20px;
-    background: #e0e0e0;
+    background: var(--color-ivory);
     border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
     overflow: hidden;
     margin-top: var(--spacing-md);
 }
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--color-success), var(--color-secondary));
+    background: var(--color-primary);
     width: 0%;
     transition: width 0.3s;
 }
@@ -457,8 +467,8 @@ body {
 .rps-btn {
     flex: 1;
     padding: var(--spacing-lg);
-    background: white;
-    border: 3px solid #e0e0e0;
+    background: var(--color-ivory);
+    border: 3px solid var(--color-border);
     border-radius: var(--radius-md);
     font-size: 1.5em;
     cursor: pointer;
@@ -466,7 +476,9 @@ body {
 }
 
 .rps-btn:hover {
-    border-color: var(--color-secondary);
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--color-ivory);
     transform: scale(1.05);
 }
 
@@ -481,24 +493,22 @@ body {
     border-radius: var(--radius-md);
     text-align: center;
     font-weight: 600;
+    border: 2px solid var(--color-border);
 }
 
 .result-display.win {
-    background: #d4edda;
-    color: #155724;
-    border: 2px solid #c3e6cb;
+    background: var(--color-surface);
+    color: var(--color-primary);
 }
 
 .result-display.lose {
-    background: #f8d7da;
-    color: #721c24;
-    border: 2px solid #f5c6cb;
+    background: var(--color-danger);
+    color: var(--color-primary);
 }
 
 .result-display.draw {
-    background: #d1ecf1;
-    color: #0c5460;
-    border: 2px solid #bee5eb;
+    background: var(--color-ivory);
+    color: var(--color-primary);
 }
 
 /* ============================================
@@ -508,6 +518,7 @@ body {
     background: var(--color-surface);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
     box-shadow: var(--shadow-md);
 }
 
@@ -519,25 +530,26 @@ body {
 
 .destination-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-lg);
     margin-top: var(--spacing-lg);
 }
 
 .destination-card {
-    background: white;
-    border: 3px solid #e0e0e0;
+    background: var(--color-ivory);
+    border: 3px solid var(--color-border);
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
     text-align: center;
     transition: all 0.3s;
-    display: flex; /* 추가 */
-    flex-direction: column; /* 추가 */
-    justify-content: space-between; /* 추가 */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
 }
 
 .destination-card:hover {
-    border-color: var(--color-secondary);
+    border-color: var(--color-primary);
     transform: translateY(-5px);
     box-shadow: var(--shadow-lg);
 }
@@ -561,8 +573,8 @@ body {
 .selection-display {
     margin-top: var(--spacing-xl);
     padding: var(--spacing-lg);
-    background: var(--gradient-accent);
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-ivory);
     border-radius: var(--radius-md);
     text-align: center;
     font-weight: 600;
@@ -576,6 +588,7 @@ body {
     background: var(--color-surface);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
     box-shadow: var(--shadow-md);
 }
 
@@ -593,15 +606,15 @@ body {
 }
 
 .investment-card {
-    background: white;
-    border: 2px solid #e0e0e0;
+    background: var(--color-ivory);
+    border: 2px solid var(--color-border);
     border-radius: var(--radius-md);
     padding: var(--spacing-lg);
     transition: all 0.3s;
 }
 
 .investment-card:hover {
-    border-color: var(--color-secondary);
+    border-color: var(--color-primary);
     box-shadow: var(--shadow-md);
 }
 
@@ -629,6 +642,7 @@ body {
     background: var(--color-surface);
     padding: var(--spacing-lg);
     border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
     box-shadow: var(--shadow-md);
 }
 
@@ -642,8 +656,8 @@ body {
 .final-rps-btn {
     flex: 1;
     padding: var(--spacing-lg);
-    background: white;
-    border: 3px solid #e0e0e0;
+    background: var(--color-ivory);
+    border: 3px solid var(--color-border);
     border-radius: var(--radius-md);
     font-size: 1.5em;
     cursor: pointer;
@@ -651,7 +665,9 @@ body {
 }
 
 .final-rps-btn:hover {
-    border-color: var(--color-warning);
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--color-ivory);
     transform: scale(1.05);
 }
 
@@ -667,6 +683,7 @@ body {
     background: var(--color-surface);
     padding: var(--spacing-xl);
     border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
     box-shadow: var(--shadow-md);
     text-align: center;
 }
@@ -679,9 +696,9 @@ body {
     align-items: center;
     gap: 10px;
     padding: 10px 15px;
-    background: var(--gradient-accent);
+    background: var(--color-primary);
     border-radius: 8px;
-    color: white;
+    color: var(--color-ivory);
     font-weight: bold;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
@@ -696,10 +713,10 @@ body {
 
 /* 현재 단계 표시 스타일 (추가됨) */
 .nav-btn.current-phase {
-    background: linear-gradient(135deg, var(--color-choco) 0%, var(--color-choco-light) 100%);
-    color: white;
-    border-color: var(--color-choco);
-    box-shadow: 0 0 12px rgba(107,79,79,0.25);
+    background: var(--color-primary);
+    color: var(--color-ivory);
+    border-color: var(--color-border);
+    box-shadow: 0 0 12px rgba(61,30,30,0.25);
 }
 
 .phase-indicator {
@@ -784,7 +801,7 @@ body {
     padding: var(--spacing-lg);
     transition: right 0.4s ease;
     z-index: 1000;
-    border-left: 1px solid #e0e0e0;
+    border-left: 2px solid var(--color-border);
     overflow-y: auto;
 }
 
@@ -795,7 +812,7 @@ body {
 .team-sidebar h3 {
     color: var(--color-primary);
     margin-bottom: var(--spacing-lg);
-    border-bottom: 2px solid #eee;
+    border-bottom: 2px solid var(--color-border);
     padding-bottom: var(--spacing-md);
 }
 
@@ -807,8 +824,8 @@ body {
     width: 50px;
     height: 50px;
     background: var(--color-primary);
-    color: white;
-    border: none;
+    color: var(--color-ivory);
+    border: 2px solid var(--color-border);
     border-radius: 50%;
     font-size: 1.5em;
     cursor: pointer;
@@ -825,7 +842,7 @@ body {
     display: flex;
     align-items: center;
     padding: var(--spacing-sm) 0;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--color-ivory);
 }
 
 #myTeamStatus .member-status:last-child {
@@ -840,7 +857,7 @@ body {
 }
 
 #myTeamStatus .status-indicator.connected {
-    background-color: var(--color-success);
+    background-color: #79C9A7;
 }
 
 #myTeamStatus .status-indicator.disconnected {
@@ -863,6 +880,7 @@ body {
     margin-bottom: var(--spacing-lg);
     text-align: center;
     box-shadow: var(--shadow-md);
+    border: 2px solid var(--color-border);
 }
 
 .admin-container header h1 {
@@ -882,13 +900,14 @@ body {
     border-radius: var(--radius-lg);
     margin-bottom: var(--spacing-lg);
     box-shadow: var(--shadow-md);
+    border: 2px solid var(--color-border);
 }
 
 .control-panel h2 {
     color: var(--color-primary);
     margin-bottom: var(--spacing-md);
     padding-bottom: var(--spacing-md);
-    border-bottom: 2px solid #eee;
+    border-bottom: 2px solid var(--color-border);
 }
 
 .control-grid {
@@ -898,10 +917,10 @@ body {
 }
 
 .control-section {
-    background: #fafafa;
+    background: var(--color-ivory);
     padding: var(--spacing-lg);
     border-radius: var(--radius-md);
-    border: 1px solid #eee;
+    border: 1px solid var(--color-border);
 }
 
 .button-group {
@@ -913,13 +932,13 @@ body {
 .admin-btn {
     flex: 1 1 auto;
     padding: var(--spacing-md);
-    border: none;
+    border: 2px solid var(--color-border);
     border-radius: var(--radius-md);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
-    background-color: #e0e0e0;
-    color: #333;
+    background-color: var(--color-ivory);
+    color: var(--color-primary);
 }
 
 .admin-btn { min-width: 140px; }
@@ -929,13 +948,15 @@ body {
 .admin-btn:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
+    background-color: var(--color-primary);
+    color: var(--color-ivory);
 }
 
-.btn-production { background-color: var(--color-success); color: white; }
-.btn-trade { background-color: var(--color-mint); color: var(--color-choco); }
-.btn-timer { background-color: var(--color-warning); color: var(--color-choco); }
-.btn-arrival { background-color: var(--color-choco-light); color: var(--color-choco); }
-.btn-end { background-color: var(--color-danger); color: white; }
+.btn-production { background-color: var(--color-primary); color: var(--color-ivory); }
+.btn-trade { background-color: var(--color-mint); color: var(--color-primary); }
+.btn-timer { background-color: var(--color-warning); color: var(--color-primary); }
+.btn-arrival { background-color: var(--color-ivory); color: var(--color-primary); }
+.btn-end { background-color: var(--color-danger); color: var(--color-ivory); }
 
 .timer-controls {
     display: flex;
@@ -946,8 +967,9 @@ body {
 .timer-controls input {
     width: 80px;
     padding: var(--spacing-md);
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--color-border);
     border-radius: var(--radius-md);
+    background-color: var(--color-ivory);
 }
 
 .status-grid {
@@ -957,10 +979,10 @@ body {
 }
 
 .status-card {
-    background: #fafafa;
+    background: var(--color-ivory);
     padding: var(--spacing-lg);
     border-radius: var(--radius-md);
-    border: 1px solid #eee;
+    border: 1px solid var(--color-border);
     text-align: center;
 }
 
@@ -991,7 +1013,7 @@ body {
     background: var(--color-surface);
     padding: var(--spacing-md);
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-    border-top: 1px solid #e0e0e0;
+    border-top: 2px solid var(--color-border);
     display: flex;
     overflow-x: auto;
     gap: var(--spacing-md);
@@ -1003,6 +1025,7 @@ body {
     padding: var(--spacing-sm);
     background: var(--color-background);
     border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
     text-align: center;
 }
 
