@@ -14,7 +14,12 @@ const gameState = {
         maxClicks: 500,
         resetTokens: 0,
         mercantilismTokens: 0,
-        investmentsMade: []
+        investmentsMade: [],
+        eventDrawnThisRound: false,
+        finalRpsPlayedThisRound: false,
+        eventText: '',
+        eventResultClass: '',
+        finalRpsResult: ''
     },
     currentRound: 0,
     currentPhase: 'waiting',
@@ -185,7 +190,6 @@ socket.on('investment_info', (data) => {
 
 socket.on('arrival_summary', (data) => {
     console.log('입항 요약:', data);
-    setupArrivalScreen(data);
 });
 
 socket.on('game_ended', (data) => {
@@ -204,7 +208,10 @@ socket.on('room_check_result', (data) => {
         playerRoomId = data.roomId;
         gameState.player.name = data.playerName;
 
-        log('info', '방 참가 준비', { name: data.playerName, roomId: data.roomId });
+        if (data.countryConfig) {
+            countryConfig = data.countryConfig;
+            generateCountrySelection();
+        }
 
         document.getElementById('joinRoomSection').classList.add('hidden');
         document.getElementById('countrySelection').classList.remove('hidden');
@@ -219,6 +226,48 @@ socket.on('game_reset', () => {
     console.log('게임 리셋');
     location.reload();
 });
+
+function generateCountrySelection() {
+    const grid = document.querySelector('.country-grid');
+    grid.innerHTML = '';
+    for (const countryCode in countryConfig) {
+        const config = countryConfig[countryCode];
+        const card = document.createElement('div');
+        card.className = 'country-card';
+        card.onclick = () => selectCountry(countryCode);
+        
+        let statsHtml = `<li>클릭 수: ${config.maxClicks}회</li>`;
+        if (config.paPerClick !== 1) {
+            statsHtml += `<li>효율: ${config.paPerClick} PA/클릭</li>`;
+        }
+        if (config.resetTokens > 0) {
+            statsHtml += `<li>리롤 토큰: ${config.resetTokens}개</li>`;
+        }
+        if (config.mercantilismTokens > 0) {
+            statsHtml += `<li>중상주의</li>`;
+        }
+
+        card.innerHTML = `
+            <div class="country-icon">${config.icon}</div>
+            <h3>${config.name}</h3>
+            <p class="country-trait">${getTrait(countryCode)}</p>
+            <ul class="country-stats">
+                ${statsHtml}
+            </ul>
+        `;
+        grid.appendChild(card);
+    }
+}
+
+function getTrait(countryCode) {
+    switch(countryCode) {
+        case 'spain': return '자원 부국';
+        case 'netherlands': return '기술 국가';
+        case 'england': return '무역 국가';
+        case 'france': return '중상주의';
+        default: return '';
+    }
+}
 
 // ============================================
 // 방 참가 및 플레이어 등록
@@ -361,7 +410,12 @@ function updatePlayerStatsFromServer(teamData) {
         maxClicks: teamData.maxClicks || 500,
         resetTokens: teamData.resetTokens || 0,
         mercantilismTokens: teamData.mercantilismTokens || 0,
-        investmentsMade: teamData.investmentsMade || []
+        investmentsMade: teamData.investmentsMade || [],
+        eventDrawnThisRound: teamData.eventDrawnThisRound || false,
+        finalRpsPlayedThisRound: teamData.finalRpsPlayedThisRound || false,
+        eventText: teamData.eventText || '',
+        eventResultClass: teamData.eventResultClass || '',
+        finalRpsResult: teamData.finalRpsResult || ''
     };
 
     updatePlayerStats();
@@ -770,25 +824,47 @@ function makeInvestment(targetCountry) {
 // 입항 단계
 // ============================================
 
-function setupArrivalScreen(data) {
+function setupArrivalScreen() {
+    const team = gameState.team;
+
+    const drawEventBtn = document.querySelector('.event-section button');
+    if(drawEventBtn) {
+        drawEventBtn.disabled = team.eventDrawnThisRound;
+    }
+
     // 이벤트 카드 영역 초기화
     const eventResult = document.getElementById('eventResult');
     if (eventResult) {
-        eventResult.innerHTML = '';
-        eventResult.className = 'result-display';
+        if (team.eventDrawnThisRound && team.eventText) {
+            eventResult.className = 'result-display ' + team.eventResultClass;
+            eventResult.innerHTML = team.eventText;
+        } else {
+            eventResult.innerHTML = '';
+            eventResult.className = 'result-display';
+        }
     }
 
     // 최종 가위바위보 버튼 초기화
     const finalRpsButtons = document.querySelectorAll('.final-rps-btn');
     finalRpsButtons.forEach(btn => {
-        btn.disabled = false;
-        btn.style.opacity = '1';
+        btn.disabled = team.finalRpsPlayedThisRound;
+        btn.style.opacity = team.finalRpsPlayedThisRound ? '0.5' : '1';
     });
 
     const finalRpsResult = document.getElementById('finalRpsResult');
     if (finalRpsResult) {
-        finalRpsResult.innerHTML = '';
-        finalRpsResult.className = 'result-display';
+        if (team.finalRpsPlayedThisRound && team.finalRpsResult) {
+            const rpsGoodsChange = team.finalRpsResult === 'win' ? 2 : team.finalRpsResult === 'lose' ? -2 : 0;
+            let html = `결과: ${getRPSResultKorean(team.finalRpsResult)}. 상품 ${rpsGoodsChange}개`;
+            if (team.country === 'england' && team.rpsRerolls > 0 && team.finalRpsResult !== 'win') {
+              html += ` 재도전 (${team.rpsRerolls} 남음)`;
+            }
+            finalRpsResult.className = 'result-display ' + team.finalRpsResult;
+            finalRpsResult.innerHTML = html;
+        } else {
+            finalRpsResult.innerHTML = '';
+            finalRpsResult.className = 'result-display';
+        }
     }
 
     const arrivalStatusContainer = document.getElementById('arrival-status-container');

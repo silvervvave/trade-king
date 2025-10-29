@@ -3,6 +3,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 const basicAuth = require('express-basic-auth');
+const { countryConfig } = require('./config');
 const { rooms, generateRoomId, createNewGameState } = require('./game-logic/rooms');
 const { 
     registerPlayer, 
@@ -125,7 +126,7 @@ io.on('connection', (socket) => {
   socket.on('check_room', (data) => {
     const { roomId, playerName } = data;
     const roomExists = !!rooms[roomId];
-    socket.emit('room_check_result', { exists: roomExists, roomId, playerName });
+    socket.emit('room_check_result', { exists: roomExists, roomId, playerName, countryConfig });
   });
 
   socket.on('register_player', safeHandler(registerPlayer));

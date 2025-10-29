@@ -47,11 +47,12 @@ function createInitialTeamState(country, config) {
     mercantilismTokens: config.mercantilismTokens, 
     investmentsMade: [], 
     investmentsReceived: [], 
-    eventMultiplier: 1, 
+    eventMultipliers: { paMultiplier: 1, goodsMultiplier: 1 }, 
     rpsGoodsChange: 0, 
     rpsPaChange: 0, 
     eventText: '',
     finalRpsResult: '',
+    eventResultClass: '',
     members: [] 
   };
 }

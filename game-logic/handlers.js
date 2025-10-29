@@ -172,6 +172,7 @@ function startPhase(io, socket, data, room, roomId) {
         t.rpsGoodsChange = 0;
         t.eventText = '';
         t.finalRpsResult = '';
+        t.eventResultClass = '';
       });
     }
 
@@ -373,6 +374,7 @@ function drawEvent(io, socket, data, room, roomId) {
     team.eventMultipliers = { paMultiplier: event.paMultiplier, goodsMultiplier: event.goodsMultiplier };
     team.eventDrawnThisRound = true;
     team.eventText = event.text;
+    team.eventResultClass = event.class;
 
     io.to(socket.id).emit('event_result', { 
       html: event.text, 
