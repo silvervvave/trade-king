@@ -22,12 +22,7 @@ const gameState = {
 };
 
 // 국가별 설정
-const countryConfig = {
-    spain: { name: '스페인', maxClicks: 1000, paPerClick: 1, icon: '' },
-    netherlands: { name: '네덜란드', maxClicks: 600, paPerClick: 1.5, icon: '' },
-    england: { name: '영국', maxClicks: 600, paPerClick: 1, resetTokens: 2, icon: '' },
-    france: { name: '프랑스', maxClicks: 600, paPerClick: 1, mercantilismTokens: 1, icon: '' }
-};
+let countryConfig = {};
 
 // ============================================
 // Socket.IO 연결 및 전역 변수
@@ -73,6 +68,9 @@ socket.on('connect_error', (error) => {
 
 socket.on('game_state_update', (state) => {
     console.log('게임 상태 업데이트:', state);
+    if (state.countryConfig) {
+        countryConfig = state.countryConfig;
+    }
     updateGameState(state);
 });
 

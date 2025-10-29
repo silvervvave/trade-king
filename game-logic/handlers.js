@@ -120,7 +120,8 @@ function registerPlayer(io, socket, data, room, roomId) {
         currentRound: room.currentRound,
         currentPhase: room.currentPhase,
         players: room.players,
-        teams: room.teams
+        teams: room.teams,
+        countryConfig: countryConfig
     };
     socket.emit('game_state_update', safeRoomState);
     socket.emit('team_state_update', team);
@@ -139,6 +140,7 @@ function startPhase(io, socket, data, room, roomId) {
       Object.values(room.teams).forEach(t => {
         t.eventDrawnThisRound = false;
         t.finalRpsPlayedThisRound = false;
+        t.rerollUsedThisRound = false;
       });
     }
 
@@ -435,7 +437,10 @@ function resetGame(io, socket, data, room, roomId) {
     if (socket.id !== room.adminSocketId) return;
 
     Object.values(room.teams).forEach(team => {
-      room.teams[team.country] = createInitialTeamState(team.country, countryConfig[team.country]);
+      const members = team.members;
+      const newTeamState = createInitialTeamState(team.country, countryConfig[team.country]);
+      newTeamState.members = members;
+      room.teams[team.country] = newTeamState;
     });
 
     room.currentRound = 0;
