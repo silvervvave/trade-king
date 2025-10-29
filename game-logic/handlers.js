@@ -41,22 +41,31 @@ function calculateArrivalResults(io, team, room, roomId) {
         }
 
         const profit = (baseAmount * paMultiplier) - baseAmount;
-        
-        if (profit > 0 && team.investmentsReceived.length > 0) {
-            const totalInvestments = team.investmentsReceived.reduce((acc, inv) => acc + inv.amount, 0);
-            if (totalInvestments > 0) {
-                team.investmentsReceived.forEach(investment => {
-                    const investorTeam = room.teams[investment.fromTeam];
-                    if (investorTeam) {
-                        const share = (investment.amount / totalInvestments) * profit * 0.5; // 50% 분배
-                        investorTeam.totalPA += share;
-                        if (investorTeam.country === 'france') {
-                            investorTeam.totalPA += 50;
+
+        if (team.investmentsReceived.length > 0) {
+            team.investmentsReceived.forEach(investment => {
+                const investorTeam = room.teams[investment.fromTeam];
+                if (investorTeam) {
+                    // 투자금 반환
+                    investorTeam.totalPA += investment.amount;
+
+                    // 무역품 분배
+                    const investmentGoods = Math.floor(investment.amount / 100) * goodsMultiplier;
+                    if (investmentGoods > 0) {
+                        if (destination === 'china') {
+                            investorTeam.silk += investmentGoods;
+                        } else if (destination === 'india') {
+                            investorTeam.pepper += investmentGoods;
                         }
-                        updateTeamMembers(io, investorTeam, roomId);
                     }
-                });
-            }
+                    
+                    // 프랑스 투자 보너스
+                    if (investorTeam.country === 'france' && profit > 0) {
+                        investorTeam.totalPA += 50;
+                    }
+                    updateTeamMembers(io, investorTeam, roomId);
+                }
+            });
         }
         
         team.totalPA += (baseAmount * paMultiplier);
@@ -170,7 +179,11 @@ function startPhase(io, socket, data, room, roomId) {
     }
 
     if (phase === 'trade') {
-      Object.values(room.teams).forEach(t => { t.tradeSelection = null; });
+      Object.values(room.teams).forEach(t => {
+        t.tradeSelection = null;
+        t.investmentsMade = [];
+        t.investmentsReceived = [];
+      });
     }
 
     broadcastTeamsUpdate(io, room, roomId);
@@ -267,8 +280,8 @@ function makeInvestment(io, socket, data, room, roomId) {
     }
     const amount = parseInt(data.amount);
 
-    if (!targetTeam || !isValidAmount(amount) || amount > investingTeam.totalPA || amount < 100) {
-      return socket.emit('error', { message: '유효하지 않은 투자입니다. (100 PA 이상)' });
+    if (!targetTeam || !isValidAmount(amount) || amount > investingTeam.totalPA || amount < 100 || amount % 100 !== 0) {
+      return socket.emit('error', { message: '유효하지 않은 투자입니다. (100 PA 이상, 100 PA 단위로 입력)' });
     }
 
     investingTeam.totalPA -= amount;

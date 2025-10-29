@@ -290,7 +290,7 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: var(--spacing-lg);
-    margin-bottom: 120px; /* 팀 현황 창과의 간섭을 줄이기 위해 여백 추가 */
+    margin-bottom: 180px; /* 팀 현황 창과의 간섭을 줄이기 위해 여백 추가 */
 }
 
 .game-nav {

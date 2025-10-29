@@ -13,7 +13,8 @@ const gameState = {
         clickCount: 0,
         maxClicks: 500,
         resetTokens: 0,
-        mercantilismTokens: 0
+        mercantilismTokens: 0,
+        investmentsMade: []
     },
     currentRound: 0,
     currentPhase: 'waiting',
@@ -23,9 +24,9 @@ const gameState = {
 // 국가별 설정
 const countryConfig = {
     spain: { name: '스페인', maxClicks: 1000, paPerClick: 1, icon: '' },
-    netherlands: { name: '네덜란드', maxClicks: 500, paPerClick: 1.5, icon: '' },
-    england: { name: '영국', maxClicks: 500, paPerClick: 1, resetTokens: 2, icon: '' },
-    france: { name: '프랑스', maxClicks: 500, paPerClick: 1, mercantilismTokens: 1, icon: '' }
+    netherlands: { name: '네덜란드', maxClicks: 600, paPerClick: 1.5, icon: '' },
+    england: { name: '영국', maxClicks: 600, paPerClick: 1, resetTokens: 2, icon: '' },
+    france: { name: '프랑스', maxClicks: 600, paPerClick: 1, mercantilismTokens: 1, icon: '' }
 };
 
 // ============================================
@@ -90,6 +91,10 @@ socket.on('teams_update', (data) => {
     }
     updateAllTeamsStatus(data.teams);
     updateMyTeamStatus(data.teams);
+
+    if (gameState.currentPhase === 'arrival') {
+        updateArrivalStatus(data.teams);
+    }
 });
 
 socket.on('timer_update', (data) => {
@@ -357,7 +362,8 @@ function updatePlayerStatsFromServer(teamData) {
         clickCount: teamData.clickCount || 0,
         maxClicks: teamData.maxClicks || 500,
         resetTokens: teamData.resetTokens || 0,
-        mercantilismTokens: teamData.mercantilismTokens || 0
+        mercantilismTokens: teamData.mercantilismTokens || 0,
+        investmentsMade: teamData.investmentsMade || []
     };
 
     updatePlayerStats();
@@ -786,6 +792,11 @@ function setupArrivalScreen(data) {
         finalRpsResult.innerHTML = '';
         finalRpsResult.className = 'result-display';
     }
+
+    const arrivalStatusContainer = document.getElementById('arrival-status-container');
+    if (arrivalStatusContainer) {
+        arrivalStatusContainer.innerHTML = '';
+    }
     
     updateTokenDisplay();
 }
@@ -832,6 +843,53 @@ function rerollFinalRPS() {
     if (confirm(`리롤 토큰을 사용하시겠습니까?\n\n남은 토큰: ${gameState.team.resetTokens}개`)) {
         socket.emit('reroll_final_rps', { roomId: playerRoomId });
     }
+}
+
+function updateArrivalStatus(teams) {
+    const container = document.getElementById('arrival-status-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const myCountry = gameState.player.country;
+    const myInvestments = gameState.team.investmentsMade || [];
+
+    const otherTeamsOnVoyage = Object.values(teams).filter(team => team.country !== myCountry && team.tradeSelection);
+
+    if (otherTeamsOnVoyage.length === 0) {
+        container.innerHTML = '<p class="info-text">다른 팀의 항해 정보가 없습니다.</p>';
+        return;
+    }
+
+    const title = document.createElement('h3');
+    title.textContent = '다른 팀 입항 현황';
+    title.style.color = 'var(--color-primary)';
+    title.style.marginBottom = 'var(--spacing-md)';
+    title.style.textAlign = 'center';
+    container.appendChild(title);
+
+    otherTeamsOnVoyage.forEach(team => {
+        const card = document.createElement('div');
+        card.className = 'investment-card';
+
+        const investment = myInvestments.find(inv => inv.toTeam === team.country);
+        let investmentInfo = '';
+        if (investment) {
+            investmentInfo = `<p style="color: var(--color-primary); font-weight: bold; margin-top: 8px;">내가 투자한 금액: ${investment.amount} PA</p>`;
+        }
+
+        const eventStatus = team.eventDrawnThisRound ? '완료' : '대기중';
+        const rpsStatus = team.finalRpsPlayedThisRound ? '완료' : '대기중';
+
+        card.innerHTML = `
+            <h4>${countryConfig[team.country].name}</h4>
+            <p>이벤트 카드: ${eventStatus}</p>
+            <p>최종 가위바위보: ${rpsStatus}</p>
+            ${investmentInfo}
+        `;
+        
+        container.appendChild(card);
+    });
 }
 
 // ============================================

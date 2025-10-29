@@ -177,6 +177,9 @@ function updateTeamsDisplay(teams) {
         playersList.innerHTML = '<div class="status-card"><p style="text-align: center; color: var(--color-text-light);">아직 참가한 플레이어가 없습니다.</p></div>';
         return;
     }
+
+    // 한글 이름순으로 정렬
+    teamArray.sort((a, b) => a.name.localeCompare(b.name));
     
     teamArray.forEach(team => {
         const playerCard = document.createElement('div');
