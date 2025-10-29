@@ -210,14 +210,16 @@ function productionBatch(io, socket, data, room, roomId) {
 
     const clicks = data.clicks || 0;
     let paGained = 0;
-    for (let i = 0; i < clicks; i++) {
-        if (team.clickCount < config.maxClicks) {
-            team.clickCount++;
-            paGained += config.paPerClick;
-        } else {
-            break;
-        }
+  // 테스트용: 클릭당 획득 PA를 10배로 증가시킵니다. 추후 제거/조정 가능.
+  const effectivePaPerClick = (config.paPerClick || 0) * 10;
+  for (let i = 0; i < clicks; i++) {
+    if (team.clickCount < config.maxClicks) {
+      team.clickCount++;
+      paGained += effectivePaPerClick;
+    } else {
+      break;
     }
+  }
     team.totalPA += paGained;
     updateTeamMembers(io, team, roomId);
 }
