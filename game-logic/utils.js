@@ -1,38 +1,51 @@
-const TRADE_VALUE_MULTIPLIER = 200;
-
-function isValidAmount(amount) {
-  return typeof amount === 'number' && !isNaN(amount) && amount > 0;
-}
-
-function getPhaseKorean(phase) {
-  const phases = {
-    'production': '생산',
-    'trade': '무역',
-    'investment': '투자',
-    'arrival': '입항',
-    'waiting': '대기',
-    'ended': '종료'
-  };
-  return phases[phase] || phase;
-}
-
 function calculateRankings(room) {
-  const teams = Object.values(room.teams);
-  teams.forEach(team => {
-    const silkValue = team.silk * TRADE_VALUE_MULTIPLIER;
-    const pepperValue = team.pepper * TRADE_VALUE_MULTIPLIER;
-    team.totalAssets = team.totalPA + silkValue + pepperValue;
-  });
-  teams.sort((a, b) => b.totalAssets - a.totalAssets);
-  return teams.map((team, index) => ({
-    rank: index + 1,
-    name: `${team.country} 팀`,
-    country: team.country,
-    totalPA: Math.floor(team.totalPA),
-    silk: team.silk,
-    pepper: team.pepper,
-    totalAssets: Math.floor(team.totalAssets)
-  }));
+    const teams = Object.values(room.teams);
+    if (teams.length === 0) return [];
+
+    // 1. 전체 무역품 수량 계산
+    const totalSilk = teams.reduce((sum, team) => sum + team.silk, 0);
+    const totalPepper = teams.reduce((sum, team) => sum + team.pepper, 0);
+
+    // 2. 희소성 보너스 적용된 무역품 가치 결정
+    let silkValue = 100;
+    let pepperValue = 100;
+
+    if (totalSilk < totalPepper) {
+        silkValue *= 1.1;
+    } else if (totalPepper < totalSilk) {
+        pepperValue *= 1.1;
+    }
+
+    // 3. 각 팀별 자산 계산
+    teams.forEach(team => {
+        let totalAssets = team.totalPA;
+        totalAssets += team.silk * silkValue;
+        totalAssets += team.pepper * pepperValue;
+
+        // 4. 독점 보너스 확인
+        if (totalSilk > 0 && (team.silk / totalSilk) > 0.5) {
+            totalAssets += 150;
+        }
+        if (totalPepper > 0 && (team.pepper / totalPepper) > 0.5) {
+            totalAssets += 150;
+        }
+        
+        team.totalAssets = totalAssets;
+    });
+
+    // 5. 순위 정렬
+    teams.sort((a, b) => b.totalAssets - a.totalAssets);
+
+    // 6. 최종 결과 데이터 생성
+    return teams.map((team, index) => ({
+        rank: index + 1,
+        name: `${team.name}`,
+        country: team.country,
+        totalPA: Math.floor(team.totalPA),
+        silk: team.silk,
+        pepper: team.pepper,
+        totalAssets: Math.floor(team.totalAssets)
+    }));
 }
 
 function determineRPSResult(player, computer) {

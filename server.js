@@ -16,7 +16,8 @@ const {
     playFinalRPS, 
     rerollFinalRPS, 
     resetGame, 
-    disconnect 
+    disconnect,
+    endGame
 } = require('./game-logic/handlers');
 
 const app = express();
@@ -138,6 +139,7 @@ io.on('connection', (socket) => {
   socket.on('play_final_rps', safeHandler(playFinalRPS));
   socket.on('reroll_final_rps', safeHandler(rerollFinalRPS));
   socket.on('reset_game', safeHandler(resetGame));
+  socket.on('end_game', safeHandler(endGame));
 
   socket.on('start_timer', (data) => {
     const { roomId, minutes, seconds } = data;

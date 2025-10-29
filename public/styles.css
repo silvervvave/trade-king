@@ -12,6 +12,7 @@
     /* Warning/Danger colors can be kept for semantic meaning, but let's make them fit better */
     --color-warning: #E2B391;
     --color-danger: #D99A9A;
+    --color-success: #28a745; /* 추가됨 */
 
     --color-background: var(--color-ivory);
     --color-surface: var(--color-mint);
@@ -612,6 +613,7 @@ body {
     border-radius: var(--radius-md);
     padding: var(--spacing-lg);
     transition: all 0.3s;
+    height: 100%;
 }
 
 .investment-card:hover {
@@ -993,6 +995,7 @@ body {
     display: flex;
     gap: var(--spacing-sm);
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .timer-controls input {
@@ -1077,4 +1080,81 @@ body {
 .team-status-resources p {
     font-size: 0.9em;
     font-weight: 600;
+}
+
+.winner-card {
+    background: var(--color-primary);
+    color: var(--color-ivory);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    margin: var(--spacing-lg) 0;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    border: 2px solid var(--color-border);
+}
+
+.winner-card h3 {
+    font-size: 2em;
+    margin-bottom: var(--spacing-sm);
+    animation: winner-animation 1.5s ease-in-out infinite;
+}
+
+@keyframes winner-animation {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--spacing-lg);
+    font-size: 1.1em;
+    box-shadow: var(--shadow-md);
+}
+
+.results-table th, .results-table td {
+    padding: var(--spacing-md);
+    border: 2px solid var(--color-border);
+    text-align: center;
+}
+
+.results-table thead {
+    background: var(--color-surface);
+    color: var(--color-primary);
+    font-weight: bold;
+}
+
+.results-table tbody tr:nth-child(odd) {
+    background: var(--color-ivory);
+}
+
+.results-table tbody tr:nth-child(even) {
+    background: var(--color-surface);
+}
+
+.winner-row {
+    background-color: var(--color-warning) !important;
+    font-weight: bold;
+}
+.phase-status-container {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.phase-box {
+    flex: 1;
+    padding: var(--spacing-sm);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-weight: 600;
+    background-color: var(--color-ivory);
+    color: var(--color-text);
+    transition: all 0.3s;
+}
+
+.phase-box.completed {
+    background-color: var(--color-dark-choco);
+    color: var(--color-ivory);
 }

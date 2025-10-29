@@ -136,6 +136,10 @@ function startPhase(io, socket, data, room, roomId) {
       room.currentRound = 1;
     } else if (phase === 'trade' && room.currentPhase === 'arrival') {
       room.currentRound++;
+      Object.values(room.teams).forEach(t => {
+        t.eventDrawnThisRound = false;
+        t.finalRpsPlayedThisRound = false;
+      });
     }
 
     room.currentPhase = phase;
@@ -164,6 +168,8 @@ function startPhase(io, socket, data, room, roomId) {
         t.finalRpsPlayedThisRound = false; 
         t.eventMultipliers = { paMultiplier: 1, goodsMultiplier: 1 };
         t.rpsGoodsChange = 0;
+        t.eventText = '';
+        t.finalRpsResult = '';
       });
     }
 
@@ -364,6 +370,7 @@ function drawEvent(io, socket, data, room, roomId) {
     const event = determineEvent(EVENT_CONFIG);
     team.eventMultipliers = { paMultiplier: event.paMultiplier, goodsMultiplier: event.goodsMultiplier };
     team.eventDrawnThisRound = true;
+    team.eventText = event.text;
 
     io.to(socket.id).emit('event_result', { 
       html: event.text, 
@@ -383,6 +390,7 @@ function playFinalRPS(io, socket, data, room, roomId) {
     const result = determineRPSResult(data.choice, computerChoice);
     team.rpsGoodsChange = result === 'win' ? 2 : result === 'lose' ? -2 : 0;
     team.finalRpsPlayedThisRound = true;
+    team.finalRpsResult = result;
 
     let html = `결과: ${result}. 상품 ${team.rpsGoodsChange}개`;
     if (team.country === 'england' && team.rpsRerolls > 0 && result !== 'win') {
@@ -476,6 +484,16 @@ function disconnect(io, socket, room, roomId) {
     }
 }
 
+function endGame(io, socket, data, room, roomId) {
+    if (socket.id !== room.adminSocketId) return;
+
+    const finalRankings = calculateRankings(room);
+    room.currentPhase = 'ended';
+
+    io.to(roomId).emit('game_ended', { rankings: finalRankings });
+    broadcastTeamsUpdate(io, room, roomId);
+}
+
 module.exports = {
     registerPlayer,
     startPhase,
@@ -488,5 +506,6 @@ module.exports = {
     playFinalRPS,
     rerollFinalRPS,
     resetGame,
-    disconnect
+    disconnect,
+    endGame
 };

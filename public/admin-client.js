@@ -194,12 +194,21 @@ function updateTeamsDisplay(teams) {
         `).join('') || '없음';
 
         const rpsStatus = team.rpsPlayedThisRound ? '완료' : '안함';
+
+        const phaseStatusHtml = `
+            <div class="phase-status-container">
+                <div class="phase-box ${team.tradeSelection ? 'completed' : ''}">무역</div>
+                <div class="phase-box ${team.investmentsMade.length > 0 ? 'completed' : ''}">투자</div>
+                <div class="phase-box ${team.eventDrawnThisRound && team.finalRpsPlayedThisRound ? 'completed' : ''}">입항</div>
+            </div>
+        `;
         
         playerCard.innerHTML = `
             <h4>${team.name}</h4>
             <div style="margin-bottom: 5px;"><strong>멤버:</strong> ${membersHtml}</div>
             <p><strong>총 PA:</strong> ${Math.floor(team.totalPA)} | <strong>비단:</strong> ${team.silk} | <strong>후추:</strong> ${team.pepper}</p>
             <p><strong>클릭 수:</strong> ${team.clickCount}/${team.maxClicks} | <strong>가위바위보:</strong> ${rpsStatus}</p>
+            ${phaseStatusHtml}
         `;
         
         playersList.appendChild(playerCard);

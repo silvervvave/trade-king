@@ -50,6 +50,8 @@ function createInitialTeamState(country, config) {
     eventMultiplier: 1, 
     rpsGoodsChange: 0, 
     rpsPaChange: 0, 
+    eventText: '',
+    finalRpsResult: '',
     members: [] 
   };
 }

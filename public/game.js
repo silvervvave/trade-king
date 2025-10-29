@@ -845,6 +845,15 @@ function rerollFinalRPS() {
     }
 }
 
+function getRPSResultKorean(result) {
+    const map = {
+        'win': '승리',
+        'lose': '패배',
+        'draw': '무승부'
+    };
+    return map[result] || result;
+}
+
 function updateArrivalStatus(teams) {
     const container = document.getElementById('arrival-status-container');
     if (!container) return;
@@ -878,8 +887,8 @@ function updateArrivalStatus(teams) {
             investmentInfo = `<p style="color: var(--color-primary); font-weight: bold; margin-top: 8px;">내가 투자한 금액: ${investment.amount} PA</p>`;
         }
 
-        const eventStatus = team.eventDrawnThisRound ? '완료' : '대기중';
-        const rpsStatus = team.finalRpsPlayedThisRound ? '완료' : '대기중';
+        const eventStatus = team.eventDrawnThisRound ? team.eventText : '대기중';
+        const rpsStatus = team.finalRpsPlayedThisRound ? getRPSResultKorean(team.finalRpsResult) : '대기중';
 
         card.innerHTML = `
             <h4>${countryConfig[team.country].name}</h4>
@@ -966,7 +975,59 @@ function displayFinalResults(data) {
 
     showArea('resultsArea');
     
-    // 최종 결과 표시 로직 (필요시 구현)
+    const resultsPanel = resultsArea.querySelector('.results-panel');
+    if (!resultsPanel) return;
+
+    resultsPanel.innerHTML = ''; // Clear previous content
+
+    const rankings = data.rankings;
+    if (!rankings || rankings.length === 0) {
+        resultsPanel.innerHTML = '<p>결과를 계산할 수 없습니다.</p>';
+        return;
+    }
+
+    const title = document.createElement('h2');
+    title.textContent = '최종 순위';
+    resultsPanel.appendChild(title);
+
+    const winner = rankings[0];
+    if (winner) {
+        const winnerCard = document.createElement('div');
+        winnerCard.className = 'winner-card';
+        winnerCard.innerHTML = `
+            <h3>1등: ${winner.name}</h3>
+            <p>총 자산: ${winner.totalAssets} PA</p>
+        `;
+        resultsPanel.appendChild(winnerCard);
+    }
+
+    const table = document.createElement('table');
+    table.className = 'results-table';
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>순위</th>
+                <th>팀</th>
+                <th>총 자산</th>
+                <th>PA</th>
+                <th>비단</th>
+                <th>후추</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${rankings.map(team => `
+                <tr class="${team.rank === 1 ? 'winner-row' : ''}">
+                    <td>${team.rank}</td>
+                    <td>${team.name}</td>
+                    <td>${team.totalAssets}</td>
+                    <td>${team.totalPA}</td>
+                    <td>${team.silk}</td>
+                    <td>${team.pepper}</td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+    resultsPanel.appendChild(table);
 }
 
 
