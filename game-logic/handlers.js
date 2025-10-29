@@ -125,7 +125,7 @@ function startPhase(io, socket, data, room, roomId) {
     if (!room.gameStarted) {
       room.gameStarted = true;
       room.currentRound = 1;
-    } else if (phase === 'production' && room.currentPhase === 'arrival') {
+    } else if (phase === 'trade' && room.currentPhase === 'arrival') {
       room.currentRound++;
     }
 
@@ -153,6 +153,8 @@ function startPhase(io, socket, data, room, roomId) {
       Object.values(room.teams).forEach(t => { 
         t.eventDrawnThisRound = false; 
         t.finalRpsPlayedThisRound = false; 
+        t.eventMultipliers = { paMultiplier: 1, goodsMultiplier: 1 };
+        t.rpsGoodsChange = 0;
       });
     }
 

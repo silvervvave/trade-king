@@ -25,27 +25,12 @@ function getPhaseKorean(phase) {
  */
 function showNotification(message) {
     const notification = document.createElement('div');
+    notification.className = 'notification';
     notification.textContent = message;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: var(--color-mint-dark);
-        color: var(--color-surface);
-        background: var(--color-primary);
-        color: var(--color-text-inverse);
-        padding: 15px 25px;
-        border-radius: 8px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.12);
-        z-index: 10000;
-        animation: slideIn 0.3s ease;
-        font-weight: 600;
-    `;
     document.body.appendChild(notification);
 
     setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => notification.remove(), 300);
+        notification.remove();
     }, 3000);
 }
 

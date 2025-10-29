@@ -70,10 +70,18 @@ function determineRPSResult(player, computer) {
 
 function determineEvent(EVENT_CONFIG) {
   const roll = Math.floor(Math.random() * 100) + 1;
-  if (roll <= EVENT_CONFIG.goodFortune.threshold) return EVENT_CONFIG.goodFortune;
-  if (roll <= EVENT_CONFIG.mildSetback.threshold) return EVENT_CONFIG.mildSetback;
-  if (roll <= EVENT_CONFIG.disaster.threshold) return EVENT_CONFIG.disaster;
-  return EVENT_CONFIG.normal;
+
+  // Robust selection: sort configured events by threshold and pick the first matching one.
+  const events = Object.values(EVENT_CONFIG || {})
+    .filter(e => e && typeof e.threshold === 'number')
+    .sort((a, b) => a.threshold - b.threshold);
+
+  for (const ev of events) {
+    if (roll <= ev.threshold) return ev;
+  }
+
+  // Fallback to a sane default
+  return (EVENT_CONFIG && EVENT_CONFIG.normal) ? EVENT_CONFIG.normal : (events[events.length - 1] || null);
 }
 
 module.exports = {

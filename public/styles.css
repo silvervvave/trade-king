@@ -290,6 +290,7 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: var(--spacing-lg);
+    margin-bottom: 120px; /* 팀 현황 창과의 간섭을 줄이기 위해 여백 추가 */
 }
 
 .game-nav {
@@ -783,8 +784,29 @@ body {
     }
 }
 
+/* 알림창 스타일 */
 .notification {
-    animation: slideIn 0.3s ease;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--color-dark-choco);
+    color: var(--color-ivory); /* 아이보리색으로 변경 */
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 9999;
+    font-size: 1em;
+    font-weight: 600;
+    animation: fadeInOut 3s ease-in-out;
+    border: 2px solid var(--color-border);
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, 20px); }
+    10% { opacity: 1; transform: translate(-50%, 0); }
+    90% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, 20px); }
 }
 
 /* ============================================
@@ -1024,18 +1046,19 @@ body {
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
     border-top: 2px solid var(--color-border);
     display: flex;
+    justify-content: center; /* 중앙 정렬 추가 */
     overflow-x: auto;
     gap: var(--spacing-md);
     z-index: 200;
 }
 
 .team-status-card {
-    flex: 0 0 180px; /* 최소 너비 180px, 줄어들지 않음 */
+    flex: 0 0 180px;
     padding: var(--spacing-sm);
     background: var(--color-background);
     border-radius: var(--radius-md);
     border: 1px solid var(--color-border);
-    text-align: center;
+    text-align: center; /* 중앙 정렬 */
 }
 
 .team-status-card h4 {
@@ -1047,8 +1070,8 @@ body {
 
 .team-status-resources {
     display: flex;
-    justify-content: space-around;
-    gap: var(--spacing-sm);
+    justify-content: center; /* 중앙 정렬 */
+    gap: var(--spacing-md); /* 간격 조정 */
 }
 
 .team-status-resources p {
