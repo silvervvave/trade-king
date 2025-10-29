@@ -390,13 +390,16 @@ function playFinalRPS(io, socket, data, room, roomId) {
 
     if (team.finalRpsPlayedThisRound || !team.tradeSelection) return;
 
-  const computerChoice = ['✌️', '✊', '✋'][Math.floor(Math.random() * 3)];
+    const computerChoice = ['✌️', '✊', '✋'][Math.floor(Math.random() * 3)];
     const result = determineRPSResult(data.choice, computerChoice);
-    team.rpsGoodsChange = result === 'win' ? 2 : result === 'lose' ? -2 : 0;
+    const goodsChange = result === 'win' ? 1 : result === 'lose' ? -1 : 0;
+
+    team.rpsGoodsChange = goodsChange;
     team.finalRpsPlayedThisRound = true;
     team.finalRpsResult = result;
 
-    let html = `결과: ${result}. 상품 ${team.rpsGoodsChange}개`;
+
+    let html = `결과: ${result}. 상품 ${goodsChange}개`;
     if (team.country === 'england' && team.rpsRerolls > 0 && result !== 'win') {
       html += ` 재도전 (${team.rpsRerolls} 남음)`;
     }

@@ -97,6 +97,19 @@ function determineEvent(EVENT_CONFIG) {
   return (EVENT_CONFIG && EVENT_CONFIG.normal) ? EVENT_CONFIG.normal : (events[events.length - 1] || null);
 }
 
+function isValidAmount(amount) {
+    return typeof amount === 'number' && amount > 0;
+}
+
+function getPhaseKorean(phase) {
+    const phaseMap = {
+        negotiation: '협상',
+        trade: '무역',
+        event: '이벤트'
+    };
+    return phaseMap[phase] || phase;
+}
+
 module.exports = {
     isValidAmount,
     getPhaseKorean,
