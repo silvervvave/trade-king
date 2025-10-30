@@ -166,66 +166,81 @@ function updateAdminDashboard(state) {
 
 // 플레이어 목록 표시
 function updateTeamsDisplay(teams) {
-    const container = document.getElementById('playersContainer');
-    container.style.display = 'block';
-    
-    const playersList = document.getElementById('playersList');
-    playersList.innerHTML = '';
-    
-    const teamArray = Object.values(teams);
-    if (teamArray.length === 0) {
-        playersList.innerHTML = '<div class="status-card"><p style="text-align: center; color: var(--color-text-light);">아직 참가한 플레이어가 없습니다.</p></div>';
+    const tradeStatusContainer = document.getElementById('tradeStatusContainer');
+    const arrivalContainer = document.getElementById('playersContainer');
+
+    if (Object.keys(teams).length === 0) {
+        tradeStatusContainer.classList.add('hidden');
+        arrivalContainer.classList.add('hidden');
         return;
     }
 
-    // 한글 이름순으로 정렬
+    const currentPhase = document.getElementById('currentPhase').textContent;
+
+    if (currentPhase === '무역' || currentPhase === '투자') {
+        tradeStatusContainer.classList.remove('hidden');
+        arrivalContainer.classList.add('hidden');
+        updateTradeStatus(teams);
+    } else if (currentPhase === '입항') {
+        tradeStatusContainer.classList.add('hidden');
+        arrivalContainer.classList.remove('hidden');
+        updateArrivalStatus(teams);
+    } else {
+        tradeStatusContainer.classList.add('hidden');
+        arrivalContainer.classList.add('hidden');
+    }
+}
+
+function updateTradeStatus(teams) {
+    const container = document.querySelector('.trade-status-tower-container');
+    container.innerHTML = '';
+
+    const teamArray = Object.values(teams);
     teamArray.sort((a, b) => a.name.localeCompare(b.name));
-    
+
     teamArray.forEach(team => {
-        const playerCard = document.createElement('div');
-        playerCard.className = 'status-card';
-        playerCard.style.marginBottom = '10px';
-        
-        const membersHtml = team.members.map(m => `
-            <span style="display: inline-flex; align-items: center; margin-right: 10px;">
-                <span style="width: 8px; height: 8px; border-radius: 50%; background-color: ${m.connected ? 'var(--color-success)' : 'var(--color-danger)'}; margin-right: 5px;"></span>
-                ${m.name}
-            </span>
-        `).join('') || '없음';
+        const card = document.createElement('div');
+        card.className = 'team-trade-status-card';
 
-        const rpsStatus = team.rpsPlayedThisRound ? '완료' : '안함';
+        const tradeSelection = team.tradeSelection;
+        const tradeStatus = tradeSelection ? `${tradeSelection.type === 'china' ? '중국' : '인도'} / ${tradeSelection.amount} PA` : '미정';
+        const investmentStatus = team.investmentsMade.length > 0 ? `투자 ${team.investmentsMade.length}건` : '미정';
 
-        const phaseStatusHtml = `
-            <div class="phase-status-container">
-                <div class="phase-box ${team.tradeSelection ? 'completed' : ''}">무역</div>
-                <div class="phase-box ${team.investmentsMade.length > 0 ? 'completed' : ''}">투자</div>
-                <div class="phase-box ${team.eventDrawnThisRound && team.finalRpsPlayedThisRound ? 'completed' : ''}">입항</div>
-            </div>
-        `;
-        
-        playerCard.innerHTML = `
+        card.innerHTML = `
             <h4>${team.name}</h4>
-            <div style="margin-bottom: 5px;"><strong>멤버:</strong> ${membersHtml}</div>
-            <p><strong>총 PA:</strong> ${Math.floor(team.totalPA)} | <strong>비단:</strong> ${team.silk} | <strong>후추:</strong> ${team.pepper}</p>
-            <p><strong>클릭 수:</strong> ${team.clickCount}/${team.maxClicks} | <strong>가위바위보:</strong> ${rpsStatus}</p>
-            ${phaseStatusHtml}
+            <p><strong>무역:</strong> <span class="status-indicator-box ${tradeSelection ? 'completed' : ''}">${tradeStatus}</span></p>
+            <p><strong>투자:</strong> <span class="status-indicator-box ${team.investmentsMade.length > 0 ? 'completed' : ''}">${investmentStatus}</span></p>
         `;
-        
-        playersList.appendChild(playerCard);
+        container.appendChild(card);
     });
 }
 
-// 무역 로그 추가
-function addTradeLog(data) {
-    const logContainer = document.getElementById('tradeLogContainer');
-    if (!logContainer) return;
-    
-    const logEntry = document.createElement('div');
-    logEntry.className = 'trade-log-entry';
-    logEntry.innerHTML = `
-        <span class="timestamp">${new Date().toLocaleTimeString()}</span>
-        <strong>${data.playerName}</strong>: ${data.selection.type === 'china' ? '중국' : '인도'} / ${data.selection.amount} PA
-    `;
-    
-    logContainer.insertBefore(logEntry, logContainer.firstChild);
+function updateArrivalStatus(teams) {
+    const container = document.getElementById('playersList');
+    container.innerHTML = '';
+
+    const teamArray = Object.values(teams);
+    teamArray.sort((a, b) => a.name.localeCompare(b.name));
+
+    teamArray.forEach(team => {
+        const card = document.createElement('div');
+        card.className = 'arrival-status-container';
+
+        const eventStatus = team.eventDrawnThisRound ? '오픈 완료' : '대기중';
+        const rpsStatus = team.finalRpsPlayedThisRound ? '플레이 완료' : '대기중';
+
+        card.innerHTML = `
+            <div class="arrival-box">
+                <h4>${team.name} - 이벤트</h4>
+                <p class="status-indicator-box ${team.eventDrawnThisRound ? 'completed' : ''}">${eventStatus}</p>
+            </div>
+            <div class="arrival-box">
+                <h4>${team.name} - 가위바위보</h4>
+                <p class="status-indicator-box ${team.finalRpsPlayedThisRound ? 'completed' : ''}">${rpsStatus}</p>
+            </div>
+        `;
+        container.appendChild(card);
+    });
 }
+
+

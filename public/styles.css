@@ -1158,3 +1158,65 @@ body {
     background-color: var(--color-dark-choco);
     color: var(--color-ivory);
 }
+
+/* New styles for trade status tower */
+.trade-status-tower-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.team-trade-status-card {
+    background: var(--color-ivory);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    text-align: center;
+}
+
+.team-trade-status-card h4 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.team-trade-status-card p {
+    font-weight: 600;
+    margin: var(--spacing-sm) 0;
+}
+
+.status-indicator-box {
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-weight: bold;
+    color: var(--color-primary);
+    border: 1px solid var(--color-border);
+}
+
+.status-indicator-box.completed {
+    background-color: var(--color-success);
+    color: var(--color-ivory);
+}
+
+/* New styles for split arrival boxes */
+.arrival-status-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.arrival-box {
+    background: var(--color-surface);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+    text-align: center;
+}
+
+.arrival-box h4 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+}
+

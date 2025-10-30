@@ -1,3 +1,4 @@
+const escape = require('escape-html');
 const { rooms, createInitialTeamState } = require('./rooms');
 const { countryConfig, EVENT_CONFIG } = require('../config');
 const { isValidAmount, determineRPSResult, determineEvent, calculateRankings } = require('./utils');
@@ -7,6 +8,18 @@ const logger = {
   warn: (message) => console.warn(`[WARN] ${message}`),
   error: (message, error) => console.error(`[ERROR] ${message}`, error || ''),
 };
+
+function _getPlayerAndTeam(room, socketId) {
+    const player = room.players[socketId];
+    if (!player) {
+        return { error: '플레이어 정보를 찾을 수 없습니다.' };
+    }
+    const team = room.teams[player.team];
+    if (!team) {
+        return { error: '팀 정보를 찾을 수 없습니다.' };
+    }
+    return { player, team };
+}
 
 function broadcastTeamsUpdate(io, room, roomId) {
     io.to(roomId).emit('teams_update', { teams: room.teams });
@@ -89,9 +102,9 @@ function registerPlayer(io, socket, data, room, roomId) {
     const { country, playerName } = data;
     if (!countryConfig[country]) return socket.emit('error', { message: '유효하지 않은 국가입니다.' });
 
-    const sanitizedPlayerName = playerName.replace(/[<>"'&]/g, ' ').trim();
-    if (sanitizedPlayerName.length === 0) {
-        return socket.emit('error', { message: '이름이 유효하지 않습니다.' });
+    const sanitizedPlayerName = escape(playerName.trim());
+    if (sanitizedPlayerName.length === 0 || sanitizedPlayerName.length > 20) {
+        return socket.emit('error', { message: '이름은 1~20자 사이여야 합니다.' });
     }
 
     if (!room.teams[country]) {
@@ -199,16 +212,10 @@ function startPhase(io, socket, data, room, roomId) {
 }
 
 function productionBatch(io, socket, data, room, roomId) {
-    const player = room.players[socket.id];
-    if (!player) {
+    const { player, team, error } = _getPlayerAndTeam(room, socket.id);
+    if (error) {
         logger.warn(`플레이어를 찾을 수 없음: ${socket.id}`);
         return socket.emit('error', { message: '플레이어 정보를 찾을 수 없습니다.' });
-    }
-
-    const team = room.teams[player.team];
-    if (!team) {
-        logger.warn(`팀을 찾을 수 없음: ${player.team}`);
-        return socket.emit('error', { message: '팀 정보를 찾을 수 없습니다.' });
     }
 
     const config = countryConfig[player.team];
@@ -232,14 +239,9 @@ function productionBatch(io, socket, data, room, roomId) {
 }
 
 function tradeSelection(io, socket, data, room, roomId) {
-    const player = room.players[socket.id];
-    if (!player) {
-        return socket.emit('error', { message: '플레이어 정보를 찾을 수 없습니다.' });
-    }
-
-    const team = room.teams[player.team];
-    if (!team) {
-        return socket.emit('error', { message: '팀 정보를 찾을 수 없습니다.' });
+    const { player, team, error } = _getPlayerAndTeam(room, socket.id);
+    if (error) {
+        return socket.emit('error', { message: error });
     }
 
     const { type, amount } = data;
@@ -273,14 +275,9 @@ function tradeSelection(io, socket, data, room, roomId) {
 }
 
 function makeInvestment(io, socket, data, room, roomId) {
-    const player = room.players[socket.id];
-    if (!player) {
-      return socket.emit('error', { message: '플레이어 정보를 찾을 수 없습니다.' });
-    }
-
-    const investingTeam = room.teams[player.team];
-    if (!investingTeam) {
-      return socket.emit('error', { message: '팀 정보를 찾을 수 없습니다.' });
+    const { player, team, error } = _getPlayerAndTeam(room, socket.id);
+    if (error) {
+      return socket.emit('error', { message: error });
     }
 
     const targetTeam = room.teams[data.targetCountry];
@@ -289,30 +286,25 @@ function makeInvestment(io, socket, data, room, roomId) {
     }
     const amount = parseInt(data.amount);
 
-    if (!targetTeam || !isValidAmount(amount) || amount > investingTeam.totalPA || amount < 100 || amount % 100 !== 0) {
+    if (!targetTeam || !isValidAmount(amount) || amount > team.totalPA || amount < 100 || amount % 100 !== 0) {
       return socket.emit('error', { message: '유효하지 않은 투자입니다. (100 PA 이상, 100 PA 단위로 입력)' });
     }
 
-    investingTeam.totalPA -= amount;
-    investingTeam.investmentsMade.push({ toTeam: data.targetCountry, amount });
+    team.totalPA -= amount;
+    team.investmentsMade.push({ toTeam: data.targetCountry, amount });
     targetTeam.investmentsReceived.push({ fromTeam: player.team, amount });
 
     socket.emit('action_result', { 
       message: `${targetTeam.country} 팀에 ${amount} PA 투자 완료!`,
-      teamState: investingTeam 
+      teamState: team 
     });
     updateTeamMembers(io, targetTeam, roomId);
 }
 
 function playRPS(io, socket, data, room, roomId) {
-    const player = room.players[socket.id];
-    if (!player) {
-      return socket.emit('error', { message: '플레이어 정보를 찾을 수 없습니다.' });
-    }
-
-    const team = room.teams[player.team];
-    if (!team) {
-      return socket.emit('error', { message: '팀 정보를 찾을 수 없습니다.' });
+    const { player, team, error } = _getPlayerAndTeam(room, socket.id);
+    if (error) {
+      return socket.emit('error', { message: error });
     }
 
     if (team.rpsPlayedThisRound) {
@@ -337,10 +329,11 @@ function playRPS(io, socket, data, room, roomId) {
     broadcastTeamsUpdate(io, room, roomId);
 }
 
-function rerollRPS(io, socket, data, room, roomId) {
-    const player = room.players[socket.id];
-    if (!player) return;
-    const team = room.teams[player.team];
+function _handleReroll(io, socket, room, roomId, phase) {
+    const { player, team, error } = _getPlayerAndTeam(room, socket.id);
+    if (error) {
+        return socket.emit('error', { message: error });
+    }
 
     if (team.country !== 'england' || team.rpsRerolls <= 0) {
       return socket.emit('error', { message: '리롤 토큰이 없거나 사용할 수 없습니다.' });
@@ -352,21 +345,34 @@ function rerollRPS(io, socket, data, room, roomId) {
 
     team.rerollUsedThisRound = true;
     team.rpsRerolls--;
-    team.totalPA -= (team.rpsPaChange || 0);
-    team.rpsPaChange = 0;
-    team.rpsPlayedThisRound = false;
+
+    const isProduction = phase === 'production';
+    if (isProduction) {
+        team.totalPA -= (team.rpsPaChange || 0);
+        team.rpsPaChange = 0;
+        team.rpsPlayedThisRound = false;
+    } else { // arrival
+        team.finalRpsPlayedThisRound = false;
+        team.rpsGoodsChange = 0;
+    }
 
     socket.emit('action_result', { 
       message: '리롤 토큰을 사용했습니다. 다시 선택하세요!', 
       teamState: team, 
-      action: 'rps_reroll'
+      action: isProduction ? 'rps_reroll' : 'final_rps_reroll'
     });
     broadcastTeamsUpdate(io, room, roomId);
 }
 
+function rerollRPS(io, socket, data, room, roomId) {
+    _handleReroll(io, socket, room, roomId, 'production');
+}
+
 function drawEvent(io, socket, data, room, roomId) {
-    const player = room.players[socket.id];
-    const team = room.teams[player.team];
+    const { player, team, error } = _getPlayerAndTeam(room, socket.id);
+    if (error) {
+        return socket.emit('error', { message: error });
+    }
 
     if (team.eventDrawnThisRound || !team.tradeSelection) return;
 
@@ -385,8 +391,10 @@ function drawEvent(io, socket, data, room, roomId) {
 }
 
 function playFinalRPS(io, socket, data, room, roomId) {
-    const player = room.players[socket.id];
-    const team = room.teams[player.team];
+    const { player, team, error } = _getPlayerAndTeam(room, socket.id);
+    if (error) {
+        return socket.emit('error', { message: error });
+    }
 
     if (team.finalRpsPlayedThisRound || !team.tradeSelection) return;
 
@@ -413,29 +421,7 @@ function playFinalRPS(io, socket, data, room, roomId) {
 }
 
 function rerollFinalRPS(io, socket, data, room, roomId) {
-    const player = room.players[socket.id];
-    if (!player) return;
-    const team = room.teams[player.team];
-
-    if (team.country !== 'england' || team.rpsRerolls <= 0) {
-      return socket.emit('error', { message: '리롤 토큰이 없거나 사용할 수 없습니다.' });
-    }
-
-    if (team.rerollUsedThisRound) {
-        return socket.emit('error', { message: '이번 라운드에 이미 리롤 토큰을 사용했습니다.' });
-    }
-
-    team.rerollUsedThisRound = true;
-    team.rpsRerolls--;
-    team.finalRpsPlayedThisRound = false;
-    team.rpsGoodsChange = 0;
-
-    socket.emit('action_result', { 
-      message: '리롤 토큰을 사용했습니다. 다시 선택하세요!', 
-      teamState: team, 
-      action: 'final_rps_reroll'
-    });
-    broadcastTeamsUpdate(io, room, roomId);
+    _handleReroll(io, socket, room, roomId, 'arrival');
 }
 
 function resetGame(io, socket, data, room, roomId) {

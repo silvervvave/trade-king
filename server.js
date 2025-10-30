@@ -34,7 +34,7 @@ const io = socketIo(server, {
 
 // Super-admin password protection
 app.use('/super-admin', basicAuth({
-    users: { 'superadmin': process.env.SUPER_ADMIN_PASSWORD || 'superking' },
+    users: { 'superadmin': 'superadmin' },
     challenge: true,
     realm: 'Imb4T3st4pp',
 }));
