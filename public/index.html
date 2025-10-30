@@ -23,7 +23,7 @@
                 <input type="text" id="roomCodeInput" placeholder="방 코드 입력" maxlength="4">
             </div>
             
-            <button class="game-btn btn-primary" onclick="joinRoom()">
+            <button class="game-btn btn-primary" id="joinRoomBtn">
                 게임 참가하기
             </button>
             
@@ -66,10 +66,10 @@
 
             <!-- 상단 네비게이션 -->
             <nav id="gameNav" class="game-nav hidden">
-                <button id="navProduction" class="nav-btn" onclick="showArea('productionArea')">생산</button>
-                <button id="navTrade" class="nav-btn" onclick="showArea('tradeArea')">무역</button>
-                <button id="navInvestment" class="nav-btn" onclick="showArea('investmentArea')">투자</button>
-                <button id="navArrival" class="nav-btn" onclick="showArea('arrivalArea')">입항</button>
+                <button id="navProduction" class="nav-btn">생산</button>
+                <button id="navTrade" class="nav-btn">무역</button>
+                <button id="navInvestment" class="nav-btn">투자</button>
+                <button id="navArrival" class="nav-btn">입항</button>
             </nav>
 
             <!-- 게임 정보 헤더 -->
@@ -111,7 +111,7 @@
                 <div class="production-panel">
                     <div class="click-section">
                         <h3>자원 생산</h3>
-                        <button id="produceBtn" class="game-btn btn-click" onclick="produce()">
+                        <button id="produceBtn" class="game-btn btn-click">
                             생산하기 (클릭!)
                         </button>
                         <div class="production-stats">
@@ -125,13 +125,13 @@
 
                     <div class="rps-section">
                         <h3>✊ ✋ ✌️ 대결</h3>
-                        <p class="info-text">승리: +50PA / 무승부: 0PA / 패배: -50PA</p>
+                        <p class="info-info">승리: +50PA / 무승부: 0PA / 패배: -50PA</p>
                         <div class="rps-buttons">
-                            <button class="rps-btn" data-choice="✊" onclick="playRPS('✊')">✊</button>
-                            <button class="rps-btn" data-choice="✋" onclick="playRPS('✋')">✋</button>
-                            <button class="rps-btn" data-choice="✌️" onclick="playRPS('✌️')">✌️</button>
+                            <button class="rps-btn" data-choice="✊">✊</button>
+                            <button class="rps-btn" data-choice="✋">✋</button>
+                            <button class="rps-btn" data-choice="✌️">✌️</button>
                         </div>
-                        <button class="game-btn btn-secondary" onclick="rerollRPS()">
+                        <button class="game-btn btn-secondary" id="rerollRPSBtn">
                             리롤 (영국 전용)
                         </button>
                         <div id="rpsResult" class="result-display"></div>
@@ -145,16 +145,16 @@
                 
                 <div class="trade-panel">
                     <h3>항해지 선택</h3>
-                    <p class="info-text">중국과 인도 중 한 곳을 선택하여 무역품을 획득하세요. 혹은 이번 라운드를 쉴 수 있습니다.</p>
+                    <p class="info-info">중국과 인도 중 한 곳을 선택하여 무역품을 획득하세요. 혹은 이번 라운드를 쉴 수 있습니다.</p>
                     
                     <div class="destination-grid">
-                        <div class="destination-card" onclick="selectTradeDestination('china')">
+                        <div class="destination-card destination-btn" data-destination="china">
                             <div class="destination-icon"></div>
                             <h4>중국</h4>
                             <p class="destination-trait">비단 획득 기회</p>
                         </div>
                         
-                        <div class="destination-card" onclick="selectTradeDestination('india')">
+                        <div class="destination-card destination-btn" data-destination="india">
                             <div class="destination-icon"></div>
                             <h4>인도</h4>
                             <p class="destination-trait">후추 획득 기회</p>
@@ -167,11 +167,15 @@
                             <label for="tradeAmount">PA 금액 입력 (100 단위)</label>
                             <input type="number" id="tradeAmount" placeholder="예: 300" step="100" min="200">
                         </div>
-                        <button class="game-btn btn-primary" onclick="confirmTrade()">이 금액으로 출항하기</button>
-                        <button class="game-btn btn-secondary" onclick="cancelTrade()">취소</button>
+                        <button class="game-btn btn-primary" id="confirmTradeBtn">
+                            이 금액으로 출항하기
+                        </button>
+                        <button class="game-btn btn-secondary" id="cancelTradeBtn">
+                            취소
+                        </button>
                     </div>
 
-                    <button class="game-btn btn-secondary" style="margin-top: 20px;" onclick="confirmTrade('none')">
+                    <button class="game-btn btn-secondary" style="margin-top: 20px;" id="skipTradeBtn">
                         이번 라운드는 출항하지 않음
                     </button>
                     
@@ -187,7 +191,7 @@
                 
                 <div class="investment-panel">
                     <h3>다른 팀에 투자하기</h3>
-                    <p class="info-text">다른 팀의 무역에 투자하여 수익을 나눠 가질 수 있습니다. 출항하지 않은 팀은 표시되지 않습니다.</p>
+                    <p class="info-info">다른 팀의 무역에 투자하여 수익을 나눠 가질 수 있습니다. 출항하지 않은 팀은 표시되지 않습니다.</p>
                     
                     <div id="investmentOptions" class="investment-grid">
                         <!-- JavaScript로 동적 생성 -->
@@ -211,8 +215,8 @@
                 <div class="arrival-panel">
                     <div class="event-section">
                         <h3>이벤트 카드 뽑기</h3>
-                        <p class="info-text">무작위 이벤트가 발생합니다!</p>
-                        <button class="game-btn btn-primary" onclick="drawEvent()">
+                        <p class="info-info">무작위 이벤트가 발생합니다!</p>
+                        <button class="game-btn btn-primary" id="drawEventBtn">
                             이벤트 카드 뽑기
                         </button>
                         <div id="eventResult" class="result-display"></div>
@@ -220,13 +224,13 @@
 
                     <div class="final-rps-section">
                         <h3>최종 ✊ ✋ ✌️</h3>
-                        <p class="info-text">승리: 무역품 +1개 / 무승부: 0개 / 패배: 무역품 -1개</p>
+                        <p class="info-info">승리: 무역품 +1개 / 무승부: 0개 / 패배: 무역품 -1개</p>
                         <div class="rps-buttons">
-                            <button class="final-rps-btn" onclick="playFinalRPS('✊')">✊</button>
-                            <button class="final-rps-btn" onclick="playFinalRPS('✋')">✋</button>
-                            <button class="final-rps-btn" onclick="playFinalRPS('✌️')">✌️</button>
+                            <button class="final-rps-btn" data-choice="✊">✊</button>
+                            <button class="final-rps-btn" data-choice="✋">✋</button>
+                            <button class="final-rps-btn" data-choice="✌️">✌️</button>
                         </div>
-                        <button class="game-btn btn-secondary" onclick="rerollFinalRPS()">
+                        <button class="game-btn btn-secondary" id="rerollFinalRPSBtn">
                             리롤 (영국 전용)
                         </button>
                         <div id="finalRpsResult" class="result-display"></div>
@@ -242,7 +246,7 @@
             <div id="resultsArea" class="game-area hidden">
                 <h2>게임 종료</h2>
                 <div class="results-panel">
-                    <p class="info-text">교수자가 다음 단계를 시작할 때까지 기다려주세요</p>
+                    <p class="info-info">교수자가 다음 단계를 시작할 때까지 기다려주세요</p>
                 </div>
             </div>
         </div>

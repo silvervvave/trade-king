@@ -1,9 +1,21 @@
 const socket = io();
-let adminRoomId = null;
+let adminRoomId = localStorage.getItem('adminRoomId') || null;
+console.log(`[클라이언트] adminRoomId 초기값: ${adminRoomId}`);
 
 socket.on('connect', () => {
     console.log('관리자로 서버에 연결되었습니다.');
     updateConnectionStatus(true);
+    
+    if (adminRoomId) {
+        console.log(`[클라이언트] 'reclaim_admin' 이벤트 전송 시도: roomId=${adminRoomId}`);
+        socket.emit('reclaim_admin', { roomId: adminRoomId });
+    } else {
+        console.log('[클라이언트] 저장된 adminRoomId 없음. \'reclaim_admin\' 이벤트 전송 안 함.');
+        // If no adminRoomId is stored, show both room creation and transfer sections
+        document.getElementById('roomCreationSection').classList.remove('hidden');
+        document.getElementById('adminTransferSection').classList.remove('hidden');
+        document.getElementById('mainDashboard').classList.add('hidden');
+    }
 });
 
 // 방 생성 요청
@@ -14,13 +26,80 @@ function createRoom() {
 // 방 생성 완료 이벤트
 socket.on('room_created', (data) => {
     adminRoomId = data.roomId;
-    console.log(`방 ${adminRoomId} 생성 완료`);
+    localStorage.setItem('adminRoomId', adminRoomId);
+    console.log(`[클라이언트] 방 ${adminRoomId} 생성 완료 및 localStorage 저장.`);
     
     document.getElementById('roomCodeDisplay').textContent = adminRoomId;
     document.getElementById('roomCreationSection').classList.add('hidden');
+    document.getElementById('adminTransferSection').classList.add('hidden'); // Hide transfer section
     document.getElementById('mainDashboard').classList.remove('hidden');
     
     showNotification(`방 ${adminRoomId} 생성 완료! 학생들에게 코드를 공유하세요.`);
+});
+
+socket.on('admin_reclaimed', (data) => {
+    console.log(`[클라이언트] 'admin_reclaimed' 이벤트 수신: ${JSON.stringify(data)}`);
+    if (data.success) {
+        adminRoomId = data.roomId;
+        console.log(`관리자 권한 재확보: 방 ${adminRoomId}`);
+        showNotification(`관리자 권한을 재확보했습니다: 방 ${adminRoomId}`);
+        document.getElementById('roomCreationSection').classList.add('hidden');
+        document.getElementById('adminTransferSection').classList.add('hidden'); // Hide transfer section
+        document.getElementById('mainDashboard').classList.remove('hidden');
+        document.getElementById('roomCodeDisplay').textContent = adminRoomId;
+    } else {
+        console.error('관리자 권한 재확보 실패:', data.message);
+        showNotification(`관리자 권한 재확보 실패: ${data.message}`);
+        localStorage.removeItem('adminRoomId');
+        adminRoomId = null;
+        // If reclaim fails, show room creation/transfer sections
+        document.getElementById('roomCreationSection').classList.remove('hidden');
+        document.getElementById('adminTransferSection').classList.remove('hidden');
+        document.getElementById('mainDashboard').classList.add('hidden');
+    }
+});
+
+// Add event listener for the new transfer button
+document.addEventListener('DOMContentLoaded', () => {
+    const transferAdminBtn = document.getElementById('transferAdminBtn');
+    if (transferAdminBtn) {
+        transferAdminBtn.addEventListener('click', () => {
+            const roomIdInput = document.getElementById('transferRoomCodeInput');
+            const roomId = roomIdInput.value.trim().toUpperCase();
+
+            if (!roomId) {
+                showNotification('방 코드를 입력해주세요.');
+                roomIdInput.focus();
+                return;
+            }
+            // Validate room code format (similar to student client)
+            if (!/^[A-Z0-9]{4}$/.test(roomId)) {
+                showNotification('방 코드는 정확히 4자리 영문 대문자 또는 숫자여야 합니다.');
+                roomIdInput.focus();
+                return;
+            }
+
+            console.log(`[클라이언트] 'transfer_admin_privileges' 이벤트 전송 시도: roomId=${roomId}`);
+            socket.emit('transfer_admin_privileges', { roomId: roomId });
+        });
+    }
+});
+
+// Handle server response for admin privilege transfer
+socket.on('admin_privileges_transferred', (data) => {
+    console.log(`[클라이언트] 'admin_privileges_transferred' 이벤트 수신: ${JSON.stringify(data)}`);
+    if (data.success) {
+        adminRoomId = data.roomId;
+        localStorage.setItem('adminRoomId', adminRoomId);
+        showNotification(`관리자 권한을 성공적으로 인계받았습니다: 방 ${adminRoomId}`);
+        document.getElementById('roomCodeDisplay').textContent = adminRoomId;
+        document.getElementById('roomCreationSection').classList.add('hidden');
+        document.getElementById('adminTransferSection').classList.add('hidden'); // Hide transfer section
+        document.getElementById('mainDashboard').classList.remove('hidden');
+    } else {
+        showNotification(`관리자 권한 인계 실패: ${data.message}`);
+        console.error('관리자 권한 인계 실패:', data.message);
+    }
 });
 
 socket.on('disconnect', () => {
@@ -42,6 +121,21 @@ socket.on('player_trade_selection', (data) => {
     console.log(`${data.playerName}의 무역 선택:`, data.selection);
     addTradeLog(data);
 });
+
+function addTradeLog(data) {
+    const container = document.querySelector('.trade-status-tower-container');
+    if (!container) return;
+
+    const tradeType = data.selection.type === 'china' ? '중국' : (data.selection.type === 'india' ? '인도' : '출항 안 함');
+    const amount = data.selection.amount ? `${data.selection.amount} PA` : '';
+
+    const logEntry = document.createElement('div');
+    logEntry.className = 'trade-log-entry';
+    logEntry.innerHTML = `
+        <p><strong>${data.playerName}</strong>: ${tradeType} ${amount}</p>
+    `;
+    container.prepend(logEntry); // Add to the top
+}
 
 // roomId가 필요한 요청을 위한 래퍼 함수
 function withRoomId(func) {

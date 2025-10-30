@@ -194,6 +194,7 @@ class GameClient {
         });
 
         this.socket.on('room_check_result', (data) => {
+            console.log('room_check_result 이벤트 수신:', data);
             const joinButton = document.querySelector('#joinRoomSection button');
             joinButton.disabled = false;
             joinButton.textContent = '게임 참가하기';
@@ -231,6 +232,7 @@ class GameClient {
         document.querySelectorAll('.destination-btn').forEach(btn => btn.addEventListener('click', (e) => this.selectTradeDestination(e.target.dataset.destination)));
         document.getElementById('confirmTradeBtn').addEventListener('click', () => this.confirmTrade());
         document.getElementById('cancelTradeBtn').addEventListener('click', () => this.cancelTrade());
+        document.getElementById('skipTradeBtn').addEventListener('click', () => this.confirmTrade('none'));
         document.getElementById('drawEventBtn').addEventListener('click', () => this.drawEvent());
         document.querySelectorAll('.final-rps-btn').forEach(btn => btn.addEventListener('click', (e) => this.playFinalRPS(e.target.dataset.choice)));
         document.getElementById('rerollFinalRPSBtn').addEventListener('click', () => this.rerollFinalRPS());
@@ -351,6 +353,7 @@ class GameClient {
 
         joinButton.disabled = true;
         joinButton.textContent = '확인 중...';
+        console.log(`'check_room' 이벤트 전송 시도: roomId=${roomId}, playerName=${name}`);
         this.socket.emit('check_room', { roomId, playerName: name });
     }
 
@@ -731,19 +734,23 @@ class GameClient {
         document.getElementById('tradeAmount').focus();
     }
 
-    confirmTrade() {
+    confirmTrade(tradeTypeOverride) {
         if (!this.playerRoomId) {
             return this.showNotification('게임에 참가하지 않았습니다.');
         }
 
-        let tradeType = this.selectedTradeDestination;
-        let amount = parseInt(document.getElementById('tradeAmount').value);
+        let tradeType = tradeTypeOverride || this.selectedTradeDestination;
+        let amount = 0;
 
-        if (isNaN(amount) || amount < 200 || amount % 100 !== 0) {
-            return this.showNotification('유효하지 않은 금액입니다. (200 PA 이상, 100 PA 단위로 입력)');
-        }
-        if (amount > this.gameState.team.totalPA) {
-            return this.showNotification('보유한 PA가 부족합니다.');
+        if (tradeType !== 'none') {
+            amount = parseInt(document.getElementById('tradeAmount').value);
+
+            if (isNaN(amount) || amount < 200 || amount % 100 !== 0) {
+                return this.showNotification('유효하지 않은 금액입니다. (200 PA 이상, 100 PA 단위로 입력)');
+            }
+            if (amount > this.gameState.team.totalPA) {
+                return this.showNotification('보유한 PA가 부족합니다.');
+            }
         }
 
         this.socket.emit('trade_selection', {
@@ -752,9 +759,9 @@ class GameClient {
             amount: amount
         });
 
-        const destText = tradeType === 'china' ? '중국 (비단)' : '인도 (후추)';
+        const destText = tradeType === 'china' ? '중국 (비단)' : (tradeType === 'india' ? '인도 (후추)' : '출항 안 함');
         const selectionDiv = document.getElementById('tradeSelection');
-        selectionDiv.innerHTML = `<p>선택: ${destText} / ${amount} PA</p>`;
+        selectionDiv.innerHTML = `<p>선택: ${destText} ${tradeType !== 'none' ? `/ ${amount} PA` : ''}</p>`;
         
         this.showNotification('무역 선택이 완료되었습니다!');
         document.getElementById('tradeConfirmation').classList.add('hidden');

@@ -129,6 +129,60 @@ io.on('connection', (socket) => {
     socket.emit('room_check_result', { exists: roomExists, roomId, playerName, countryConfig });
   });
 
+  socket.on('reclaim_admin', (data) => {
+    console.log(`[서버] 'reclaim_admin' 이벤트 수신: ${JSON.stringify(data)} (socket.id: ${socket.id})`);
+    const { roomId } = data;
+    const room = rooms[roomId];
+
+    if (!room) {
+      console.log(`[서버] 'reclaim_admin' 실패: 방 ${roomId} 존재하지 않음.`);
+      socket.emit('admin_reclaimed', { success: false, message: '방이 존재하지 않습니다.' });
+      return;
+    }
+
+    if (room.adminSocketId === null || !io.sockets.sockets.get(room.adminSocketId)) {
+      room.adminSocketId = socket.id;
+      socket.join(roomId);
+      socket.roomId = roomId;
+      console.log(`[관리자 재확보] 방 ${roomId} (새 관리자: ${socket.id})`);
+      socket.emit('admin_reclaimed', { success: true, roomId: roomId });
+      socket.emit('game_state_update', room.state);
+      io.to(roomId).emit('teams_update', { teams: room.teams });
+    } else {
+      console.log(`[서버] 'reclaim_admin' 실패: 방 ${roomId}에 이미 관리자 ${room.adminSocketId} 있음.`);
+      socket.emit('admin_reclaimed', { success: false, message: '이미 다른 관리자가 이 방을 관리 중입니다.' });
+    }
+  });
+
+  // New event handler for transferring admin privileges
+  socket.on('transfer_admin_privileges', (data) => {
+    console.log(`[서버] 'transfer_admin_privileges' 이벤트 수신: ${JSON.stringify(data)} (socket.id: ${socket.id})`);
+    const { roomId } = data;
+    const room = rooms[roomId];
+
+    if (!room) {
+      console.log(`[서버] 'transfer_admin_privileges' 실패: 방 ${roomId} 존재하지 않음.`);
+      socket.emit('admin_privileges_transferred', { success: false, message: '방이 존재하지 않습니다.' });
+      return;
+    }
+
+    // Check if there's an active admin
+    if (room.adminSocketId && io.sockets.sockets.get(room.adminSocketId)) {
+      // Notify the old admin that their privileges are being transferred
+      io.to(room.adminSocketId).emit('error', { message: '관리자 권한이 다른 기기로 인계되었습니다.' });
+      console.log(`[관리자 권한 인계] 이전 관리자 ${room.adminSocketId}에게 알림.`);
+    }
+
+    room.adminSocketId = socket.id;
+    socket.join(roomId);
+    socket.roomId = roomId;
+    console.log(`[관리자 권한 인계] 방 ${roomId} (새 관리자: ${socket.id})`);
+    socket.emit('admin_privileges_transferred', { success: true, roomId: roomId });
+    // Send current game state to the new admin
+    socket.emit('game_state_update', room.state);
+    io.to(roomId).emit('teams_update', { teams: room.teams }); // Update all clients in the room
+  });
+
   socket.on('register_player', safeHandler(registerPlayer));
   socket.on('start_phase', safeHandler(startPhase));
   socket.on('production_batch', safeHandler(productionBatch));
