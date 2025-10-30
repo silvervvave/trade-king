@@ -260,81 +260,78 @@ function updateAdminDashboard(state) {
 
 // 플레이어 목록 표시
 function updateTeamsDisplay(teams) {
-    const tradeStatusContainer = document.getElementById('tradeStatusContainer');
-    const arrivalContainer = document.getElementById('playersContainer');
+    const container = document.querySelector('#allTeamsStatusContainer .teams-grid-container');
+    if (!container) return;
 
-    if (Object.keys(teams).length === 0) {
-        tradeStatusContainer.classList.add('hidden');
-        arrivalContainer.classList.add('hidden');
+    container.innerHTML = ''; // Clear previous content
+
+    const teamArray = Object.values(teams);
+    teamArray.sort((a, b) => a.name.localeCompare(b.name));
+
+    if (teamArray.length === 0) {
+        document.getElementById('allTeamsStatusContainer').classList.add('hidden');
         return;
-    }
-
-    const currentPhase = document.getElementById('currentPhase').textContent;
-
-    if (currentPhase === '무역' || currentPhase === '투자') {
-        tradeStatusContainer.classList.remove('hidden');
-        arrivalContainer.classList.add('hidden');
-        updateTradeStatus(teams);
-    } else if (currentPhase === '입항') {
-        tradeStatusContainer.classList.add('hidden');
-        arrivalContainer.classList.remove('hidden');
-        updateArrivalStatus(teams);
     } else {
-        tradeStatusContainer.classList.add('hidden');
-        arrivalContainer.classList.add('hidden');
+        document.getElementById('allTeamsStatusContainer').classList.remove('hidden');
     }
-}
-
-function updateTradeStatus(teams) {
-    const container = document.querySelector('.trade-status-tower-container');
-    container.innerHTML = '';
-
-    const teamArray = Object.values(teams);
-    teamArray.sort((a, b) => a.name.localeCompare(b.name));
 
     teamArray.forEach(team => {
-        const card = document.createElement('div');
-        card.className = 'team-trade-status-card';
+        const teamCard = document.createElement('div');
+        teamCard.className = 'team-status-card';
 
-        const tradeSelection = team.tradeSelection;
-        const tradeStatus = tradeSelection ? `${tradeSelection.type === 'china' ? '중국' : '인도'} / ${tradeSelection.amount} PA` : '미정';
-        const investmentStatus = team.investmentsMade.length > 0 ? `투자 ${team.investmentsMade.length}건` : '미정';
-
-        card.innerHTML = `
-            <h4>${team.name}</h4>
-            <p><strong>무역:</strong> <span class="status-indicator-box ${tradeSelection ? 'completed' : ''}">${tradeStatus}</span></p>
-            <p><strong>투자:</strong> <span class="status-indicator-box ${team.investmentsMade.length > 0 ? 'completed' : ''}">${investmentStatus}</span></p>
+        // Left section: Flag, Country Name
+        const leftSection = `
+            <div class="team-card-left">
+                <div class="team-flag">${team.icon}</div>
+                <div class="team-name">${team.name}</div>
+            </div>
         `;
-        container.appendChild(card);
+
+        // Center section: Player name/status, PA, Clicks, Special abilities
+        const playersHtml = team.members.map(member => `
+            <div class="player-status-item">
+                <span class="status-indicator ${member.connected ? 'connected' : 'disconnected'}"></span>
+                ${member.name}
+            </div>
+        `).join('');
+
+        const centerSection = `
+            <div class="team-card-center">
+                <div class="player-list-horizontal">
+                    ${playersHtml}
+                </div>
+                <p>PA 보유량: <strong>${Math.floor(team.totalPA)}</strong></p>
+                <p>클릭 수: ${team.clickCount} / ${team.maxClicks}</p>
+                ${team.resetTokens > 0 ? `<p>리롤 토큰: ${team.resetTokens}개</p>` : ''}
+                ${team.mercantilismTokens > 0 ? `<p>중상주의 토큰: ${team.mercantilismTokens}개</p>` : ''}
+            </div>
+        `;
+
+        // Right section: Stacked boxes for phase progression
+        const tradeStatus = team.tradeSelection ? 'completed' : '';
+        const investmentStatus = team.investmentsMade.length > 0 ? 'completed' : '';
+        const eventStatus = team.eventDrawnThisRound ? 'completed' : '';
+        const rpsStatus = team.finalRpsPlayedThisRound ? 'completed' : '';
+
+        const rightSection = `
+            <div class="team-card-right">
+                <div class="status-box-stack">
+                    <div class="status-box ${tradeStatus}">출항</div>
+                    <div class="status-box ${investmentStatus}">투자</div>
+                    <div class="status-box-row">
+                        <div class="status-box half-width ${eventStatus}">이벤트</div>
+                        <div class="status-box half-width ${rpsStatus}">가위바위보</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        teamCard.innerHTML = leftSection + centerSection + rightSection;
+        container.appendChild(teamCard);
     });
 }
 
-function updateArrivalStatus(teams) {
-    const container = document.getElementById('playersList');
-    container.innerHTML = '';
-
-    const teamArray = Object.values(teams);
-    teamArray.sort((a, b) => a.name.localeCompare(b.name));
-
-    teamArray.forEach(team => {
-        const card = document.createElement('div');
-        card.className = 'arrival-status-container';
-
-        const eventStatus = team.eventDrawnThisRound ? '오픈 완료' : '대기중';
-        const rpsStatus = team.finalRpsPlayedThisRound ? '플레이 완료' : '대기중';
-
-        card.innerHTML = `
-            <div class="arrival-box">
-                <h4>${team.name} - 이벤트</h4>
-                <p class="status-indicator-box ${team.eventDrawnThisRound ? 'completed' : ''}">${eventStatus}</p>
-            </div>
-            <div class="arrival-box">
-                <h4>${team.name} - 가위바위보</h4>
-                <p class="status-indicator-box ${team.finalRpsPlayedThisRound ? 'completed' : ''}">${rpsStatus}</p>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
+// 플레이어 목록 표시
+// Removed updateTradeStatus and updateArrivalStatus functions
 
 
