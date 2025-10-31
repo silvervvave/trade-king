@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const roomCodeModal = document.getElementById('roomCodeModal');
     const roomCodeInfoBox = document.getElementById('roomCodeInfoBox');
     const modalRoomCodeDisplay = document.getElementById('modalRoomCodeDisplay');
-    const closeRoomCodeModalBtn = roomCodeModal.querySelector('.close-btn-room-code');
 
     // Sidebar toggle
     toggleButton.addEventListener('click', (e) => {
@@ -30,9 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    closeRoomCodeModalBtn.addEventListener('click', () => {
-        roomCodeModal.classList.add('hidden');
-    });
 
     roomCodeModal.addEventListener('click', (e) => {
         if (e.target === roomCodeModal) {
@@ -295,7 +291,7 @@ socket.on('player_disconnected', (data) => {
 
 // 관리자 대시보드 업데이트
 function updateAdminDashboard(state) {
-    document.getElementById('currentRound').textContent = state.currentRound > 0 ? `라운드 ${state.currentRound}` : '대기중';
+    document.getElementById('currentRound').textContent = state.currentRound > 0 ? `${state.currentRound}` : '대기중';
     document.getElementById('currentPhase').textContent = getPhaseKorean(state.currentPhase);
     
     const gameStartSection = document.getElementById('gameStartSection');
