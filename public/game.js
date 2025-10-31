@@ -18,7 +18,10 @@ class GameClient {
                 finalRpsPlayedThisRound: false,
                 eventText: '',
                 eventResultClass: '',
-                finalRpsResult: ''
+                finalRpsResult: '',
+                rpsResult: null,
+                eventResult: null,
+                finalRpsResultData: null
             },
             currentRound: 0,
             currentPhase: 'waiting',
@@ -107,29 +110,7 @@ class GameClient {
             this.showNotification('시간 종료!');
         });
 
-        this.socket.on('rps_result', (data) => {
-            console.log('✊✋✌️ 결과:', data);
-            const resultDiv = document.getElementById('rpsResult');
-            if (resultDiv) {
-                resultDiv.className = 'result-display ' + data.resultClass;
-                resultDiv.innerHTML = data.html;
-            }
-            if (data.teamState) {
-                this.updatePlayerStatsFromServer(data.teamState);
-            }
-        });
 
-        this.socket.on('final_rps_result', (data) => {
-            console.log('최종 ✊✋✌️ 결과:', data);
-            const resultDiv = document.getElementById('finalRpsResult');
-            if (resultDiv) {
-                resultDiv.className = 'result-display ' + data.resultClass;
-                resultDiv.innerHTML = data.html;
-            }
-            if (data.teamState) {
-                this.updatePlayerStatsFromServer(data.teamState);
-            }
-        });
 
         this.socket.on('action_result', (data) => {
             console.log('액션 결과:', data);
@@ -166,17 +147,6 @@ class GameClient {
             }
         });
 
-        this.socket.on('event_result', (data) => {
-            console.log('이벤트 결과:', data);
-            const resultDiv = document.getElementById('eventResult');
-            if (resultDiv) {
-                resultDiv.className = 'result-display ' + data.resultClass;
-                resultDiv.innerHTML = data.html;
-            }
-            if (data.teamState) {
-                this.updatePlayerStatsFromServer(data.teamState);
-            }
-        });
 
         this.socket.on('investment_info', (data) => {
             console.log('투자 정보:', data);
@@ -478,7 +448,10 @@ class GameClient {
             finalRpsPlayedThisRound: teamData.finalRpsPlayedThisRound || false,
             eventText: teamData.eventText || '',
             eventResultClass: teamData.eventResultClass || '',
-            finalRpsResult: teamData.finalRpsResult || ''
+            finalRpsResult: teamData.finalRpsResult || '',
+            rpsResult: teamData.rpsResult || null,
+            eventResult: teamData.eventResult || null,
+            finalRpsResultData: teamData.finalRpsResultData || null
         };
 
         this.updatePlayerStats();
@@ -519,6 +492,33 @@ class GameClient {
             const config = this.countryConfig[this.gameState.player.country];
             const percentage = (this.gameState.team.clickCount / config.maxClicks) * 100;
             progressFill.style.width = percentage + '%';
+        }
+
+        const rpsResult = this.gameState.team.rpsResult;
+        if (rpsResult) {
+            const resultDiv = document.getElementById('rpsResult');
+            if (resultDiv) {
+                resultDiv.className = 'result-display ' + rpsResult.resultClass;
+                resultDiv.innerHTML = rpsResult.html;
+            }
+        }
+
+        const eventResult = this.gameState.team.eventResult;
+        if (eventResult) {
+            const resultDiv = document.getElementById('eventResult');
+            if (resultDiv) {
+                resultDiv.className = 'result-display ' + eventResult.resultClass;
+                resultDiv.innerHTML = eventResult.html;
+            }
+        }
+
+        const finalRpsResult = this.gameState.team.finalRpsResultData;
+        if (finalRpsResult) {
+            const resultDiv = document.getElementById('finalRpsResult');
+            if (resultDiv) {
+                resultDiv.className = 'result-display ' + finalRpsResult.resultClass;
+                resultDiv.innerHTML = finalRpsResult.html;
+            }
         }
     }
 

@@ -294,10 +294,7 @@ function makeInvestment(io, socket, data, room, roomId) {
     team.investmentsMade.push({ toTeam: data.targetCountry, amount });
     targetTeam.investmentsReceived.push({ fromTeam: player.team, amount });
 
-    socket.emit('action_result', { 
-      message: `${targetTeam.country} 팀에 ${amount} PA 투자 완료!`,
-      teamState: team 
-    });
+    updateTeamMembers(io, team, roomId);
     updateTeamMembers(io, targetTeam, roomId);
 }
 
@@ -325,7 +322,9 @@ function playRPS(io, socket, data, room, roomId) {
       html += ` 재도전 (${team.rpsRerolls} 남음)`;
     }
 
-    io.to(socket.id).emit('rps_result', { html, resultClass: result, teamState: team });
+    team.rpsResult = { html, resultClass: result };
+
+    updateTeamMembers(io, team, roomId);
     broadcastTeamsUpdate(io, room, roomId);
 }
 
@@ -382,11 +381,9 @@ function drawEvent(io, socket, data, room, roomId) {
     team.eventText = event.text;
     team.eventResultClass = event.class;
 
-    io.to(socket.id).emit('event_result', { 
-      html: event.text, 
-      resultClass: event.class, 
-      teamState: team 
-    });
+    team.eventResult = { html: event.text, resultClass: event.class };
+
+    updateTeamMembers(io, team, roomId);
     calculateArrivalResults(io, team, room, roomId);
 }
 
@@ -412,11 +409,9 @@ function playFinalRPS(io, socket, data, room, roomId) {
       html += ` 재도전 (${team.rpsRerolls} 남음)`;
     }
 
-    io.to(socket.id).emit('final_rps_result', { 
-      html, 
-      resultClass: result, 
-      teamState: team 
-    });
+    team.finalRpsResultData = { html, resultClass: result };
+
+    updateTeamMembers(io, team, roomId);
     calculateArrivalResults(io, team, room, roomId);
 }
 

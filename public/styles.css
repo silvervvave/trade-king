@@ -1479,6 +1479,22 @@ body {
     font-size: 6em;
     font-weight: bold;
     color: var(--color-primary);
-    letter-spacing: 0.1em;
     padding: 0 var(--spacing-lg);
 }
+
+.player-status-item .status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.player-status-item .status-indicator.connected {
+    background-color: var(--color-success);
+}
+
+.player-status-item .status-indicator.disconnected {
+    background-color: var(--color-danger);
+}
+
