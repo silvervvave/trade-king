@@ -3,16 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>교수자 관리 패널</title>
+    <title>Trade-king admin</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div id="topBanner">
+        <div id="bannerLeft">TRADE-KING</div>
+        <div id="bannerCenter">
+            <div class="infoBox">ADMIN RM: <span id="bannerRoomCode">-</span></div>
+        </div>
+        <div id="bannerRight">
+            <div id="connectionStatus"></div>
+            <button id="participantsModalToggle" class="team-sidebar-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </button>
+        </div>
+    </div>
+
     <div class="admin-container">
-        <header>
-            <h1>교수자 관리 패널</h1>
-            <p>나는 무역왕이 될거야!</p>
-            <p id="connectionStatus" style="margin-top:10px; color:var(--color-danger);">🔴 서버 연결 대기중...</p>
-        </header>
 
         <!-- 방 생성 섹션 -->
         <div id="roomCreationSection" class="control-panel">
@@ -111,11 +119,22 @@
                 </div>
             </div>
 
-            <div id="allTeamsStatusContainer" class="control-panel hidden">
-                <h2>팀 현황</h2>
-                <div class="teams-grid-container">
-                    <!-- Team status cards will be dynamically generated here -->
-                </div>
+        <div id="allTeamsStatusContainer" class="control-panel hidden">
+            <h2>팀 현황</h2>
+            <div class="teams-grid-container">
+                <!-- Team status cards will be dynamically generated here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="participantsModal" class="hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>참가자 목록</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div id="modalTeamsContainer" class="teams-grid-container">
+                <!-- Participant team status will be rendered here -->
             </div>
         </div>
     </div>

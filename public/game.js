@@ -274,7 +274,7 @@ class GameClient {
         const connectionStatus = document.getElementById('connectionStatus');
         if (connectionStatus) {
             connectionStatus.textContent = connected ? '● 연결됨' : '◌ 연결 끊김';
-            connectionStatus.style.color = connected ? 'var(--color-success)' : 'var(--color-error)';
+            connectionStatus.style.color = connected ? 'var(--color-success)' : 'var(--color-danger)';
         }
     }
 

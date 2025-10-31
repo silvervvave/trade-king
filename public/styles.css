@@ -1356,44 +1356,181 @@ body {
 }
 
 #bannerLeft {
+
     font-weight: bold;
+
     font-size: 1.2em;
+
     color: var(--color-primary);
+
     letter-spacing: var(--trade-king-letter-spacing);
+
 }
+
+
+
+#bannerLeft.admin-logo {
+
+    font-size: 1.1em;
+
+    font-weight: 700;
+
+}
+
+
 
 #bannerCenter {
+
     display: flex;
+
     gap: 20px;
+
 }
+
+
 
 .infoBox {
+
     background: var(--color-ivory);
+
     font-weight: bold;
+
 }
+
+
 
 #bannerRight {
+
     display: flex;
+
     align-items: center;
+
     gap: 20px;
+
 }
+
+
 
 #connectionStatus {
+
     font-weight: bold;
+
 }
+
+
 
 #teamSidebarToggle {
+
     position: static;
+
     transform: none;
+
     width: auto;
+
     height: auto;
+
     background: none;
+
     border: none;
+
     color: var(--color-primary);
+
     box-shadow: none;
+
     transition: none;
+
 }
 
+
+
 #teamSidebarToggle svg {
+
     stroke: var(--color-primary);
+
+}
+
+
+
+/* Participants Modal */
+
+#participantsModal {
+
+    position: fixed;
+
+    top: 0;
+
+    left: 0;
+
+    width: 100%;
+
+    height: 100%;
+
+    background-color: rgba(0, 0, 0, 0.5);
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    z-index: 2000;
+
+}
+
+
+
+#participantsModal .modal-content {
+
+    background-color: var(--color-ivory);
+
+    padding: var(--spacing-xl);
+
+    border-radius: var(--radius-lg);
+
+    border: 2px solid var(--color-border);
+
+    width: 90%;
+
+    max-width: 800px;
+
+    max-height: 80%;
+
+    overflow-y: auto;
+
+}
+
+
+
+#participantsModal .modal-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: var(--spacing-lg);
+
+}
+
+
+
+#participantsModal .modal-header h2 {
+
+    color: var(--color-primary);
+
+}
+
+
+
+#participantsModal .close-btn {
+
+    background: none;
+
+    border: none;
+
+    font-size: 1.5em;
+
+    cursor: pointer;
+
 }

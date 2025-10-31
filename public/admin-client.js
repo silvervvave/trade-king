@@ -2,6 +2,31 @@ const socket = io();
 let adminRoomId = localStorage.getItem('adminRoomId') || null;
 console.log(`[클라이언트] adminRoomId 초기값: ${adminRoomId}`);
 
+document.addEventListener('DOMContentLoaded', () => {
+    const participantsModal = document.getElementById('participantsModal');
+    const toggleButton = document.getElementById('participantsModalToggle');
+    const closeButton = participantsModal.querySelector('.close-btn');
+
+    toggleButton.addEventListener('click', () => participantsModal.classList.remove('hidden'));
+    closeButton.addEventListener('click', () => participantsModal.classList.add('hidden'));
+    participantsModal.addEventListener('click', (e) => {
+        if (e.target === participantsModal) {
+            participantsModal.classList.add('hidden');
+        }
+    });
+});
+
+function updateConnectionStatus(isConnected) {
+    const statusElement = document.getElementById('connectionStatus');
+    if (isConnected) {
+        statusElement.textContent = '온라인';
+        statusElement.style.color = 'var(--color-success)';
+    } else {
+        statusElement.textContent = '오프라인';
+        statusElement.style.color = 'var(--color-danger)';
+    }
+}
+
 socket.on('connect', () => {
     console.log('관리자로 서버에 연결되었습니다.');
     updateConnectionStatus(true);
@@ -30,6 +55,7 @@ socket.on('room_created', (data) => {
     console.log(`[클라이언트] 방 ${adminRoomId} 생성 완료 및 localStorage 저장.`);
     
     document.getElementById('roomCodeDisplay').textContent = adminRoomId;
+    document.getElementById('bannerRoomCode').textContent = adminRoomId;
     document.getElementById('roomCreationSection').classList.add('hidden');
     document.getElementById('adminTransferSection').classList.add('hidden'); // Hide transfer section
     document.getElementById('mainDashboard').classList.remove('hidden');
@@ -47,6 +73,7 @@ socket.on('admin_reclaimed', (data) => {
         document.getElementById('adminTransferSection').classList.add('hidden'); // Hide transfer section
         document.getElementById('mainDashboard').classList.remove('hidden');
         document.getElementById('roomCodeDisplay').textContent = adminRoomId;
+        document.getElementById('bannerRoomCode').textContent = adminRoomId;
     } else {
         console.error('관리자 권한 재확보 실패:', data.message);
         showNotification(`관리자 권한 재확보 실패: ${data.message}`);
@@ -93,6 +120,7 @@ socket.on('admin_privileges_transferred', (data) => {
         localStorage.setItem('adminRoomId', adminRoomId);
         showNotification(`관리자 권한을 성공적으로 인계받았습니다: 방 ${adminRoomId}`);
         document.getElementById('roomCodeDisplay').textContent = adminRoomId;
+        document.getElementById('bannerRoomCode').textContent = adminRoomId;
         document.getElementById('roomCreationSection').classList.add('hidden');
         document.getElementById('adminTransferSection').classList.add('hidden'); // Hide transfer section
         document.getElementById('mainDashboard').classList.remove('hidden');
@@ -260,19 +288,26 @@ function updateAdminDashboard(state) {
 
 // 플레이어 목록 표시
 function updateTeamsDisplay(teams) {
-    const container = document.querySelector('#allTeamsStatusContainer .teams-grid-container');
-    if (!container) return;
+    const containers = [
+        document.querySelector('#allTeamsStatusContainer .teams-grid-container'),
+        document.getElementById('modalTeamsContainer')
+    ];
 
-    container.innerHTML = ''; // Clear previous content
+    if (!containers[0] || !containers[1]) return;
+
+    containers.forEach(container => {
+        container.innerHTML = ''; // Clear previous content
+    });
 
     const teamArray = Object.values(teams);
     teamArray.sort((a, b) => a.name.localeCompare(b.name));
 
+    const allTeamsContainer = document.getElementById('allTeamsStatusContainer');
     if (teamArray.length === 0) {
-        document.getElementById('allTeamsStatusContainer').classList.add('hidden');
+        if(allTeamsContainer) allTeamsContainer.classList.add('hidden');
         return;
     } else {
-        document.getElementById('allTeamsStatusContainer').classList.remove('hidden');
+        if(allTeamsContainer) allTeamsContainer.classList.remove('hidden');
     }
 
     teamArray.forEach(team => {
@@ -327,7 +362,10 @@ function updateTeamsDisplay(teams) {
         `;
 
         teamCard.innerHTML = leftSection + centerSection + rightSection;
-        container.appendChild(teamCard);
+        
+        containers.forEach(container => {
+            container.appendChild(teamCard.cloneNode(true));
+        });
     });
 }
 
