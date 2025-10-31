@@ -3,15 +3,17 @@ let adminRoomId = localStorage.getItem('adminRoomId') || null;
 console.log(`[클라이언트] adminRoomId 초기값: ${adminRoomId}`);
 
 document.addEventListener('DOMContentLoaded', () => {
-    const participantsModal = document.getElementById('participantsModal');
-    const toggleButton = document.getElementById('participantsModalToggle');
-    const closeButton = participantsModal.querySelector('.close-btn');
+    const sidebar = document.getElementById('adminSidebar');
+    const toggleButton = document.getElementById('adminSidebarToggle');
 
-    toggleButton.addEventListener('click', () => participantsModal.classList.remove('hidden'));
-    closeButton.addEventListener('click', () => participantsModal.classList.add('hidden'));
-    participantsModal.addEventListener('click', (e) => {
-        if (e.target === participantsModal) {
-            participantsModal.classList.add('hidden');
+    toggleButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.toggle('open');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (sidebar.classList.contains('open') && !sidebar.contains(e.target)) {
+            sidebar.classList.remove('open');
         }
     });
 });
@@ -288,16 +290,15 @@ function updateAdminDashboard(state) {
 
 // 플레이어 목록 표시
 function updateTeamsDisplay(teams) {
-    const containers = [
-        document.querySelector('#allTeamsStatusContainer .teams-grid-container'),
-        document.getElementById('modalTeamsContainer')
-    ];
+    const containers = {
+        dashboard: document.querySelector('#allTeamsStatusContainer .teams-grid-container'),
+        sidebar: document.getElementById('sidebarTeamsContainer')
+    };
 
-    if (!containers[0] || !containers[1]) return;
+    if (!containers.dashboard || !containers.sidebar) return;
 
-    containers.forEach(container => {
-        container.innerHTML = ''; // Clear previous content
-    });
+    // Clear previous content
+    Object.values(containers).forEach(container => { container.innerHTML = ''; });
 
     const teamArray = Object.values(teams);
     teamArray.sort((a, b) => a.name.localeCompare(b.name));
@@ -311,10 +312,28 @@ function updateTeamsDisplay(teams) {
     }
 
     teamArray.forEach(team => {
-        const teamCard = document.createElement('div');
-        teamCard.className = 'team-status-card';
+        // Simplified card for sidebar
+        const playersHtmlSimple = team.members.map(member => `
+            <div class="member-status">
+                <span class="status-indicator ${member.connected ? 'connected' : 'disconnected'}"></span>
+                ${member.name}
+            </div>
+        `).join('');
 
-        // Left section: Flag, Country Name
+        const sidebarCard = document.createElement('div');
+        sidebarCard.className = 'team-status-card-simple';
+        sidebarCard.innerHTML = `
+            <h4>${team.icon} ${team.name}</h4>
+            <div class="player-list-vertical">
+                ${playersHtmlSimple}
+            </div>
+        `;
+        containers.sidebar.appendChild(sidebarCard);
+
+        // Detailed card for dashboard
+        const detailCard = document.createElement('div');
+        detailCard.className = 'team-status-card';
+
         const leftSection = `
             <div class="team-card-left">
                 <div class="team-flag">${team.icon}</div>
@@ -322,8 +341,7 @@ function updateTeamsDisplay(teams) {
             </div>
         `;
 
-        // Center section: Player name/status, PA, Clicks, Special abilities
-        const playersHtml = team.members.map(member => `
+        const playersHtmlDetail = team.members.map(member => `
             <div class="player-status-item">
                 <span class="status-indicator ${member.connected ? 'connected' : 'disconnected'}"></span>
                 ${member.name}
@@ -333,7 +351,7 @@ function updateTeamsDisplay(teams) {
         const centerSection = `
             <div class="team-card-center">
                 <div class="player-list-horizontal">
-                    ${playersHtml}
+                    ${playersHtmlDetail}
                 </div>
                 <p>PA 보유량: <strong>${Math.floor(team.totalPA)}</strong></p>
                 <p>클릭 수: ${team.clickCount} / ${team.maxClicks}</p>
@@ -342,7 +360,6 @@ function updateTeamsDisplay(teams) {
             </div>
         `;
 
-        // Right section: Stacked boxes for phase progression
         const tradeStatus = team.tradeSelection ? 'completed' : '';
         const investmentStatus = team.investmentsMade.length > 0 ? 'completed' : '';
         const eventStatus = team.eventDrawnThisRound ? 'completed' : '';
@@ -361,11 +378,8 @@ function updateTeamsDisplay(teams) {
             </div>
         `;
 
-        teamCard.innerHTML = leftSection + centerSection + rightSection;
-        
-        containers.forEach(container => {
-            container.appendChild(teamCard.cloneNode(true));
-        });
+        detailCard.innerHTML = leftSection + centerSection + rightSection;
+        containers.dashboard.appendChild(detailCard);
     });
 }
 

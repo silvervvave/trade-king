@@ -2,7 +2,7 @@
    기본 설정 (New Theme)
    ============================================ */
 :root {
-    --trade-king-letter-spacing: -1px;
+    --trade-king-letter-spacing: -2px;
     --color-mint: #d8fde0;
     --color-ivory: #fffffd;
     --color-mocha-mousse: #A47864;
@@ -844,6 +844,42 @@ body {
     padding-bottom: var(--spacing-md);
 }
 
+/* Styles for simplified team cards in the admin sidebar */
+.team-status-card-simple {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.team-status-card-simple h4 {
+    color: var(--color-ivory);
+    font-size: 1.1em;
+    margin-bottom: var(--spacing-sm);
+}
+
+.player-list-vertical .member-status {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-xs) 0;
+    color: var(--color-ivory);
+    font-size: 0.95em;
+}
+
+.player-list-vertical .status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: var(--spacing-sm);
+}
+
+.player-list-vertical .status-indicator.connected {
+    background-color: #7CFC00;
+}
+
+.player-list-vertical .status-indicator.disconnected {
+    background-color: #FF6347;
+}
 
 
 #myTeamStatus .member-status {
@@ -1356,181 +1392,51 @@ body {
 }
 
 #bannerLeft {
-
     font-weight: bold;
-
     font-size: 1.2em;
-
     color: var(--color-primary);
-
     letter-spacing: var(--trade-king-letter-spacing);
-
 }
-
-
 
 #bannerLeft.admin-logo {
-
     font-size: 1.1em;
-
     font-weight: 700;
-
 }
-
-
 
 #bannerCenter {
-
     display: flex;
-
-    gap: 20px;
-
+    gap: 10px;
+    align-items: center;
 }
-
-
 
 .infoBox {
-
     background: var(--color-ivory);
-
     font-weight: bold;
-
 }
-
-
 
 #bannerRight {
-
     display: flex;
-
     align-items: center;
-
     gap: 20px;
-
 }
-
-
 
 #connectionStatus {
-
     font-weight: bold;
-
 }
 
-
-
-#teamSidebarToggle {
-
+.team-sidebar-toggle {
     position: static;
-
     transform: none;
-
     width: auto;
-
     height: auto;
-
     background: none;
-
     border: none;
-
     color: var(--color-primary);
-
     box-shadow: none;
-
     transition: none;
-
-}
-
-
-
-#teamSidebarToggle svg {
-
-    stroke: var(--color-primary);
-
-}
-
-
-
-/* Participants Modal */
-
-#participantsModal {
-
-    position: fixed;
-
-    top: 0;
-
-    left: 0;
-
-    width: 100%;
-
-    height: 100%;
-
-    background-color: rgba(0, 0, 0, 0.5);
-
-    display: flex;
-
-    justify-content: center;
-
-    align-items: center;
-
-    z-index: 2000;
-
-}
-
-
-
-#participantsModal .modal-content {
-
-    background-color: var(--color-ivory);
-
-    padding: var(--spacing-xl);
-
-    border-radius: var(--radius-lg);
-
-    border: 2px solid var(--color-border);
-
-    width: 90%;
-
-    max-width: 800px;
-
-    max-height: 80%;
-
-    overflow-y: auto;
-
-}
-
-
-
-#participantsModal .modal-header {
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    margin-bottom: var(--spacing-lg);
-
-}
-
-
-
-#participantsModal .modal-header h2 {
-
-    color: var(--color-primary);
-
-}
-
-
-
-#participantsModal .close-btn {
-
-    background: none;
-
-    border: none;
-
-    font-size: 1.5em;
-
     cursor: pointer;
+}
 
+.team-sidebar-toggle svg {
+    stroke: var(--color-primary);
 }
