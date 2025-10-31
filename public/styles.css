@@ -2,23 +2,25 @@
    기본 설정 (New Theme)
    ============================================ */
 :root {
-    --color-mint: #BDFCC9;
-    --color-ivory: #FFFFF0;
-    --color-dark-choco: #3D1E1E;
+    --trade-king-letter-spacing: -1px;
+    --color-mint: #d8fde0;
+    --color-ivory: #fffffd;
+    --color-mocha-mousse: #A47864;
+    --color-black: #000000;
 
-    --color-primary: var(--color-dark-choco);
+    --color-primary: var(--color-black);
     --color-secondary: var(--color-mint);
     
     /* Warning/Danger colors can be kept for semantic meaning, but let's make them fit better */
-    --color-warning: #E2B391;
-    --color-danger: #D99A9A;
-    --color-success: #28a745; /* 추가됨 */
+    --color-warning: #FFBE98;
+    --color-danger: #BE3455;
+    --color-success: #88B04B;
 
     --color-background: var(--color-ivory);
     --color-surface: var(--color-mint);
-    --color-text: var(--color-dark-choco);
-    --color-text-light: var(--color-dark-choco);
-    --color-border: var(--color-dark-choco);
+    --color-text: var(--color-black);
+    --color-text-light: var(--color-black);
+    --color-border: var(--color-black);
     
     --spacing-xs: 4px;
     --spacing-sm: 8px;
@@ -47,6 +49,7 @@ body {
     background: var(--color-background);
     min-height: 100vh;
     color: var(--color-text);
+    padding-top: 60px; /* Height of the banner */
 }
 
 .hidden {
@@ -343,9 +346,8 @@ body {
     align-items: center;
     gap: 0.5rem;
     padding: 6px 12px;
-    border-radius: 999px;
+        border-radius: 999px;
     background: var(--color-ivory);
-    border: 1px solid var(--color-border);
     font-weight: 700;
     color: var(--color-text);
 }
@@ -792,7 +794,7 @@ body {
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background-color: var(--color-dark-choco);
+    background-color: var(--color-mocha-mousse);
     color: var(--color-ivory); /* 아이보리색으로 변경 */
     padding: 12px 20px;
     border-radius: var(--radius-md);
@@ -842,33 +844,7 @@ body {
     padding-bottom: var(--spacing-md);
 }
 
-.team-sidebar-toggle {
-    position: fixed;
-    top: 50%;
-    right: 10px;
-    transform: translateY(-50%);
-    width: 50px;
-    height: 50px;
-    background: var(--color-primary);
-    color: var(--color-ivory);
-    border: 2px solid var(--color-border);
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: var(--shadow-md);
-    z-index: 1001;
-    transition: right 0.4s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
-.team-sidebar-toggle svg {
-    stroke: var(--color-ivory);
-}
-
-.team-sidebar.open + .team-sidebar-toggle {
-    right: 310px; /* 사이드바가 열렸을 때 버튼 위치 */
-}
 
 #myTeamStatus .member-status {
     display: flex;
@@ -1155,7 +1131,7 @@ body {
 }
 
 .phase-box.completed {
-    background-color: var(--color-dark-choco);
+    background-color: var(--color-mocha-mousse);
     color: var(--color-ivory);
 }
 
@@ -1360,4 +1336,64 @@ body {
     .team-card-right {
         margin-top: var(--spacing-md);
     }
+}
+
+/* ============================================
+   Top Banner
+   ============================================ */
+#topBanner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: var(--color-background);
+    border-bottom: 2px solid var(--color-background);
+    z-index: 1001;
+}
+
+#bannerLeft {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: var(--color-primary);
+    letter-spacing: var(--trade-king-letter-spacing);
+}
+
+#bannerCenter {
+    display: flex;
+    gap: 20px;
+}
+
+.infoBox {
+    background: var(--color-ivory);
+    font-weight: bold;
+}
+
+#bannerRight {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+#connectionStatus {
+    font-weight: bold;
+}
+
+#teamSidebarToggle {
+    position: static;
+    transform: none;
+    width: auto;
+    height: auto;
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    box-shadow: none;
+    transition: none;
+}
+
+#teamSidebarToggle svg {
+    stroke: var(--color-primary);
 }

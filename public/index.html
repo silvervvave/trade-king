@@ -7,14 +7,27 @@
     <link rel="stylesheet" href="styles.css?v=1.1">
 </head>
 <body>
+    <div id="topBanner">
+        <div id="bannerLeft">TRADE-KING</div>
+        <div id="bannerCenter">
+            <div class="infoBox">ROOM: <span id="bannerRoomCode">-</span></div>
+            <div class="infoBox">TEAM: <span id="bannerTeam">-</span></div>
+        </div>
+        <div id="bannerRight">
+            <div id="connectionStatus"></div>
+            <button id="teamSidebarToggle" class="team-sidebar-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </button>
+        </div>
+    </div>
     <!-- 방 참가 화면 -->
     <div id="joinRoomSection" class="screen">
         <div class="join-container">
             <h1>나는 무역왕이 될거야!</h1>
-            <p class="subtitle">대항해시대 무역 시뮬레이션 게임</p>
+            <p class="subtitle">대항해시대 무역 게임</p>
             
             <div class="input-group">
-                <label for="playerNameInput">플레이어 이름</label>
+                <label for="playerNameInput">예비 무역왕 이름</label>
                 <input type="text" id="playerNameInput" placeholder="이름을 입력하세요" maxlength="20">
             </div>
             
@@ -26,8 +39,6 @@
             <button class="game-btn btn-primary" id="joinRoomBtn">
                 게임 참가하기
             </button>
-            
-            <p class="info-text">먼저 서버에 연결되었는지 확인하세요 (위의 연결 상태 확인)</p>
         </div>
     </div>
 
@@ -60,9 +71,6 @@
                 <h3>우리 팀 현황</h3>
                 <div id="myTeamStatus"></div>
             </div>
-            <button id="teamSidebarToggle" class="team-sidebar-toggle">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </button>
 
             <!-- 상단 네비게이션 -->
             <nav id="gameNav" class="game-nav hidden">
@@ -75,7 +83,6 @@
             <!-- 게임 정보 헤더 -->
             <div class="game-header">
                 <div class="header-info">
-                    <span id="connectionStatus">🔴 서버 연결 대기중...</span>
                     <span id="currentRound">라운드: -</span>
                     <span id="timeRemaining">시간: --:--</span>
                 </div>

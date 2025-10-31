@@ -42,7 +42,7 @@ class GameClient {
             console.log('서버에 연결되었습니다!', this.socket.id);
             this.updateConnectionStatus(true);
             
-            if (this.gameState.player.country && this.playerRoomId && !this.playerRegistered) {
+            if (this.gameState.player.country && this.playerRoomId && !this.playerRegistered && !this.gameState.gameStarted) {
                 this.registerPlayer();
             }
         });
@@ -204,6 +204,11 @@ class GameClient {
                 this.playerRoomId = data.roomId;
                 this.gameState.player.name = data.playerName;
 
+                const bannerRoomCode = document.getElementById('bannerRoomCode');
+                if (bannerRoomCode) {
+                    bannerRoomCode.textContent = data.roomId;
+                }
+
                 if (data.countryConfig) {
                     this.countryConfig = data.countryConfig;
                     this.generateCountrySelection();
@@ -225,7 +230,9 @@ class GameClient {
     }
 
     setupDOM() {
+        this.updateConnectionStatus(false);
         document.getElementById('joinRoomBtn').addEventListener('click', () => this.joinRoom());
+
         document.getElementById('produceBtn').addEventListener('click', () => this.produce());
         document.querySelectorAll('.rps-btn').forEach(btn => btn.addEventListener('click', (e) => this.playRPS(e.target.dataset.choice)));
         document.getElementById('rerollRPSBtn').addEventListener('click', () => this.rerollRPS());
@@ -264,10 +271,10 @@ class GameClient {
     }
 
     updateConnectionStatus(connected) {
-        const statusDiv = document.getElementById('connectionStatus');
-        if (statusDiv) {
-            statusDiv.textContent = connected ? '● 연결됨' : '◌ 연결 끊김';
-            statusDiv.style.color = connected ? 'var(--color-success)' : 'var(--color-error)';
+        const connectionStatus = document.getElementById('connectionStatus');
+        if (connectionStatus) {
+            connectionStatus.textContent = connected ? '● 연결됨' : '◌ 연결 끊김';
+            connectionStatus.style.color = connected ? 'var(--color-success)' : 'var(--color-error)';
         }
     }
 
@@ -397,10 +404,15 @@ class GameClient {
 
         this.playerRegistered = true;
 
+        const config = this.countryConfig[this.gameState.player.country];
+        const bannerTeam = document.getElementById('bannerTeam');
+        if (bannerTeam && config) {
+            bannerTeam.textContent = config.name;
+        }
+
         document.getElementById('countrySelection').classList.add('hidden');
         document.getElementById('waitingScreen').classList.remove('hidden');
 
-        const config = this.countryConfig[this.gameState.player.country];
         this.showNotification(`${config.name} 팀에 참가했습니다!`);
     }
 
