@@ -1483,17 +1483,3 @@ body {
     letter-spacing: 0.1em;
     padding: 0 var(--spacing-lg);
 }
-
-.close-btn-room-code {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 2em;
-    color: var(--color-text-light);
-    cursor: pointer;
-    transition: color 0.3s;
-}
-
-.close-btn-room-code:hover {
-    color: var(--color-primary);
-}

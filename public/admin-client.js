@@ -79,7 +79,6 @@ socket.on('room_created', (data) => {
     localStorage.setItem('adminRoomId', adminRoomId);
     console.log(`[클라이언트] 방 ${adminRoomId} 생성 완료 및 localStorage 저장.`);
     
-    document.getElementById('roomCodeDisplay').textContent = adminRoomId;
     document.getElementById('bannerRoomCode').textContent = adminRoomId;
     document.getElementById('roomCreationSection').classList.add('hidden');
     document.getElementById('adminTransferSection').classList.add('hidden'); // Hide transfer section
