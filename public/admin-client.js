@@ -5,7 +5,12 @@ console.log(`[클라이언트] adminRoomId 초기값: ${adminRoomId}`);
 document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.getElementById('adminSidebar');
     const toggleButton = document.getElementById('adminSidebarToggle');
+    const roomCodeModal = document.getElementById('roomCodeModal');
+    const roomCodeInfoBox = document.getElementById('roomCodeInfoBox');
+    const modalRoomCodeDisplay = document.getElementById('modalRoomCodeDisplay');
+    const closeRoomCodeModalBtn = roomCodeModal.querySelector('.close-btn-room-code');
 
+    // Sidebar toggle
     toggleButton.addEventListener('click', (e) => {
         e.stopPropagation();
         sidebar.classList.toggle('open');
@@ -14,6 +19,24 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
         if (sidebar.classList.contains('open') && !sidebar.contains(e.target)) {
             sidebar.classList.remove('open');
+        }
+    });
+
+    // Room code modal toggle
+    roomCodeInfoBox.addEventListener('click', () => {
+        if (adminRoomId) {
+            modalRoomCodeDisplay.textContent = adminRoomId;
+            roomCodeModal.classList.remove('hidden');
+        }
+    });
+
+    closeRoomCodeModalBtn.addEventListener('click', () => {
+        roomCodeModal.classList.add('hidden');
+    });
+
+    roomCodeModal.addEventListener('click', (e) => {
+        if (e.target === roomCodeModal) {
+            roomCodeModal.classList.add('hidden');
         }
     });
 });

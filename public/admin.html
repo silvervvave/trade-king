@@ -10,7 +10,7 @@
     <div id="topBanner">
         <div id="bannerLeft">TRADE-KING</div>
         <div id="bannerCenter">
-            <div class="infoBox">ADMIN RM: <span id="bannerRoomCode">-</span></div>
+            <div id="roomCodeInfoBox" class="infoBox">RM: <span id="bannerRoomCode">-</span></div>
         </div>
         <div id="bannerRight">
             <div id="connectionStatus"></div>
@@ -129,6 +129,14 @@
         <h3>참가자 목록</h3>
         <div id="sidebarTeamsContainer">
             <!-- Participant team status will be rendered here -->
+        </div>
+    </div>
+
+    <!-- Room Code Modal -->
+    <div id="roomCodeModal" class="hidden">
+        <div class="modal-content-room-code">
+            <span class="close-btn-room-code">&times;</span>
+            <div id="modalRoomCodeDisplay" style="text-align: center;">-</div>
         </div>
     </div>
 
