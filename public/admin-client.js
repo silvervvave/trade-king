@@ -308,15 +308,14 @@ function updateAdminDashboard(state) {
 
 // 플레이어 목록 표시
 function updateTeamsDisplay(teams) {
-    const containers = {
-        dashboard: document.querySelector('#allTeamsStatusContainer .teams-grid-container'),
-        sidebar: document.getElementById('sidebarTeamsContainer')
-    };
+    const dashboardContainer = document.querySelector('#allTeamsStatusContainer .teams-grid-container');
+    const sidebarContainer = document.getElementById('sidebarTeamsContainer');
 
-    if (!containers.dashboard || !containers.sidebar) return;
+    if (!dashboardContainer || !sidebarContainer) return;
 
     // Clear previous content
-    Object.values(containers).forEach(container => { container.innerHTML = ''; });
+    dashboardContainer.innerHTML = '';
+    sidebarContainer.innerHTML = '';
 
     const teamArray = Object.values(teams);
     teamArray.sort((a, b) => a.name.localeCompare(b.name));
@@ -330,7 +329,7 @@ function updateTeamsDisplay(teams) {
     }
 
     teamArray.forEach(team => {
-        // Simplified card for sidebar
+        // --- Simplified card for sidebar ---
         const playersHtmlSimple = team.members.map(member => `
             <div class="member-status">
                 <span class="status-indicator ${member.connected ? 'connected' : 'disconnected'}"></span>
@@ -346,9 +345,9 @@ function updateTeamsDisplay(teams) {
                 ${playersHtmlSimple}
             </div>
         `;
-        containers.sidebar.appendChild(sidebarCard);
+        sidebarContainer.appendChild(sidebarCard);
 
-        // Detailed card for dashboard
+        // --- Detailed card for dashboard ---
         const detailCard = document.createElement('div');
         detailCard.className = 'team-status-card';
 
@@ -397,7 +396,7 @@ function updateTeamsDisplay(teams) {
         `;
 
         detailCard.innerHTML = leftSection + centerSection + rightSection;
-        containers.dashboard.appendChild(detailCard);
+        dashboardContainer.appendChild(detailCard);
     });
 }
 
