@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - Trade King</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .room-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-text-light);
+            border-radius: var(--radius-lg);
+            padding: var(--space-16);
+            margin-bottom: var(--space-16);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .room-info span {
+            margin-right: var(--space-24);
+            font-size: var(--font-size-lg);
+        }
+        .room-info span strong {
+            color: var(--color-primary);
+        }
+        .close-btn {
+            background-color: var(--color-danger);
+        }
+    </style>
+</head>
+<body>
+    <div id="topBanner">
+        <div id="bannerLeft">TRADE-KING</div>
+        <div id="bannerCenter">
+        </div>
+        <div id="bannerRight">
+            <div id="connectionStatus"></div>
+        </div>
+    </div>
+
+    <div class="admin-container">
+        <header>
+            <h1>Super Admin Dashboard</h1>
+            <p>모든 활성 게임 룸 모니터링</p>
+        </header>
+
+        <div class="control-panel">
+            <h2>활성 룸 목록 (<span id="roomCount">0</span>)</h2>
+            <div id="roomListContainer">
+                <!-- 방 목록이 여기에 동적으로 추가됩니다. -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="utils.js"></script>
+    <script src="super-admin-client.js"></script>
+</body>
+</html>

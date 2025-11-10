@@ -1,0 +1,1650 @@
+/* ============================================
+   기본 설정 (New Theme)
+   ============================================ */
+:root {
+    --trade-king-letter-spacing: -2px;
+    --color-cannoli-cream: #F1F0E2;
+    --color-gardenia: #fffdf2;
+    --color-mocha-mousse: #A47764;
+    --color-chocolate-martini: #503f3b;
+
+    --color-primary: var(--color-chocolate-martini);
+    --color-secondary: var(--color-cannoli-cream);
+    
+    /* Warning/Danger colors can be kept for semantic meaning, but let's make them fit better */
+    --color-warning: #FFBE98;
+    --color-danger: #BE3455;
+    --color-success: #88B04B;
+
+    --color-background: var(--color-gardenia);
+    --color-surface: var(--color-cannoli-cream);
+    --color-text: var(--color-chocolate-martini);
+    --color-text-light: var(--color-chocolate-martini);
+    --color-border: var(--color-chocolate-martini);
+    
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.07);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--color-background);
+    min-height: 100vh;
+    color: var(--color-text);
+    padding-top: 60px; /* Height of the banner */
+    touch-action: manipulation;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ============================================
+   화면 컨테이너
+   ============================================ */
+.screen {
+    height: calc(100vh - 60px); /* 배너 높이를 제외한 나머지 뷰포트 높이 */
+    display: flex;
+    align-items: center; /* 중앙 정렬로 복원 */
+    justify-content: center;
+    padding: var(--spacing-lg);
+}
+
+/* ============================================
+   방 참가 화면
+   ============================================ */
+.join-container {
+    background: var(--color-surface);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-xl);
+    max-width: 900px;
+    width: 100%;
+    text-align: center;
+}
+
+.join-container h1 {
+    font-size: 2.5em;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-primary);
+}
+
+.subtitle {
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-xl);
+    font-size: 1.1em;
+}
+
+.join-container .input-group,
+.join-container .btn-primary {
+    max-width: 450px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.input-group {
+    margin-bottom: var(--spacing-lg);
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.input-group input {
+    width: 100%;
+    padding: var(--spacing-md);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 1em;
+    transition: border-color 0.3s;
+    background-color: var(--color-gardenia);
+    color: var(--color-text);
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+/* Toggle Input Styles */
+.toggle-input {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background-color: var(--color-gardenia);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+}
+
+.btn-toggle {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-primary);
+    font-size: 1.5em;
+    font-weight: bold;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s;
+}
+
+.btn-toggle:hover {
+    background-color: var(--color-primary);
+    color: var(--color-gardenia);
+}
+
+.toggle-value {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--color-primary);
+    flex-grow: 1;
+    text-align: center;
+}
+
+/* ============================================
+   버튼 스타일
+   ============================================ */
+.game-btn {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: var(--color-gardenia);
+    width: 100%;
+}
+
+.btn-primary:hover {
+    background: var(--color-surface);
+    color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-primary);
+}
+
+.btn-secondary:hover {
+    background: var(--color-primary);
+    color: var(--color-surface);
+}
+
+.btn-click {
+    background: var(--color-primary);
+    color: var(--color-gardenia);
+    font-size: 1.2em;
+    padding: var(--spacing-lg);
+    width: 100%;
+}
+
+.btn-click:hover {
+    background: var(--color-surface);
+    color: var(--color-primary);
+    transform: scale(1.05);
+}
+
+.info-text {
+    color: var(--color-text-light);
+    font-size: 0.9em;
+    margin-top: var(--spacing-md);
+}
+
+/* ============================================
+   초기 선택 화면
+   ============================================ */
+.choice-container {
+    max-width: 900px;
+    width: 100%;
+    text-align: center;
+}
+
+.choice-container h1 {
+    font-size: 2.5em;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-primary);
+}
+
+.choice-buttons {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+}
+
+.btn-choice {
+    background: var(--color-primary);
+    color: var(--color-gardenia);
+    width: 150px;
+    text-decoration: none; /* for <a> tag */
+    display: inline-block; /* for <a> tag */
+    line-height: 40px; /* for <a> tag */
+    padding: 0;
+}
+
+.btn-choice:hover {
+    background: var(--color-surface);
+    color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* ============================================
+   국가 선택 화면
+   ============================================ */
+.selection-container {
+    background: var(--color-surface);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-xl);
+    border: 2px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
+    max-width: 900px;
+    width: 100%;
+}
+
+.selection-container h2 {
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+    color: var(--color-primary);
+    font-size: 2em;
+}
+
+.country-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+    justify-content: center; /* 그리드 항목들을 중앙에 정렬 */
+    align-content: center; /* 그리드 행들을 중앙에 정렬 */
+}
+
+.country-card {
+    background: var(--color-gardenia);
+    border: 3px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.country-card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.country-icon {
+    font-size: 4em;
+    margin-bottom: var(--spacing-md);
+}
+
+.country-card h3 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.country-trait {
+    color: var(--color-primary);
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+}
+
+.country-stats {
+    list-style: none;
+    text-align: left;
+    padding-left: var(--spacing-md);
+}
+
+.country-stats li {
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.9em;
+}
+
+/* ============================================
+   대기 화면
+   ============================================ */
+.waiting-container {
+    background: var(--color-surface);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-xl);
+    border: 2px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    max-width: 900px;
+}
+
+.waiting-container h2 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    margin: var(--spacing-xl) auto;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   게임 화면
+   ============================================ */
+#gameScreen {
+    background: var(--color-background);
+    min-height: 100vh;
+    padding: 0;
+    display: block; /* flex 대신 block으로 변경 */
+}
+
+.game-content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+    margin-bottom: 180px; /* 팀 현황 창과의 간섭을 줄이기 위해 여백 추가 */
+}
+
+.game-nav {
+    background: var(--color-surface);
+    padding: var(--spacing-md);
+    display: flex;
+    gap: var(--spacing-sm);
+    box-shadow: var(--shadow-md);
+    z-index: 100;
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
+}
+
+.nav-btn {
+    flex: 1;
+    padding: var(--spacing-md);
+    background: var(--color-gardenia);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: var(--color-text);
+}
+
+.nav-btn:hover {
+    background: var(--color-primary);
+    color: var(--color-gardenia);
+    border-color: var(--color-border);
+}
+
+.nav-btn.active {
+    background: var(--color-primary);
+    color: var(--color-gardenia);
+    border-color: var(--color-border);
+}
+
+.game-header {
+    background: var(--color-surface);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+}
+
+#connectionStatus {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 6px 12px;
+        border-radius: 999px;
+    background: var(--color-gardenia);
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.header-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+    font-weight: 600;
+}
+
+.resource-display {
+    display: flex;
+    gap: var(--spacing-lg);
+    justify-content: center;
+}
+
+.resource-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--color-primary);
+    border-radius: var(--radius-md);
+    color: var(--color-gardenia);
+    min-width: 100px;
+}
+
+.resource-label {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+.resource-value {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: var(--spacing-xs);
+}
+
+/* ============================================
+   게임 영역
+   ============================================ */
+.game-area {
+    max-width: 1000px;
+    margin: var(--spacing-xl) auto;
+    padding: 0 var(--spacing-lg);
+}
+
+.game-area h2 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    font-size: 2em;
+}
+
+/* ============================================
+   생산 패널
+   ============================================ */
+.production-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+}
+
+@media (max-width: 768px) {
+    .production-panel {
+        grid-template-columns: 1fr;
+    }
+}
+
+.click-section,
+.rps-section {
+    background: var(--color-surface);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+}
+
+.click-section h3,
+.rps-section h3 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.production-stats {
+    margin: var(--spacing-md) 0;
+    text-align: center;
+}
+
+.production-stats p {
+    margin: var(--spacing-sm) 0;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.rps-buttons {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: var(--color-gardenia);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    margin-top: var(--spacing-md);
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--color-primary);
+    width: 0%;
+    transition: width 0.3s;
+}
+
+/* ============================================
+   출항 패널
+   ============================================ */
+.trade-panel {
+    background: var(--color-surface);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+}
+
+.trade-panel h3 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.destination-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.destination-card {
+    background: var(--color-gardenia);
+    border: 3px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    min-height: 180px; /* 고정 높이 */
+}
+
+.destination-card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.destination-icon {
+    font-size: 3em;
+    margin-bottom: var(--spacing-md);
+}
+
+.destination-card h4 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.destination-trait {
+    color: var(--color-text-light);
+    font-size: 0.9em;
+    margin-bottom: var(--spacing-md);
+}
+
+.selection-display {
+    margin-top: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background: var(--color-primary);
+    color: var(--color-gardenia);
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+/* ============================================
+   투자 패널
+   ============================================ */
+.investment-panel {
+    background: var(--color-surface);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+}
+
+.investment-panel h3 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.investment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.investment-card {
+    background: var(--color-gardenia);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    transition: all 0.3s;
+    height: 100%;
+    min-height: 250px; /* 고정 높이 */
+}
+
+.investment-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.investment-card h4 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.investment-card p {
+    color: var(--color-text-light);
+    margin: var(--spacing-xs) 0;
+}
+
+.investment-status {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+}
+
+.investment-status-title {
+    font-weight: bold;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.investment-status-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.investment-status-list li {
+    font-size: 0.9em;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-xs);
+}
+
+/* ============================================
+   입항 패널
+   ============================================ */
+.arrival-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+}
+
+.event-section,
+.final-rps-section {
+    background: var(--color-surface);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+}
+
+.event-section h3,
+.final-rps-section h3 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.final-rps-btn {
+    flex: 1;
+    padding: var(--spacing-lg);
+    background: var(--color-gardenia);
+    border: 3px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.final-rps-btn:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--color-gardenia);
+    transform: scale(1.05);
+}
+
+.final-rps-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   결과 패널
+   ============================================ */
+.results-panel {
+    background: var(--color-surface);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+    text-align: center;
+}
+
+/* ============================================
+   토큰 정보 표시 스타일 (추가됨)
+   ============================================ */
+.token-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    background: var(--color-primary);
+    border-radius: 8px;
+    color: var(--color-gardenia);
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.token-icon {
+    font-size: 1.5em;
+}
+
+.token-text {
+    font-size: 1em;
+}
+
+/* 현재 단계 표시 스타일 (추가됨) */
+.nav-btn.current-phase {
+    background: var(--color-primary);
+    color: var(--color-gardenia);
+    border-color: var(--color-border);
+    box-shadow: 0 0 12px rgba(61,30,30,0.25);
+}
+
+.phase-indicator {
+    font-weight: bold;
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    0%, 50%, 100% { transform: 1; }
+    25%, 75% { opacity: 0.5; }
+}
+
+/* ============================================
+   반응형 디자인
+   ============================================ */
+@media (max-width: 768px) {
+    /* overflow: hidden; */ /* Removed to enable scrolling */
+
+    .game-nav {
+        flex-wrap: wrap;
+    }
+    
+    .nav-btn {
+        flex-basis: calc(50% - var(--spacing-xs));
+    }
+    
+    .resource-display {
+        gap: var(--spacing-sm);
+    }
+
+    .resource-item {
+        min-width: 0;
+        padding: var(--spacing-sm);
+        flex: 1;
+    }
+
+    .resource-label {
+        font-size: 0.8em;
+    }
+
+    .resource-value {
+        font-size: 1.2em;
+    }
+    
+    .production-panel,
+    .arrival-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .destination-grid,
+    .investment-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .country-card {
+        padding: var(--spacing-sm);
+    }
+
+    .country-icon {
+        font-size: 2.5em;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .country-card h3 {
+        font-size: 1em;
+    }
+
+    .country-trait {
+        font-size: 0.8em;
+    }
+
+    .country-stats li {
+        font-size: 0.75em;
+    }
+}
+
+/* ============================================
+   애니메이션
+   ============================================ */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* 알림창 스타일 */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--color-mocha-mousse);
+    color: var(--color-gardenia); /* 아이보리색으로 변경 */
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 9999;
+    font-size: 1em;
+    font-weight: 600;
+    animation: fadeInOut 3s ease-in-out;
+    border: 2px solid var(--color-border);
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, 20px); }
+    10% { opacity: 1; transform: translate(-50%, 0); }
+    90% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, 20px); }
+}
+
+/* ============================================
+   팀 현황 사이드바 (추가)
+   ============================================ */
+.team-sidebar {
+    position: fixed;
+    top: 0;
+    right: -320px; /* 초기에는 숨김 */
+    width: 300px;
+    height: 100%;
+    background: rgba(61, 30, 30, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: -2px 0 15px rgba(0,0,0,0.2);
+    padding: var(--spacing-lg);
+    transition: right 0.4s ease;
+    z-index: 1000;
+    border-left: 1px solid rgba(255, 255, 240, 0.2);
+    overflow-y: auto;
+}
+
+.team-sidebar.open {
+    right: 0; /* 열렸을 때 위치 */
+}
+
+.team-sidebar h3 {
+    color: var(--color-gardenia);
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 1px solid rgba(255, 255, 240, 0.2);
+    padding-bottom: var(--spacing-md);
+}
+
+/* Styles for simplified team cards in the admin sidebar */
+.team-status-card-simple {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.team-status-card-simple h4 {
+    color: var(--color-gardenia);
+    font-size: 1.1em;
+    margin-bottom: var(--spacing-sm);
+}
+
+.player-list-vertical .member-status {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-xs) 0;
+    color: var(--color-gardenia);
+    font-size: 0.95em;
+}
+
+.player-list-vertical .status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: var(--spacing-sm);
+}
+
+.player-list-vertical .status-indicator.connected {
+    background-color: #7CFC00;
+}
+
+.player-list-vertical .status-indicator.disconnected {
+    background-color: #FF6347;
+}
+
+
+#myTeamStatus .member-status {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid rgba(255, 255, 240, 0.1);
+    color: var(--color-gardenia);
+}
+
+#myTeamStatus .member-status:last-child {
+    border-bottom: none;
+}
+
+#myTeamStatus .status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: var(--spacing-md);
+}
+
+#myTeamStatus .status-indicator.connected {
+    background-color: #7CFC00; /* LimeGreen for better visibility */
+}
+
+#myTeamStatus .status-indicator.disconnected {
+    background-color: #FF6347; /* Tomato for better visibility */
+}
+
+/* ============================================
+   관리자 패널 스타일
+   ============================================ */
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+}
+
+.admin-container header {
+    background: var(--color-surface);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    box-shadow: var(--shadow-md);
+    border: 2px solid var(--color-border);
+}
+
+.admin-container header h1 {
+    font-size: 1.8em;
+    color: var(--color-primary);
+    margin-bottom: 0.25rem;
+}
+
+.admin-container header p {
+    color: var(--color-text-light);
+    margin-top: 0.25rem;
+}
+
+.control-panel {
+    background: var(--color-surface);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+    border: 2px solid var(--color-border);
+}
+
+.control-panel h2 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--color-border);
+}
+
+.control-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.control-section {
+    background: var(--color-gardenia);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+}
+
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.admin-btn {
+    flex: 1 1 auto;
+    padding: var(--spacing-md);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    background-color: var(--color-gardenia);
+    color: var(--color-primary);
+}
+
+.admin-btn { min-width: 140px; }
+
+.button-group { align-items: center; }
+
+.admin-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    background-color: var(--color-primary);
+    color: var(--color-gardenia);
+}
+
+.btn-production { background-color: var(--color-primary); color: var(--color-gardenia); }
+.btn-trade { background-color: var(--color-cannoli-cream); color: var(--color-primary); }
+.btn-timer { background-color: var(--color-warning); color: var(--color-primary); }
+.btn-arrival { background-color: var(--color-gardenia); color: var(--color-primary); }
+.btn-end { background-color: var(--color-danger); color: var(--color-gardenia); }
+
+.timer-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.timer-controls input {
+    width: 80px;
+    padding: var(--spacing-md);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-gardenia);
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.status-card {
+    background: var(--color-gardenia);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.status-label {
+    font-weight: 600;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-sm);
+}
+
+.status-value {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--color-primary);
+}
+
+#playersContainer h2 {
+    margin-bottom: var(--spacing-lg);
+}
+
+/* ============================================
+   전체 팀 현황 스타일
+   ============================================ */
+.all-teams-status-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--color-surface);
+    padding: var(--spacing-md);
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    border-top: 2px solid var(--color-border);
+    display: flex;
+    flex-wrap: wrap; /* Allow cards to wrap to the next line */
+    justify-content: center; /* Center cards horizontally */
+    overflow-x: hidden; /* Remove horizontal scrolling */
+    gap: var(--spacing-md);
+    z-index: 200;
+}
+
+.team-status-card {
+    flex: 0 0 auto; /* Allow cards to size automatically, remove fixed width */
+    width: 180px; /* Keep a default width, but allow it to be overridden by media queries if needed */
+    max-width: calc(33.333% - var(--spacing-md) * 2 / 3); /* Max 3 cards per row on larger screens */
+    padding: var(--spacing-sm);
+    background: var(--color-background);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    text-align: center; /* 중앙 정렬 */
+}
+
+/* Media query for smaller screens to stack cards */
+@media (max-width: 768px) {
+    .team-status-card {
+        max-width: calc(50% - var(--spacing-md) / 2); /* 2 cards per row on medium screens */
+    }
+}
+
+@media (max-width: 480px) {
+    .team-status-card {
+        max-width: 100%; /* 1 card per row on small screens */
+    }
+}
+
+/* New Team Status Card Styles */
+.teams-grid-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.team-status-card {
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    display: flex; /* Use flexbox for internal layout */
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+    transition: all 0.2s ease-in-out;
+}
+
+.team-status-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.team-card-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Align left */
+    gap: var(--spacing-sm);
+}
+
+.team-flag {
+    font-size: 2.5em; /* Adjust size as needed */
+    line-height: 1;
+}
+
+.team-name {
+    font-weight: bold;
+    color: var(--color-primary);
+    font-size: 1.1em;
+    white-space: nowrap; /* Prevent wrapping */
+}
+
+.team-card-center {
+    flex-grow: 1;
+    text-align: center;
+    padding: 0 var(--spacing-md);
+}
+
+.player-list-horizontal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.player-status-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.9em;
+    color: var(--color-text-light);
+    white-space: nowrap;
+}
+
+.team-card-center p {
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.9em;
+    color: var(--color-text-light);
+}
+
+.team-card-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Align right */
+}
+
+.status-box-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    width: 100px;
+    min-width: 100px; /* Fixed width for the stack */
+}
+
+.status-box {
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--color-border);
+    text-align: center;
+    font-size: 0.8em;
+    height: 30px; /* Fixed height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-gardenia);
+    color: var(--color-text);
+}
+
+.status-box.completed {
+    background-color: var(--color-primary);
+    color: var(--color-gardenia);
+    border-style: solid;
+}
+
+.status-box-row {
+    display: flex;
+    gap: var(--spacing-xs);
+    width: 100%;
+}
+
+.status-box.half-width {
+    flex: 1;
+}
+
+/* ============================================
+   Top Banner
+   ============================================ */
+#topBanner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: var(--color-background);
+    border-bottom: 2px solid var(--color-background);
+    z-index: 1001;
+}
+
+#bannerLeft {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: var(--color-primary);
+    letter-spacing: var(--trade-king-letter-spacing);
+    user-select: none;
+    cursor: pointer;
+}
+
+#bannerLeft.admin-logo {
+    font-size: 1.1em;
+    font-weight: 700;
+}
+
+#bannerCenter {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.infoBox {
+    background: var(--color-gardenia);
+    font-weight: bold;
+}
+
+#bannerRight {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+#connectionStatus {
+    font-weight: bold;
+}
+
+#connectionStatus.connected {
+    color: var(--color-success);
+}
+
+#connectionStatus.disconnected {
+    color: var(--color-danger);
+}
+
+.team-sidebar-toggle,
+.all-teams-status-toggle {
+    position: static;
+    transform: none;
+    width: auto;
+    height: auto;
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    box-shadow: none;
+    transition: none;
+    cursor: pointer;
+}
+
+.team-sidebar-toggle svg,
+.all-teams-status-toggle svg {
+    stroke: var(--color-primary);
+}
+
+#roomCodeInfoBox {
+    cursor: pointer;
+}
+
+/* Room Code Modal */
+#roomCodeModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content-room-code {
+    position: relative;
+    background-color: var(--color-gardenia);
+    padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg) var(--spacing-xl);
+    border-radius: var(--radius-xl);
+    border: 2px solid var(--color-border);
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-content-room-code p {
+    color: var(--color-text-light);
+    font-size: 1.2em;
+    margin-bottom: var(--spacing-sm);
+}
+
+#modalRoomCodeDisplay {
+    font-size: 6em;
+    font-weight: bold;
+    color: var(--color-primary);
+    padding: 0 var(--spacing-lg);
+}
+
+.player-status-item .status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.player-status-item .status-indicator.connected {
+    background-color: var(--color-success);
+}
+
+.player-status-item .status-indicator.disconnected {
+    background-color: var(--color-danger);
+}
+
+/* Game Info Modal Styles */
+.clickable {
+    cursor: pointer;
+    transition: background-color 0.3s;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+}
+
+.clickable:hover {
+    background-color: var(--color-mocha-mousse);
+    color: var(--color-gardenia);
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    position: relative;
+    background-color: var(--color-gardenia);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-xl);
+    border: 2px solid var(--color-border);
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    max-width: 400px;
+    width: 90%;
+}
+
+.modal-content h2 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-lg);
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.info-grid p:nth-child(odd) {
+    font-weight: bold;
+    color: var(--color-primary);
+}
+
+.waiting-container {
+    text-align: center;
+}
+
+.waiting-container h2 {
+    font-size: 2.5em;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-primary);
+}
+
+/* 관리자 최종 결과 모달 */
+#finalResultsModal .results-panel {
+    max-width: 800px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* 로그 컨테이너 스타일 */
+.log-container {
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.log-entry {
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.9em;
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+#finalResultsModal .modal-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 2.5em;
+    font-weight: bold;
+    color: var(--color-text-light);
+    cursor: pointer;
+}
+
+/* ============================================
+   결과 모달
+   ============================================ */
+#resultModal .modal-content {
+    max-width: 450px;
+}
+
+#resultModal .modal-title {
+    font-size: 1.8em;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+#resultModal .modal-body {
+    font-size: 1.1em;
+    line-height: 1.6;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-lg);
+    white-space: pre-wrap; /* Allow line breaks */
+}
+
+#resultModal .modal-close-btn {
+    position: static; /* Remove absolute positioning */
+    display: block;
+    margin: 0 auto; /* Center the button */
+    width: 50%;
+    padding: var(--spacing-md);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: var(--color-primary);
+    color: var(--color-gardenia);
+}
+
+#resultModal .modal-close-btn:hover {
+    background: var(--color-surface);
+    color: var(--color-primary);
+}
+
+/* ============================================
+   생산 클릭 영역 UI (추가)
+   ============================================ */
+.production-click-area {
+    position: relative;
+    width: 100%;
+    height: 200px; /* Adjust height as needed */
+    background-color: var(--color-gardenia);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.production-click-area:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.production-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    background-color: var(--color-chocolate-martini);
+    transition: height 0.1s ease-out; /* Smooth fill animation */
+    z-index: 1;
+}
+
+.production-click-text {
+    position: relative;
+    font-size: 3em;
+    font-weight: bold;
+    color: var(--color-text); /* Default text color */
+    z-index: 2;
+    transition: color 0.1s ease-out;
+    user-select: none; /* Prevent text selection on click */
+}
+
+/* Style for when the production box is filled */
+.production-click-area.production-box-filled {
+    background-color: var(--color-primary); /* Change background when filled */
+}
+
+.production-click-area.production-box-filled .production-click-text {
+    color: var(--color-gardenia); /* Change text color when filled */
+}

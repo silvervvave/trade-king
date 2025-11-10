@@ -1,0 +1,42 @@
+const PHASES = {
+  WAITING: 'waiting',
+  PRODUCTION: 'production',
+  TRADE: 'trade',
+  INVESTMENT: 'investment',
+  ARRIVAL: 'arrival',
+  ENDED: 'ended',
+};
+
+const COUNTRIES = {
+  SPAIN: 'spain',
+  NETHERLANDS: 'netherlands',
+  ENGLAND: 'england',
+  FRANCE: 'france',
+};
+
+const RPS_CHOICES = {
+  ROCK: '✊',
+  PAPER: '✋',
+  SCISSORS: '✌️',
+};
+
+const INVESTMENT_FAILURE_COMPENSATION_PA = 50;
+const CAMUSARI_COMPENSATION_PA = 10;
+const RPS_WIN_PA_CHANGE = 5;
+const RPS_LOSE_PA_CHANGE = -5;
+const FRANCE_MERCANTILISM_BONUS_PA = 15;
+const FINAL_RPS_WIN_GOODS_CHANGE = 1;
+const FINAL_RPS_LOSE_GOODS_CHANGE = -1;
+
+module.exports = {
+  PHASES,
+  COUNTRIES,
+  RPS_CHOICES,
+  INVESTMENT_FAILURE_COMPENSATION_PA,
+  CAMUSARI_COMPENSATION_PA,
+  RPS_WIN_PA_CHANGE,
+  RPS_LOSE_PA_CHANGE,
+  FRANCE_MERCANTILISM_BONUS_PA,
+  FINAL_RPS_WIN_GOODS_CHANGE,
+  FINAL_RPS_LOSE_GOODS_CHANGE,
+};

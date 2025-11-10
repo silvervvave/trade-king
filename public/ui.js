@@ -1,0 +1,703 @@
+class UIManager {
+    constructor(game) {
+        this.game = game;
+        this.initializeUI();
+    }
+
+    initializeUI() {
+        const gameInfoBtn = document.getElementById('gameInfoBtn');
+        if (gameInfoBtn) {
+            gameInfoBtn.addEventListener('click', () => this.showGameInfoModal());
+        }
+
+        const modalCloseBtn = document.querySelector('#gameInfoModal .modal-close-btn');
+        if (modalCloseBtn) {
+            modalCloseBtn.addEventListener('click', () => this.hideGameInfoModal());
+        }
+
+        const allTeamsStatusToggle = document.getElementById('allTeamsStatusToggle');
+        const allTeamsStatusContainer = document.getElementById('allTeamsStatusContainer');
+        if (allTeamsStatusToggle && allTeamsStatusContainer) {
+            allTeamsStatusToggle.addEventListener('click', () => {
+                allTeamsStatusContainer.classList.toggle('hidden');
+                const isHidden = allTeamsStatusContainer.classList.contains('hidden');
+                localStorage.setItem('allTeamsStatusHidden', isHidden);
+            });
+
+            // Load initial state from localStorage
+            const savedState = localStorage.getItem('allTeamsStatusHidden');
+            if (savedState === 'true') {
+                allTeamsStatusContainer.classList.add('hidden');
+            } else {
+                allTeamsStatusContainer.classList.remove('hidden');
+            }
+        }
+
+        // Event delegation for toggle buttons
+        document.body.addEventListener('click', (event) => {
+            if (event.target.matches('.btn-toggle')) {
+                this.handleToggleClick(event.target);
+            }
+        });
+
+        // Result Modal
+        document.body.addEventListener('click', (event) => {
+            if (event.target.matches('#resultModal .modal-close-btn')) {
+                this.hideResultModal();
+            }
+        });
+    }
+
+    showResultModal(title, content) {
+        const modal = document.getElementById('resultModal');
+        if (!modal) return;
+
+        modal.innerHTML = templates.resultModal(title, content);
+        modal.classList.remove('hidden');
+    }
+
+    hideResultModal() {
+        const modal = document.getElementById('resultModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.innerHTML = '';
+        }
+    }
+
+    handleToggleClick(button) {
+        const toggleInput = button.closest('.toggle-input');
+        const valueSpan = toggleInput.querySelector('.toggle-value');
+        const step = parseInt(toggleInput.dataset.step, 10);
+        const min = parseInt(toggleInput.dataset.min, 10);
+
+        let currentValue = parseInt(valueSpan.textContent, 10);
+
+        if (button.classList.contains('plus')) {
+            currentValue += step;
+        } else if (button.classList.contains('minus')) {
+            currentValue -= step;
+        }
+
+        if (currentValue < min) {
+            currentValue = min;
+        }
+
+        valueSpan.textContent = currentValue;
+    }
+
+    showScreen(screenId) {
+        const screens = document.querySelectorAll('.screen');
+        screens.forEach(screen => {
+            if (!screen.classList.contains('hidden')) {
+                screen.classList.add('hidden');
+            }
+        });
+        document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    renderCountrySelection(countries, playerCounts) {
+        const countryGrid = document.querySelector('.country-grid');
+        countryGrid.innerHTML = '';
+
+        for (const countryKey in countries) {
+            const country = countries[countryKey];
+            const card = this.createCountryCard(country, playerCounts[countryKey] || 0);
+            card.addEventListener('click', () => this.game.handleCountryClick(countryKey));
+            countryGrid.appendChild(card);
+        }
+    }
+
+    createCountryCard(country, playerCount) {
+        const card = document.createElement('div');
+        card.className = 'country-card';
+        card.innerHTML = `
+            <div class="country-icon">${country.icon}</div>
+            <h3>${country.name}</h3>
+            <p class="country-trait">참여: ${playerCount}명</p>
+        `;
+        return card;
+    }
+
+    showCountryDescription(countryKey) {
+        const country = this.game.countryConfig[countryKey];
+        document.getElementById('modalCountryName').textContent = country.name;
+        const descriptionEl = document.getElementById('modalCountryDescription');
+        descriptionEl.innerHTML = `
+            <p>${country.trait}</p>
+            <ul class="country-stats">
+                <li>클릭 ${country.clicksPerBatch}회당 생산량: ${country.paPerBatch} PA</li>
+                <li>최대 생산량: ${country.maxProduct} PA</li>
+            </ul>
+        `;
+        document.getElementById('countryDescriptionModal').classList.remove('hidden');
+    }
+
+    hideCountryDescription() {
+        document.getElementById('countryDescriptionModal').classList.add('hidden');
+    }
+
+    updatePlayerStats() {
+        if (!this.game.gameState.player.country) return;
+
+        const teamState = this.game.gameState.team;
+        document.getElementById('totalPA').textContent = teamState.totalPA;
+        document.getElementById('silkCount').textContent = teamState.silk;
+        document.getElementById('pepperCount').textContent = teamState.pepper;
+
+        document.getElementById('clickCount').textContent = teamState.clickCount;
+        document.getElementById('maxClicks').textContent = teamState.maxProduct; // Display maxProduct here
+        // The currentProduction display is no longer needed as the UI is now a progress bar
+        // document.getElementById('currentProduction').textContent = teamState.clickCount * this.game.countryConfig[this.game.gameState.player.country].paPerClick;
+
+        const productionClickArea = document.getElementById('produceBtn'); // produceBtn is now the .production-click-area
+        const productionFill = productionClickArea ? productionClickArea.querySelector('.production-fill') : null;
+        const productionClickText = productionClickArea ? productionClickArea.querySelector('.production-click-text') : null;
+
+        if (productionFill && productionClickText) {
+            const productionBoxClickCount = teamState.productionBoxClickCount;
+            const maxClicksForFill = 30; // 30 clicks to fill the box
+            const progress = Math.min((productionBoxClickCount / maxClicksForFill) * 100, 100); // Calculate progress based on clicks, cap at 100%
+            productionFill.style.height = `${progress}%`;
+
+            if (progress >= 100) {
+                productionClickArea.classList.add('production-box-filled');
+            } else {
+                productionClickArea.classList.remove('production-box-filled');
+            }
+        }
+    }
+
+    updateTradeSelectionDisplay() {
+        const tradeSelectionDiv = document.getElementById('tradeSelection');
+        if (!tradeSelectionDiv) return;
+
+        const tradeSelection = this.game.gameState.team.tradeSelection;
+        if (tradeSelection) {
+            const destinationText = tradeSelection.type === 'china' ? '중국' : '인도';
+            tradeSelectionDiv.innerHTML = `
+                <p>선택 완료: ${destinationText} (${tradeSelection.amount} PA)</p>
+                <p>결정 플레이어: ${tradeSelection.playerName}</p>
+            `;
+        } else {
+            tradeSelectionDiv.innerHTML = '<p>선택 대기중...</p>';
+        }
+    }
+
+    showGameInfoModal() {
+        document.getElementById('modalRoomCode').textContent = this.game.playerRoomId || '-';
+        document.getElementById('modalTeamName').textContent = this.game.gameState.player.country ? this.game.countryConfig[this.game.gameState.player.country].name : '-';
+        document.getElementById('modalPlayerName').textContent = this.game.localPlayerName || '-';
+        document.getElementById('gameInfoModal').classList.remove('hidden');
+    }
+
+    hideGameInfoModal() {
+        document.getElementById('gameInfoModal').classList.add('hidden');
+    }
+
+    updateGameState(gameState) {
+        // Ensure all panels are hidden before showing the correct one to prevent overlap
+        document.querySelectorAll('.game-area-panel').forEach(panel => {
+            panel.classList.add('hidden');
+        });
+
+        console.log('UI: updateGameState', gameState);
+        if (gameState.gameStarted) {
+            this.showScreen('gameScreen');
+            document.getElementById('gameNav').classList.remove('hidden');
+            this.updateNav(gameState.currentPhase);
+            this.showArea(this.getPhaseAreaId(gameState.currentPhase));
+        } else {
+            // If game is not started, ensure we are on a pre-game screen
+            if (!document.getElementById('initialChoiceScreen').classList.contains('hidden') ||
+                !document.getElementById('nameInputScreen').classList.contains('hidden') ||
+                !document.getElementById('roomCodeInputScreen').classList.contains('hidden') ||
+                !document.getElementById('countrySelection').classList.contains('hidden') ||
+                !document.getElementById('waitingScreen').classList.contains('hidden')) {
+                // Do nothing, stay on current pre-game screen
+            } else {
+                // Fallback to initial choice screen if somehow on gameScreen without gameStarted
+                this.showScreen('initialChoiceScreen');
+            }
+        }
+        this.updatePlayerStats();
+        this.updateTokenDisplay();
+        this.updateAllTeamsStatus(this.game.teams);
+        this.updateMyTeamStatus(this.game.teams);
+        this.setupPhaseScreen(gameState.currentPhase);
+    }
+
+    getPhaseAreaId(phase) {
+        const phaseToArea = {
+            'production': 'productionArea',
+            'trade': 'tradeArea',
+            'investment': 'investmentArea',
+            'arrival': 'arrivalArea',
+            'ended': 'resultsArea'
+        };
+        return phaseToArea[phase] || 'productionArea'; // Default to production area
+    }
+
+    updateConnectionStatus(isConnected) {
+        const statusElement = document.getElementById('connectionStatus');
+        if (statusElement) {
+            statusElement.textContent = isConnected ? '온라인' : '오프라인';
+            statusElement.className = isConnected ? 'connected' : 'disconnected'; // Add class for styling
+        }
+    }
+
+    updateTokenDisplay() {
+        const rerollInfo = document.getElementById('rerollTokenInfo');
+        if (rerollInfo) {
+            if (this.game.gameState.player.country === 'england') {
+                rerollInfo.style.display = 'block';
+                rerollInfo.innerHTML = `
+                    <div class="token-info">
+                                <span class="token-icon"></span>
+                                <span class="token-text">절대왕정 권력: ${this.game.gameState.team.resetTokens}개</span>
+                    </div>
+                `;
+            } else {
+                rerollInfo.style.display = 'none';
+            }
+        }
+        
+        const mercantilismInfo = document.getElementById('mercantilismTokenInfo');
+        if (mercantilismInfo) {
+            mercantilismInfo.style.display = 'none';
+        }
+    }
+
+    showArea(areaId) {
+        const phaseToArea = {
+            'production': 'productionArea',
+            'trade': 'tradeArea',
+            'investment': 'investmentArea',
+            'arrival': 'arrivalArea',
+            'ended': 'resultsArea'
+        };
+        const currentPhaseArea = phaseToArea[this.game.gameState.currentPhase];
+        const allowedAreas = ['productionArea', currentPhaseArea];
+
+        if (!allowedAreas.includes(areaId) && this.game.gameState.gameStarted) {
+            this.showNotification('지금은 해당 화면으로 이동할 수 없습니다.');
+            return;
+        }
+
+        console.log('영역 전환:', areaId);
+        
+        const gameAreas = ['productionArea', 'tradeArea', 'investmentArea', 'arrivalArea', 'resultsArea'];
+        
+        gameAreas.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                if (id === areaId) {
+                    element.classList.remove('hidden');
+                } else {
+                    element.classList.add('hidden');
+                }
+            }
+        });
+        
+        this.currentVisibleArea = areaId;
+        this.updateNavHighlight(areaId);
+    }
+
+    updateNavHighlight(areaId) {
+        const productionBtn = document.getElementById('navProduction');
+        const currentPhaseBtn = document.getElementById('navCurrentPhase');
+
+        // Reset both buttons
+        if (productionBtn) productionBtn.classList.remove('active');
+        if (currentPhaseBtn) currentPhaseBtn.classList.remove('active');
+
+        // Highlight the correct button
+        if (areaId === 'productionArea') {
+            if (productionBtn) productionBtn.classList.add('active');
+        } else {
+            // For trade, investment, or arrival, the currentPhaseBtn is the one to highlight
+            if (currentPhaseBtn) currentPhaseBtn.classList.add('active');
+        }
+    }
+
+    updateNav(phase) {
+        const phaseConfig = {
+            'trade': { text: '출항', area: 'tradeArea' },
+            'investment': { text: '투자', area: 'investmentArea' },
+            'arrival': { text: '입항', area: 'arrivalArea' }
+        };
+
+        const productionBtn = document.getElementById('navProduction');
+        const currentPhaseBtn = document.getElementById('navCurrentPhase');
+
+        // Remove existing indicators from all nav buttons
+        document.querySelectorAll('.nav-btn .phase-indicator').forEach(ind => ind.remove());
+
+        if (phaseConfig[phase]) {
+            const config = phaseConfig[phase];
+            currentPhaseBtn.textContent = config.text;
+            currentPhaseBtn.dataset.area = config.area;
+            currentPhaseBtn.classList.remove('hidden');
+
+            // Add indicator to the current phase button
+            const indicator = document.createElement('span');
+            indicator.className = 'phase-indicator';
+            indicator.textContent = '● ';
+            currentPhaseBtn.insertBefore(indicator, currentPhaseBtn.firstChild);
+        } else {
+            // Hide dynamic phase button if phase is production, waiting, etc.
+            currentPhaseBtn.classList.add('hidden');
+
+            // Optionally, highlight production if it's the current phase
+            if (phase === 'production') {
+                const indicator = document.createElement('span');
+                indicator.className = 'phase-indicator';
+                indicator.textContent = '● ';
+                productionBtn.insertBefore(indicator, productionBtn.firstChild);
+            }
+        }
+    }
+
+    setupPhaseScreen(phase) {
+        this.renderProductionResults();
+        this.renderArrivalResults();
+
+        if (phase === 'production') {
+            this.setupProductionScreen();
+        } else if (phase === 'trade') {
+            this.setupTradeScreen();
+        } else if (phase === 'investment') {
+            this.setupInvestmentScreen();
+        } else if (phase === 'arrival') {
+            this.setupArrivalScreen();
+        }
+    }
+
+    renderProductionResults() {
+        const rpsResultData = this.game.gameState.team.rpsResult;
+        const rpsResultDiv = document.getElementById('rpsResult');
+        const rpsButtons = document.querySelectorAll('.rps-btn');
+
+        if (rpsResultData && rpsResultData.result && rpsResultDiv) {
+            rpsResultDiv.className = 'result-display ' + rpsResultData.result;
+            rpsResultDiv.innerHTML = `<p>나: ${this.getRPSEmoji(rpsResultData.playerChoice)} vs 상대: ${this.getRPSEmoji(rpsResultData.opponentChoice)}</p><p>결과: ${this.getRPSResultKorean(rpsResultData.result)}</p>`;
+            
+            rpsButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+            });
+        } else if (rpsResultDiv) {
+            rpsResultDiv.innerHTML = '';
+            rpsResultDiv.className = 'result-display';
+            rpsButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            });
+        }
+    }
+
+    renderArrivalResults() {
+        const team = this.game.gameState.team;
+        const eventResultDiv = document.getElementById('eventResult');
+        const finalRpsResultDiv = document.getElementById('finalRpsResult');
+
+        if (team.eventDrawnThisRound && team.eventText && eventResultDiv) {
+            eventResultDiv.className = 'result-display ' + team.eventResultClass;
+            eventResultDiv.innerHTML = team.eventText;
+        } else if (eventResultDiv) {
+            eventResultDiv.innerHTML = '';
+            eventResultDiv.className = 'result-display';
+        }
+
+        if (team.finalRpsResultData && team.finalRpsResultData.result && finalRpsResultDiv) {
+            const resultData = team.finalRpsResultData;
+            const goodsChange = resultData.result === 'win' ? 1 : resultData.result === 'lose' ? -1 : 0;
+            finalRpsResultDiv.className = 'result-display ' + resultData.result;
+            finalRpsResultDiv.innerHTML = `<p>나: ${this.getRPSEmoji(resultData.playerChoice)} vs 상대: ${this.getRPSEmoji(resultData.opponentChoice)}</p><p>결과: ${this.getRPSResultKorean(resultData.result)} (상품 ${goodsChange}개)</p>`;
+        } else if (finalRpsResultDiv) {
+            finalRpsResultDiv.innerHTML = '';
+            finalRpsResultDiv.className = 'result-display';
+        }
+    }
+
+    setupProductionScreen() {
+        this.updatePlayerStats();
+        this.updateTokenDisplay();
+        this.renderProductionResults();
+    }
+
+    setupTradeScreen() {
+        document.querySelector('.destination-grid').classList.remove('hidden');
+        document.getElementById('tradeConfirmation').classList.add('hidden');
+        this.game.selectedTradeDestination = null;
+        document.getElementById('tradeAmountValue').textContent = '200'; // Reset to default
+        this.game.ui.updateTradeSelectionDisplay();
+    }
+
+    selectTradeDestination(destination) {
+        this.game.selectedTradeDestination = destination;
+        document.getElementById('tradeDestinationTitle').textContent = `${destination === 'china' ? '중국' : '인도'}에 투자할 금액`;
+        document.querySelector('.destination-grid').classList.add('hidden');
+        document.getElementById('tradeConfirmation').classList.remove('hidden');
+        // Removed focus() call as tradeAmount is no longer an input
+    }
+
+    cancelTrade() {
+        document.getElementById('tradeConfirmation').classList.add('hidden');
+        document.querySelector('.destination-grid').classList.remove('hidden');
+        this.game.selectedTradeDestination = null;
+    }
+
+    setupInvestmentScreen(voyages) {
+        const container = document.getElementById('investmentOptions');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        if (!voyages || voyages.length === 0) {
+            container.innerHTML = '<p class="info-text">현재 투자 가능한 항해가 없습니다.</p>';
+            return;
+        }
+
+        voyages.forEach(voyage => {
+            if (voyage.country !== this.game.gameState.player.country) {
+                const card = this.createInvestmentCard(voyage);
+                container.appendChild(card);
+            }
+        });
+    }
+
+    createInvestmentCard(voyage) {
+        const card = document.createElement('div');
+        card.className = 'investment-card';
+        card.innerHTML = templates.investmentCard(voyage, this.game.countryConfig[voyage.country], voyage.investments || []);
+        return card;
+    }
+
+    updateInvestmentStatus() {
+        if (!this.game.teams) return;
+
+        Object.values(this.game.teams).forEach(targetTeam => {
+            const statusDiv = document.getElementById(`investment-status-${targetTeam.country}`);
+            if (!statusDiv) return;
+
+            statusDiv.innerHTML = ''; // Clear previous status
+
+            if (targetTeam.investmentsReceived && targetTeam.investmentsReceived.length > 0) {
+                const list = document.createElement('ul');
+                list.className = 'investment-status-list';
+
+                targetTeam.investmentsReceived.forEach(investment => {
+                    const item = document.createElement('li');
+                    item.textContent = `${investment.teamName} ${investment.playerName}: ${investment.amount} PA`;
+                    list.appendChild(item);
+                });
+
+                statusDiv.appendChild(list);
+            }
+        });
+    }
+
+    setupArrivalScreen() {
+        const team = this.game.gameState.team;
+
+        const drawEventBtn = document.querySelector('.event-section button');
+        if(drawEventBtn) {
+            drawEventBtn.disabled = team.eventDrawnThisRound;
+        }
+
+        const finalRpsButtons = document.querySelectorAll('.final-rps-btn');
+        finalRpsButtons.forEach(btn => {
+            btn.disabled = team.finalRpsPlayedThisRound;
+            btn.style.opacity = team.finalRpsPlayedThisRound ? '0.5' : '1';
+        });
+
+        const arrivalStatusContainer = document.getElementById('arrival-status-container');
+        if (arrivalStatusContainer) {
+            arrivalStatusContainer.innerHTML = '';
+        }
+        
+        this.updateTokenDisplay();
+        this.renderArrivalResults();
+    }
+
+    updateArrivalStatus(teams) {
+        const container = document.getElementById('arrival-status-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        const myCountry = this.game.gameState.player.country;
+        const myInvestments = this.game.gameState.team.investmentsMade || [];
+
+        const otherTeamsOnVoyage = Object.values(teams).filter(team => team.country !== myCountry && team.tradeSelection);
+
+        if (otherTeamsOnVoyage.length === 0) {
+            container.innerHTML = '<p class="info-text">다른 팀의 항해 정보가 없습니다.</p>';
+            return;
+        }
+
+        const title = document.createElement('h3');
+        title.textContent = '다른 팀 입항 현황';
+        title.style.color = 'var(--color-primary)';
+        title.style.marginBottom = 'var(--spacing-md)';
+        title.style.textAlign = 'center';
+        container.appendChild(title);
+
+        otherTeamsOnVoyage.forEach(team => {
+            const card = document.createElement('div');
+            card.className = 'investment-card';
+
+            const investment = myInvestments.find(inv => inv.toTeam === team.country);
+            let investmentInfo = '';
+            if (investment) {
+                investmentInfo = `<p style="color: var(--color-primary); font-weight: bold; margin-top: 8px;">내가 투자한 금액: ${investment.amount} PA</p>`;
+            }
+
+            const eventStatus = team.eventDrawnThisRound ? team.eventText : '대기중';
+            const rpsStatus = team.finalRpsPlayedThisRound ? this.getRPSResultKorean(team.finalRpsResult) : '대기중';
+
+            card.innerHTML = `
+                <h4>${this.game.countryConfig[team.country].name}</h4>
+                <p>이벤트 카드: ${eventStatus}</p>
+                <p>최종 가위바위보: ${rpsStatus}</p>
+                ${investmentInfo}
+            `;
+            
+            container.appendChild(card);
+        });
+    }
+
+    getPhaseKorean(phase) {
+        const phaseMap = {
+            'waiting': '대기',
+            'production': '생산',
+            'trade': '출항',
+            'investment': '투자',
+            'arrival': '입항',
+            'ended': '종료'
+        };
+        return phaseMap[phase] || phase;
+    }
+
+    updateAllTeamsStatus(teams) {
+        const container = document.getElementById('allTeamsStatusContainer');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        const teamArray = Object.values(teams);
+        // Duplicate the teamArray to create a seamless loop effect for manual scrolling
+        const duplicatedTeamArray = [...teamArray, ...teamArray, ...teamArray]; // Duplicate twice for smoother loop
+
+        duplicatedTeamArray.forEach(team => {
+            const card = document.createElement('div');
+            card.className = 'team-status-card';
+
+            const isMyTeam = team.country === this.game.gameState.player.country;
+            if (isMyTeam) {
+                card.classList.add('my-team-card');
+            }
+
+            card.innerHTML = `
+                <h4><span class="team-icon-display">${team.icon}</span> <span class="team-name-display">${team.name}</span></h4>
+                <div class="team-status-resources">
+                    <p>비단: ${team.silk}</p>
+                    <p>후추: ${team.pepper}</p>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        const cardWidth = 180 + 16; // card width + gap (var(--spacing-md) = 16px)
+        const totalOriginalWidth = teamArray.length * cardWidth;
+
+        // Set initial scroll position to the middle of the duplicated content
+        container.scrollLeft = totalOriginalWidth;
+
+        // Add manual infinite scroll logic
+        container.addEventListener('scroll', () => {
+            if (container.scrollLeft >= totalOriginalWidth * 2) {
+                container.scrollLeft -= totalOriginalWidth;
+            } else if (container.scrollLeft <= 0) {
+                container.scrollLeft += totalOriginalWidth;
+            }
+        });
+
+
+    }
+
+    updateMyTeamStatus(teams) {
+        const myTeam = teams[this.game.gameState.player.country];
+        const container = document.getElementById('myTeamStatus');
+        if (!myTeam || !container) return;
+
+        container.innerHTML = '';
+
+        myTeam.members.forEach(member => {
+            const memberDiv = document.createElement('div');
+            memberDiv.className = 'member-status';
+            memberDiv.innerHTML = `
+                <span class="status-indicator ${member.connected ? 'connected' : 'disconnected'}"></span>
+                <span>${member.name}</span>
+            `;
+            container.appendChild(memberDiv);
+        });
+    }
+
+    displayFinalResults(data) {
+        const resultsArea = document.getElementById('resultsArea');
+        if (!resultsArea) return;
+
+        this.showArea('resultsArea');
+        
+        const resultsPanel = resultsArea.querySelector('.results-panel');
+        if (!resultsPanel) return;
+
+        resultsPanel.innerHTML = templates.finalResults(data.rankings);
+    }
+    
+    getRPSResultKorean(result) {
+        const map = {
+            'win': '승리',
+            'lose': '패배',
+            'draw': '무승부'
+        };
+        return map[result] || result;
+    }
+
+    showNotification(message) {
+        const notificationDiv = document.createElement('div');
+        notificationDiv.className = 'notification';
+        notificationDiv.textContent = message;
+        document.body.appendChild(notificationDiv);
+
+        setTimeout(() => {
+            notificationDiv.remove();
+        }, 3000); // 3초 후 제거
+    }
+
+    getRPSEmoji(choice) {
+        return choice;
+    }
+
+    addArrivalSummary(data) {
+        const container = document.getElementById('arrivalSummaryLog');
+        if (!container) return;
+
+        const teamName = this.game.countryConfig[data.country]?.name || data.country;
+        let message = '';
+
+        if (data.camusari) {
+            message = `<strong>${teamName}:</strong> 카무사리 발생! (손실: ${data.profit} PA)`;
+        } else {
+            const goodsName = data.destination === 'china' ? '비단' : '후추';
+            message = `<strong>${teamName}:</strong> ${goodsName} ${data.goodsAcquired}개 획득! (수익: ${data.profit} PA)`;
+        }
+
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = message;
+
+        container.prepend(entry); // Add to the top
+    }
+}

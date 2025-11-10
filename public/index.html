@@ -1,0 +1,665 @@
+<<<<<<< HEAD
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content, user-scalable=no">
+    <title>나는 무역왕이 될거야!</title>
+    <link rel="stylesheet" href="styles.css?v=1.1">
+</head>
+<body>
+    <div id="topBanner">
+        <div id="bannerLeft">TRADE-KING</div>
+            <div id="bannerCenter">
+                <div id="gameInfoBtn" class="infoBox clickable">게임 정보</div>
+            </div>        <div id="bannerRight">
+            <div id="connectionStatus"></div>
+            <button id="teamSidebarToggle" class="team-sidebar-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </button>
+            <button id="allTeamsStatusToggle" class="all-teams-status-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </button>
+        </div>
+    </div>
+    <!-- 초기 선택 화면 -->
+    <div id="initialChoiceScreen" class="screen">
+        <div class="choice-container">
+            <h1>나는 무역왕이 될거야!</h1>
+            <p class="subtitle">대항해시대 무역 게임</p>
+            <p class="info-text">게임 참가하기</p>
+            <div class="choice-buttons">
+                <button class="game-btn btn-choice" id="playerBtn">플레이어</button>
+                <a href="admin.html" class="game-btn btn-choice">관리자</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 이름 입력 화면 -->
+    <div id="nameInputScreen" class="screen hidden">
+        <div class="join-container">
+            <h1>나는 무역왕이 될거야!</h1>
+            <p class="subtitle">무역왕 후보의 이름을 입력하세요.</p>
+            <div class="input-group">
+                <input type="text" id="playerNameInput" placeholder="이름 입력" maxlength="20">
+            </div>
+            <button class="game-btn btn-primary" id="submitNameBtn">입력 완료</button>
+        </div>
+    </div>
+
+    <!-- 방 코드 입력 화면 -->
+    <div id="roomCodeInputScreen" class="screen hidden">
+        <div class="join-container">
+            <h1>나는 무역왕이 될거야!</h1>
+            <p class="subtitle">방 번호를 입력하세요.</p>
+            <div class="input-group">
+                <input type="text" id="roomCodeInput" placeholder="방 코드 입력" maxlength="4">
+            </div>
+            <button class="game-btn btn-primary" id="submitRoomCodeBtn">준비 완료</button>
+        </div>
+    </div>
+
+    <!-- 국가 선택 화면 -->
+    <div id="countrySelection" class="screen hidden">
+        <div class="selection-container">
+            <h2>국가 선택</h2>
+            <div class="country-grid">
+                <!-- JavaScript로 동적 생성 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 국가 설명 모달 -->
+    <div id="countryDescriptionModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="modalCountryName"></h2>
+            <div id="modalCountryDescription"></div>
+            <div class="modal-buttons">
+                <button class="game-btn btn-secondary" id="modalCloseBtn">&#x2190;</button>
+                <button class="game-btn btn-primary" id="modalSelectBtn">선택 완료</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 대기 화면 -->
+    <div id="waitingScreen" class="screen hidden">
+        <div class="waiting-container">
+            <h2>게임 시작 대기중...</h2>
+            <p class="info-text">관리자가 게임을 시작할 때까지 기다려주세요</p>
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+    
+    <!-- 게임 화면 -->
+    <div id="gameScreen" class="screen hidden">
+        <div class="game-content-wrapper">
+            <!-- 팀 현황 사이드바 (추가) -->
+            <div id="teamSidebar" class="team-sidebar">
+                <h3>우리 팀 현황</h3>
+                <div id="myTeamStatus"></div>
+            </div>
+
+            <!-- 상단 네비게이션 -->
+            <nav id="gameNav" class="game-nav hidden">
+                <button id="navProduction" class="nav-btn">생산</button>
+                <button id="navCurrentPhase" class="nav-btn hidden"></button>
+            </nav>
+
+            <!-- 게임 정보 헤더 -->
+            <div class="game-header">
+                <div class="header-info">
+                    <span id="currentRound">라운드: -</span>
+                    <span id="timeRemaining">시간: --:--</span>
+                </div>
+                <div class="resource-display">
+                    <div class="resource-item">
+                        <span class="resource-label">총 PA</span>
+                        <span class="resource-value" id="totalPA">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-label">비단</span>
+                        <span class="resource-value" id="silkCount">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-label">후추</span>
+                        <span class="resource-value" id="pepperCount">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 생산 영역 -->
+            <div id="productionArea" class="game-area hidden">
+                <h2>생산 라운드</h2>
+                
+                <!-- 토큰 정보 표시 영역 (추가됨) -->
+                <div id="rerollTokenInfo" style="display: none; margin-top: 10px;">
+                    <!-- JavaScript로 동적으로 채워짐 -->
+                </div>
+                
+                <div id="mercantilismTokenInfo" style="display: none; margin-top: 10px;">
+                    <!-- JavaScript로 동적으로 채워짐 -->
+                </div>
+                
+                <div class="production-panel">
+                    <div class="click-section">
+                        <h3>자원 생산</h3>
+                        <div id="produceBtn" class="production-click-area">
+                            <div class="production-fill"></div>
+                            <span class="production-click-text">CLICK</span>
+                        </div>
+                        <div class="production-stats">
+                            <p>클릭 수: <span id="clickCount">0</span> / <span id="maxClicks">500</span></p>
+                            <p>생산량: <span id="currentProduction">0</span> PA</p>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="rps-section">
+                        <h3>✌️✊✋</h3>
+                        <p class="info-info">승리: +50PA / 무승부: 0PA / 패배: -50PA</p>
+                        <div class="rps-buttons">
+                            <button class="rps-btn" data-choice="✊">✊</button>
+                            <button class="rps-btn" data-choice="✋">✋</button>
+                            <button class="rps-btn" data-choice="✌️">✌️</button>
+                        </div>
+                        <button class="game-btn btn-secondary" id="rerollRPSBtn">
+                            절대왕정 권력
+                        </button>
+                        <div id="rpsResult" class="result-display"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 무역 영역 -->
+            <div id="tradeArea" class="game-area hidden">
+                <h2>출항 라운드</h2>
+                
+                <div class="trade-panel">
+                    <h3>항해지 선택</h3>
+                    <p class="info-info">중국과 인도 중 한 곳을 선택하여 무역품을 획득하세요. 혹은 이번 라운드를 쉴 수 있습니다.</p>
+                    
+                    <div class="destination-grid">
+                        <div class="destination-card destination-btn" data-destination="china">
+                            <div class="destination-icon"></div>
+                            <h4>중국</h4>
+                            <p class="destination-trait">비단 획득 기회</p>
+                        </div>
+                        
+                        <div class="destination-card destination-btn" data-destination="india">
+                            <div class="destination-icon"></div>
+                            <h4>인도</h4>
+                            <p class="destination-trait">후추 획득 기회</p>
+                        </div>
+                    </div>
+
+                    <div id="tradeConfirmation" class="hidden" style="margin-top: 20px;">
+                        <h3 id="tradeDestinationTitle"></h3>
+                        <div class="input-group">
+                            <label for="tradeAmount">PA 금액 (100 단위)</label>
+                            <div class="toggle-input" data-step="100" data-min="200">
+                                <button class="btn-toggle minus">-</button>
+                                <span id="tradeAmountValue" class="toggle-value">200</span>
+                                <button class="btn-toggle plus">+</button>
+                            </div>
+                        </div>
+                        <button class="game-btn btn-primary" id="confirmTradeBtn">
+                            이 금액으로 출항하기
+                        </button>
+                        <button class="game-btn btn-secondary" id="cancelTradeBtn">
+                            취소
+                        </button>
+                    </div>
+
+                    <button class="game-btn btn-secondary" style="margin-top: 20px;" id="skipTradeBtn">
+                        이번 라운드는 출항하지 않음
+                    </button>
+                    
+                    <div id="tradeSelection" class="selection-display">
+                        <p>선택 대기중...</p>
+                    </div>
+                    <button class="game-btn btn-secondary hidden" id="resetTradeBtn" style="margin-top: 10px;">선택 초기화</button>
+                </div>
+            </div>
+
+            <!-- 투자 영역 -->
+            <div id="investmentArea" class="game-area hidden">
+                <h2>투자 라운드</h2>
+                
+                <div class="investment-panel">
+                    <h3>다른 팀에 투자하기</h3>
+                    <p class="info-info">다른 팀의 출항에 투자하여 수익을 나눠 가질 수 있습니다. 출항하지 않은 팀은 표시되지 않습니다.</p>
+                    
+                    <div id="investmentOptions" class="investment-grid">
+                        <!-- JavaScript로 동적 생성 -->
+                        <div class="investment-card">
+                            <h4>{국가이름}</h4>
+                            <p>목적지: {목적지}</p>
+                            <p>투자된 금액: {금액} PA</p>
+                            <div class="input-group">
+                                <input type="number" id="investAmount-{country}" placeholder="투자할 PA (100 이상)" min="100" step="100">
+                                <button class="game-btn" onclick="makeInvestment('{country}')">투자하기</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="game-btn btn-secondary hidden" id="resetInvestmentsBtn" style="margin-top: 20px;">모든 투자 초기화</button>
+                </div>
+            </div>
+
+            <!-- 입항 영역 -->
+            <div id="arrivalArea" class="game-area hidden">
+                <h2>입항 라운드</h2>
+                
+                <div class="arrival-panel">
+                    <div class="event-section">
+                        <h3>이벤트 카드 뽑기</h3>
+                        <p class="info-info">무작위 이벤트가 발생합니다!</p>
+                        <button class="game-btn btn-primary" id="drawEventBtn">
+                            이벤트 카드 뽑기
+                        </button>
+                        <div id="eventResult" class="result-display"></div>
+                    </div>
+
+                    <div class="final-rps-section">
+                        <h3>✌️✊✋</h3>
+                        <p class="info-info">승리: 무역품 +1개 / 무승부: 0개 / 패배: 무역품 -1개</p>
+                        <div class="rps-buttons">
+                            <button class="final-rps-btn" data-choice="✊">✊</button>
+                            <button class="final-rps-btn" data-choice="✋">✋</button>
+                            <button class="final-rps-btn" data-choice="✌️">✌️</button>
+                        </div>
+                        <button class="game-btn btn-secondary" id="rerollFinalRPSBtn">
+                            절대왕정 권력
+                        </button>
+                        <div id="finalRpsResult" class="result-display"></div>
+                    </div>
+                </div>
+
+                <div id="arrival-status-container" class="investment-grid" style="margin-top: 24px;">
+                    <!-- Other countries' arrival status will be rendered here -->
+                </div>
+
+                <div id="arrivalSummaryLog" class="log-container"></div>
+            </div>
+
+            <!-- 결과 영역 -->
+            <div id="resultsArea" class="game-area hidden">
+                <h2>게임 종료</h2>
+                <div class="results-panel">
+                    <p class="info-info">관리자가 다음 단계를 시작할 때까지 기다려주세요</p>
+                </div>
+            </div>
+        </div>
+
+    <!-- 전체 팀 현황 -->
+    <div id="allTeamsStatusContainer" class="all-teams-status-container"></div>
+
+    <!-- 게임 정보 모달 -->
+    <div id="gameInfoModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <span class="modal-close-btn">&times;</span>
+            <h2>게임 정보</h2>
+            <div class="info-grid">
+                <p>방 코드:</p><p id="modalRoomCode">-</p>
+                <p>팀 국가:</p><p id="modalTeamName">-</p>
+                <p>플레이어:</p><p id="modalPlayerName">-</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 결과 모달 -->
+    <div id="resultModal" class="modal-overlay hidden"></div>
+
+    <!-- Socket.IO 클라이언트 -->
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- 공통 유틸리티 -->
+    <script src="utils.js"></script>
+
+    <!-- 템플릿 -->
+    <script src="templates.js"></script>
+
+    <!-- UI 관리 -->
+    <script src="ui.js"></script>
+
+    <!-- 소켓 핸들러 -->
+    <script src="socket.js"></script>
+    
+    <!-- 게임 로직 -->
+    <script src="game.js"></script>
+</body>
+</html>
+=======
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content, user-scalable=no">
+    <title>나는 무역왕이 될거야!</title>
+    <link rel="stylesheet" href="styles.css?v=1.1">
+</head>
+<body>
+    <div id="topBanner">
+        <div id="bannerLeft">TRADE-KING</div>
+            <div id="bannerCenter">
+                <div id="gameInfoBtn" class="infoBox clickable">게임 정보</div>
+            </div>        <div id="bannerRight">
+            <div id="connectionStatus"></div>
+            <button id="teamSidebarToggle" class="team-sidebar-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </button>
+            <button id="allTeamsStatusToggle" class="all-teams-status-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </button>
+        </div>
+    </div>
+    <!-- 초기 선택 화면 -->
+    <div id="initialChoiceScreen" class="screen">
+        <div class="choice-container">
+            <h1>나는 무역왕이 될거야!</h1>
+            <p class="subtitle">대항해시대 무역 게임</p>
+            <p class="info-text">게임 참가하기</p>
+            <div class="choice-buttons">
+                <button class="game-btn btn-choice" id="playerBtn">플레이어</button>
+                <a href="admin.html" class="game-btn btn-choice">관리자</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 이름 입력 화면 -->
+    <div id="nameInputScreen" class="screen hidden">
+        <div class="join-container">
+            <h1>나는 무역왕이 될거야!</h1>
+            <p class="subtitle">무역왕 후보의 이름을 입력하세요.</p>
+            <div class="input-group">
+                <input type="text" id="playerNameInput" placeholder="이름 입력" maxlength="20">
+            </div>
+            <button class="game-btn btn-primary" id="submitNameBtn">입력 완료</button>
+        </div>
+    </div>
+
+    <!-- 방 코드 입력 화면 -->
+    <div id="roomCodeInputScreen" class="screen hidden">
+        <div class="join-container">
+            <h1>나는 무역왕이 될거야!</h1>
+            <p class="subtitle">방 번호를 입력하세요.</p>
+            <div class="input-group">
+                <input type="text" id="roomCodeInput" placeholder="방 코드 입력" maxlength="4">
+            </div>
+            <button class="game-btn btn-primary" id="submitRoomCodeBtn">준비 완료</button>
+        </div>
+    </div>
+
+    <!-- 국가 선택 화면 -->
+    <div id="countrySelection" class="screen hidden">
+        <div class="selection-container">
+            <h2>국가 선택</h2>
+            <div class="country-grid">
+                <!-- JavaScript로 동적 생성 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 국가 설명 모달 -->
+    <div id="countryDescriptionModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="modalCountryName"></h2>
+            <div id="modalCountryDescription"></div>
+            <div class="modal-buttons">
+                <button class="game-btn btn-secondary" id="modalCloseBtn">&#x2190;</button>
+                <button class="game-btn btn-primary" id="modalSelectBtn">선택 완료</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 대기 화면 -->
+    <div id="waitingScreen" class="screen hidden">
+        <div class="waiting-container">
+            <h2>게임 시작 대기중...</h2>
+            <p class="info-text">관리자가 게임을 시작할 때까지 기다려주세요</p>
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+    
+    <!-- 게임 화면 -->
+    <div id="gameScreen" class="screen hidden">
+        <div class="game-content-wrapper">
+            <!-- 팀 현황 사이드바 (추가) -->
+            <div id="teamSidebar" class="team-sidebar">
+                <h3>우리 팀 현황</h3>
+                <div id="myTeamStatus"></div>
+            </div>
+
+            <!-- 상단 네비게이션 -->
+            <nav id="gameNav" class="game-nav hidden">
+                <button id="navProduction" class="nav-btn">생산</button>
+                <button id="navCurrentPhase" class="nav-btn hidden"></button>
+            </nav>
+
+            <!-- 게임 정보 헤더 -->
+            <div class="game-header">
+                <div class="header-info">
+                    <span id="currentRound">라운드: -</span>
+                    <span id="timeRemaining">시간: --:--</span>
+                </div>
+                <div class="resource-display">
+                    <div class="resource-item">
+                        <span class="resource-label">총 PA</span>
+                        <span class="resource-value" id="totalPA">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-label">비단</span>
+                        <span class="resource-value" id="silkCount">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-label">후추</span>
+                        <span class="resource-value" id="pepperCount">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 생산 영역 -->
+            <div id="productionArea" class="game-area hidden">
+                <h2>생산 라운드</h2>
+                
+                <!-- 토큰 정보 표시 영역 (추가됨) -->
+                <div id="rerollTokenInfo" style="display: none; margin-top: 10px;">
+                    <!-- JavaScript로 동적으로 채워짐 -->
+                </div>
+                
+                <div id="mercantilismTokenInfo" style="display: none; margin-top: 10px;">
+                    <!-- JavaScript로 동적으로 채워짐 -->
+                </div>
+                
+                <div class="production-panel">
+                    <div class="click-section">
+                        <h3>자원 생산</h3>
+                        <div id="produceBtn" class="production-click-area">
+                            <div class="production-fill"></div>
+                            <span class="production-click-text">CLICK</span>
+                        </div>
+                        <div class="production-stats">
+                            <p>클릭 수: <span id="clickCount">0</span> / <span id="maxClicks">500</span></p>
+                            <p>생산량: <span id="currentProduction">0</span> PA</p>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="rps-section">
+                        <h3>✌️✊✋</h3>
+                        <p class="info-info">승리: +50PA / 무승부: 0PA / 패배: -50PA</p>
+                        <div class="rps-buttons">
+                            <button class="rps-btn" data-choice="✊">✊</button>
+                            <button class="rps-btn" data-choice="✋">✋</button>
+                            <button class="rps-btn" data-choice="✌️">✌️</button>
+                        </div>
+                        <button class="game-btn btn-secondary" id="rerollRPSBtn">
+                            절대왕정 권력
+                        </button>
+                        <div id="rpsResult" class="result-display"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 무역 영역 -->
+            <div id="tradeArea" class="game-area hidden">
+                <h2>출항 라운드</h2>
+                
+                <div class="trade-panel">
+                    <h3>항해지 선택</h3>
+                    <p class="info-info">중국과 인도 중 한 곳을 선택하여 무역품을 획득하세요. 혹은 이번 라운드를 쉴 수 있습니다.</p>
+                    
+                    <div class="destination-grid">
+                        <div class="destination-card destination-btn" data-destination="china">
+                            <div class="destination-icon"></div>
+                            <h4>중국</h4>
+                            <p class="destination-trait">비단 획득 기회</p>
+                        </div>
+                        
+                        <div class="destination-card destination-btn" data-destination="india">
+                            <div class="destination-icon"></div>
+                            <h4>인도</h4>
+                            <p class="destination-trait">후추 획득 기회</p>
+                        </div>
+                    </div>
+
+                    <div id="tradeConfirmation" class="hidden" style="margin-top: 20px;">
+                        <h3 id="tradeDestinationTitle"></h3>
+                        <div class="input-group">
+                            <label for="tradeAmount">PA 금액 (100 단위)</label>
+                            <div class="toggle-input" data-step="100" data-min="200">
+                                <button class="btn-toggle minus">-</button>
+                                <span id="tradeAmountValue" class="toggle-value">200</span>
+                                <button class="btn-toggle plus">+</button>
+                            </div>
+                        </div>
+                        <button class="game-btn btn-primary" id="confirmTradeBtn">
+                            이 금액으로 출항하기
+                        </button>
+                        <button class="game-btn btn-secondary" id="cancelTradeBtn">
+                            취소
+                        </button>
+                    </div>
+
+                    <button class="game-btn btn-secondary" style="margin-top: 20px;" id="skipTradeBtn">
+                        이번 라운드는 출항하지 않음
+                    </button>
+                    
+                    <div id="tradeSelection" class="selection-display">
+                        <p>선택 대기중...</p>
+                    </div>
+                    <button class="game-btn btn-secondary hidden" id="resetTradeBtn" style="margin-top: 10px;">선택 초기화</button>
+                </div>
+            </div>
+
+            <!-- 투자 영역 -->
+            <div id="investmentArea" class="game-area hidden">
+                <h2>투자 라운드</h2>
+                
+                <div class="investment-panel">
+                    <h3>다른 팀에 투자하기</h3>
+                    <p class="info-info">다른 팀의 출항에 투자하여 수익을 나눠 가질 수 있습니다. 출항하지 않은 팀은 표시되지 않습니다.</p>
+                    
+                    <div id="investmentOptions" class="investment-grid">
+                        <!-- JavaScript로 동적 생성 -->
+                        <div class="investment-card">
+                            <h4>{국가이름}</h4>
+                            <p>목적지: {목적지}</p>
+                            <p>투자된 금액: {금액} PA</p>
+                            <div class="input-group">
+                                <input type="number" id="investAmount-{country}" placeholder="투자할 PA (100 이상)" min="100" step="100">
+                                <button class="game-btn" onclick="makeInvestment('{country}')">투자하기</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="game-btn btn-secondary hidden" id="resetInvestmentsBtn" style="margin-top: 20px;">모든 투자 초기화</button>
+                </div>
+            </div>
+
+            <!-- 입항 영역 -->
+            <div id="arrivalArea" class="game-area hidden">
+                <h2>입항 라운드</h2>
+                
+                <div class="arrival-panel">
+                    <div class="event-section">
+                        <h3>이벤트 카드 뽑기</h3>
+                        <p class="info-info">무작위 이벤트가 발생합니다!</p>
+                        <button class="game-btn btn-primary" id="drawEventBtn">
+                            이벤트 카드 뽑기
+                        </button>
+                        <div id="eventResult" class="result-display"></div>
+                    </div>
+
+                    <div class="final-rps-section">
+                        <h3>✌️✊✋</h3>
+                        <p class="info-info">승리: 무역품 +1개 / 무승부: 0개 / 패배: 무역품 -1개</p>
+                        <div class="rps-buttons">
+                            <button class="final-rps-btn" data-choice="✊">✊</button>
+                            <button class="final-rps-btn" data-choice="✋">✋</button>
+                            <button class="final-rps-btn" data-choice="✌️">✌️</button>
+                        </div>
+                        <button class="game-btn btn-secondary" id="rerollFinalRPSBtn">
+                            절대왕정 권력
+                        </button>
+                        <div id="finalRpsResult" class="result-display"></div>
+                    </div>
+                </div>
+
+                <div id="arrival-status-container" class="investment-grid" style="margin-top: 24px;">
+                    <!-- Other countries' arrival status will be rendered here -->
+                </div>
+
+                <div id="arrivalSummaryLog" class="log-container"></div>
+            </div>
+
+            <!-- 결과 영역 -->
+            <div id="resultsArea" class="game-area hidden">
+                <h2>게임 종료</h2>
+                <div class="results-panel">
+                    <p class="info-info">관리자가 다음 단계를 시작할 때까지 기다려주세요</p>
+                </div>
+            </div>
+        </div>
+
+    <!-- 전체 팀 현황 -->
+    <div id="allTeamsStatusContainer" class="all-teams-status-container"></div>
+
+    <!-- 게임 정보 모달 -->
+    <div id="gameInfoModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <span class="modal-close-btn">&times;</span>
+            <h2>게임 정보</h2>
+            <div class="info-grid">
+                <p>방 코드:</p><p id="modalRoomCode">-</p>
+                <p>팀 국가:</p><p id="modalTeamName">-</p>
+                <p>플레이어:</p><p id="modalPlayerName">-</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 결과 모달 -->
+    <div id="resultModal" class="modal-overlay hidden"></div>
+
+    <!-- Socket.IO 클라이언트 -->
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- 공통 유틸리티 -->
+    <script src="utils.js"></script>
+
+    <!-- 템플릿 -->
+    <script src="templates.js"></script>
+
+    <!-- UI 관리 -->
+    <script src="ui.js"></script>
+
+    <!-- 소켓 핸들러 -->
+    <script src="socket.js"></script>
+    
+    <!-- 게임 로직 -->
+    <script src="game.js"></script>
+</body>
+</html>
+>>>>>>> 8ebaef76b21359b17980d7eca9a0c44245c59ebf
