@@ -496,13 +496,13 @@ body {
    생산 패널
    ============================================ */
 .production-panel {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-lg);
+    /* display: grid; */
+    /* grid-template-columns: 1fr 1fr; */
+    /* gap: var(--spacing-lg); */
 }
 
 @media (max-width: 768px) {
-    .production-panel {
+    .arrival-panel {
         grid-template-columns: 1fr;
     }
 }
@@ -648,10 +648,10 @@ body {
 }
 
 .investment-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-lg);
-    margin-top: var(--spacing-lg);
+    /* display: grid; */
+    /* grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); */
+    /* gap: var(--spacing-lg); */
+    /* margin-top: var(--spacing-lg); */
 }
 
 .investment-card {
@@ -706,9 +706,9 @@ body {
    입항 패널
    ============================================ */
 .arrival-panel {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-lg);
+    /* display: grid; */
+    /* grid-template-columns: 1fr 1fr; */
+    /* gap: var(--spacing-lg); */
 }
 
 .event-section,
@@ -727,6 +727,36 @@ body {
     text-align: center;
 }
 
+.rps-btn {
+    flex: 1;
+    padding: var(--spacing-lg);
+    background: var(--color-gardenia);
+    border: 3px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.rps-btn:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--color-gardenia);
+    transform: scale(1.05);
+}
+
+.rps-btn.selected {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--color-gardenia);
+    transform: scale(1.05);
+}
+
+.rps-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .final-rps-btn {
     flex: 1;
     padding: var(--spacing-lg);
@@ -739,6 +769,13 @@ body {
 }
 
 .final-rps-btn:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--color-gardenia);
+    transform: scale(1.05);
+}
+
+.final-rps-btn.selected {
     border-color: var(--color-primary);
     background-color: var(--color-primary);
     color: var(--color-gardenia);
@@ -835,7 +872,6 @@ body {
         font-size: 1.2em;
     }
     
-    .production-panel,
     .arrival-panel {
         grid-template-columns: 1fr;
     }
@@ -1164,16 +1200,16 @@ body {
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
     border-top: 2px solid var(--color-border);
     display: flex;
-    flex-wrap: wrap; /* Allow cards to wrap to the next line */
-    justify-content: center; /* Center cards horizontally */
-    overflow-x: hidden; /* Remove horizontal scrolling */
+    flex-wrap: nowrap; /* Allow cards to wrap to the next line */
+    justify-content: flex-start; /* Center cards horizontally */
+    overflow-x: auto; /* Remove horizontal scrolling */
     gap: var(--spacing-md);
     z-index: 200;
 }
 
 .team-status-card {
     flex: 0 0 auto; /* Allow cards to size automatically, remove fixed width */
-    width: 180px; /* Keep a default width, but allow it to be overridden by media queries if needed */
+    width: 300px; /* Keep a default width, but allow it to be overridden by media queries if needed */
     max-width: calc(33.333% - var(--spacing-md) * 2 / 3); /* Max 3 cards per row on larger screens */
     padding: var(--spacing-sm);
     background: var(--color-background);
@@ -1276,10 +1312,8 @@ body {
 
 .status-box-stack {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: var(--spacing-xs);
-    width: 100px;
-    min-width: 100px; /* Fixed width for the stack */
 }
 
 .status-box {
@@ -1372,8 +1406,7 @@ body {
     color: var(--color-danger);
 }
 
-.team-sidebar-toggle,
-.all-teams-status-toggle {
+.team-sidebar-toggle {
     position: static;
     transform: none;
     width: auto;
@@ -1386,8 +1419,7 @@ body {
     cursor: pointer;
 }
 
-.team-sidebar-toggle svg,
-.all-teams-status-toggle svg {
+.team-sidebar-toggle svg {
     stroke: var(--color-primary);
 }
 
@@ -1647,4 +1679,80 @@ body {
 
 .production-click-area.production-box-filled .production-click-text {
     color: var(--color-gardenia); /* Change text color when filled */
+}
+
+/* ============================================
+   하단 팀 현황 토글 버튼
+   ============================================ */
+.all-teams-status-toggle-bottom {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: var(--color-primary);
+    color: var(--color-gardenia);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+    cursor: pointer;
+    z-index: 1002; /* Higher than topBanner */
+    transition: transform 0.3s;
+}
+
+.all-teams-status-toggle-bottom:hover {
+    transform: scale(1.1);
+}
+
+.all-teams-status-toggle-bottom svg {
+    stroke: var(--color-gardenia);
+    width: 32px;
+    height: 32px;
+}
+/* ============================================
+   Carousel Styles
+   ============================================ */
+.carousel-container {
+    position: relative;
+    padding: 0 50px; /* Space for arrows */
+}
+
+.carousel-slide {
+    display: none; /* Hidden by default */
+}
+
+.carousel-prev,
+.carousel-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--color-surface);
+    color: var(--color-primary);
+    border: 2px solid var(--color-border);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10;
+    display: none; /* Hidden by default, shown by JS */
+    transition: all 0.2s;
+}
+
+.carousel-prev:hover,
+.carousel-next:hover {
+    background-color: var(--color-primary);
+    color: var(--color-gardenia);
+}
+
+.carousel-prev {
+    left: 0;
+}
+
+.carousel-next {
+    right: 0;
 }

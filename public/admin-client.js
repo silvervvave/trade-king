@@ -45,14 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const bannerLeft = document.getElementById('bannerLeft');
     if (bannerLeft) {
         bannerLeft.addEventListener('click', () => {
-            if (adminRoomId) {
-                if (confirm('현재 방을 삭제하고 초기화면으로 돌아가시겠습니까?')) {
-                    socket.emit('force_close_room', { roomId: adminRoomId });
-                    localStorage.removeItem('adminRoomId');
-                    adminRoomId = null;
-                    window.location.href = '/';
-                }
-            }
+            window.location.reload();
         });
     }
 

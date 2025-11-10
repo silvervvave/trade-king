@@ -41,9 +41,9 @@ const templates = {
         <p>목적지: ${destinationText}</p>
         <p>기본 투자액: ${voyage.amount} PA</p>
         <div class="input-group">
-            <div class="toggle-input" data-step="100" data-min="100">
+            <div class="toggle-input" data-step="10" data-min="10">
                 <button class="btn-toggle minus">-</button>
-                <span id="investAmountValue-${voyage.country}" class="toggle-value">100</span>
+                <span id="investAmountValue-${voyage.country}" class="toggle-value">10</span>
                 <button class="btn-toggle plus">+</button>
             </div>
             <button class="game-btn" onclick="game.makeInvestment('${voyage.country}')">투자하기</button>

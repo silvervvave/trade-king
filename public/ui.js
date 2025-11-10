@@ -4,7 +4,71 @@ class UIManager {
         this.initializeUI();
     }
 
+    setupCarousel(containerSelector) {
+        const container = document.querySelector(containerSelector);
+        if (!container) return;
+
+        const slides = Array.from(container.querySelectorAll('.carousel-slide'));
+        const nextBtn = container.querySelector('.carousel-next');
+        const prevBtn = container.querySelector('.carousel-prev');
+        let currentIndex = 0;
+
+        if (slides.length === 0) {
+            if (prevBtn) prevBtn.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'none';
+            return;
+        };
+
+        const showSlide = (index) => {
+            slides.forEach((slide, i) => {
+                slide.style.display = i === index ? 'block' : 'none';
+            });
+
+            if (prevBtn) {
+                prevBtn.style.display = index > 0 ? 'block' : 'none';
+            }
+            if (nextBtn) {
+                nextBtn.style.display = index < slides.length - 1 ? 'block' : 'none';
+            }
+        };
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                if (currentIndex < slides.length - 1) {
+                    currentIndex++;
+                    showSlide(currentIndex);
+                }
+            });
+        }
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    showSlide(currentIndex);
+                }
+            });
+        }
+
+        // Add a method to reset to the first slide, can be called from outside
+        container.resetCarousel = () => {
+            currentIndex = 0;
+            showSlide(0);
+        };
+
+        showSlide(0); // Initial setup
+    }
+
     initializeUI() {
+        const bannerLeft = document.getElementById('bannerLeft');
+        if (bannerLeft) {
+            bannerLeft.addEventListener('click', () => {
+                if (confirm('진행 상황이 초기화 될 수 있습니다. 정말 처음으로 돌아가시겠습니까?')) {
+                    window.location.reload();
+                }
+            });
+        }
+
         const gameInfoBtn = document.getElementById('gameInfoBtn');
         if (gameInfoBtn) {
             gameInfoBtn.addEventListener('click', () => this.showGameInfoModal());
@@ -46,6 +110,10 @@ class UIManager {
                 this.hideResultModal();
             }
         });
+
+        this.setupCarousel('#productionArea .carousel-container');
+        this.setupCarousel('#investmentArea .carousel-container');
+        this.setupCarousel('#arrivalArea .carousel-container');
     }
 
     showResultModal(title, content) {
@@ -453,17 +521,26 @@ class UIManager {
 
         container.innerHTML = '';
 
-        if (!voyages || voyages.length === 0) {
-            container.innerHTML = '<p class="info-text">현재 투자 가능한 항해가 없습니다.</p>';
+        const validVoyages = voyages ? voyages.filter(v => v.country !== this.game.gameState.player.country) : [];
+
+        if (validVoyages.length === 0) {
+            container.innerHTML = '<p class="info-text" style="text-align: center;">현재 투자 가능한 항해가 없습니다.</p>';
+            // Need to re-run setupCarousel to hide arrows
+            this.setupCarousel('#investmentArea .carousel-container');
             return;
         }
 
-        voyages.forEach(voyage => {
-            if (voyage.country !== this.game.gameState.player.country) {
-                const card = this.createInvestmentCard(voyage);
-                container.appendChild(card);
-            }
+        validVoyages.forEach(voyage => {
+            const slide = document.createElement('div');
+            slide.className = 'carousel-slide';
+            
+            const card = this.createInvestmentCard(voyage);
+            slide.appendChild(card);
+            container.appendChild(slide);
         });
+
+        // Re-initialize the carousel for this area now that slides are populated
+        this.setupCarousel('#investmentArea .carousel-container');
     }
 
     createInvestmentCard(voyage) {
@@ -518,6 +595,75 @@ class UIManager {
         
         this.updateTokenDisplay();
         this.renderArrivalResults();
+        this.renderMyArrivalSummary();
+        this.renderInvestmentResults();
+
+        // Reset carousel to the first slide
+        const carousel = document.querySelector('#arrivalArea .carousel-container');
+        if (carousel && carousel.resetCarousel) {
+            carousel.resetCarousel();
+        }
+    }
+
+    renderMyArrivalSummary() {
+        const container = document.getElementById('myArrivalResult');
+        if (!container) return;
+
+        const teamState = this.game.gameState.team;
+        const tradeSelection = teamState.tradeSelection;
+        if (!tradeSelection) {
+            container.innerHTML = '<h3>우리 팀 입항 결과</h3><p>이번 라운드에 출항하지 않았습니다.</p>';
+            return;
+        }
+
+        const destination = tradeSelection.type === 'china' ? '중국' : '인도';
+        const goodsName = tradeSelection.type === 'china' ? '비단' : '후추';
+        const eventText = teamState.eventText || '이벤트 결과 대기중...';
+        const rpsResult = teamState.finalRpsResultData ? this.getRPSResultKorean(teamState.finalRpsResultData.result) : '가위바위보 결과 대기중...';
+        
+        // This is a simplified summary. The actual calculation happens on the server.
+        // We can get the final profit from the arrivalSummaryLog data if needed, but for now, this is a display template.
+        container.innerHTML = `
+            <h3>우리 팀 입항 결과</h3>
+            <p><strong>목적지:</strong> ${destination}</p>
+            <p><strong>투자 금액:</strong> ${tradeSelection.amount} PA</p>
+            <p><strong>이벤트:</strong> ${eventText}</p>
+            <p><strong>최종 가위바위보:</strong> ${rpsResult}</p>
+            <p><em>서버에서 최종 집계 후 정산됩니다.</em></p>
+        `;
+    }
+
+    renderInvestmentResults() {
+        const container = document.getElementById('investmentReturnResult');
+        if (!container) return;
+
+        const myInvestments = this.game.gameState.team.investmentsMade || [];
+        if (myInvestments.length === 0) {
+            container.innerHTML = '<h3>투자 수익</h3><p>이번 라운드에 투자하지 않았습니다.</p>';
+            return;
+        }
+
+        let resultsHtml = '<h3>투자 수익</h3>';
+        myInvestments.forEach(investment => {
+            const targetTeam = this.game.teams[investment.toTeam];
+            if (targetTeam) {
+                const teamName = this.game.countryConfig[targetTeam.country].name;
+                // NOTE: The actual profit calculation is on the server. 
+                // This UI part just shows the status. We'd need a new socket event or updated game state
+                // to show the actual return PA. For now, I'll show the status.
+                const eventStatus = targetTeam.eventDrawnThisRound ? '완료' : '대기중';
+                const rpsStatus = targetTeam.finalRpsPlayedThisRound ? '완료' : '대기중';
+                resultsHtml += `
+                    <div class="investment-card" style="margin-top: 10px;">
+                        <h4>${teamName}</h4>
+                        <p><strong>투자 금액:</strong> ${investment.amount} PA</p>
+                        <p>이벤트: ${eventStatus} / 최종 ✌️✊✋: ${rpsStatus}</p>
+                        <p><em>최종 수익은 서버에서 집계 중입니다.</em></p>
+                    </div>
+                `;
+            }
+        });
+        container.innerHTML = resultsHtml;
     }
 
     updateArrivalStatus(teams) {
