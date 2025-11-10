@@ -1,8 +1,9 @@
-const socket = io();
 
+
+// The generic 'connect' event is handled in socket.js.
+// This handler is for super-admin-specific logic that runs on connection.
 socket.on('connect', () => {
-    console.log('Super Admin으로 서버에 연결되었습니다.');
-    updateConnectionStatus(true);
+    console.log('Super Admin 클라이언트 연결됨.');
     
     // 3초마다 방 목록 요청
     setInterval(() => {
@@ -11,10 +12,7 @@ socket.on('connect', () => {
     socket.emit('get_room_list'); // 즉시 1회 실행
 });
 
-socket.on('disconnect', () => {
-    console.log('서버 연결이 끊어졌습니다.');
-    updateConnectionStatus(false);
-});
+// The generic 'disconnect' event is handled in socket.js.
 
 socket.on('room_list_update', (roomList) => {
     const container = document.getElementById('roomListContainer');

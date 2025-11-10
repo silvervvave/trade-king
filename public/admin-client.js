@@ -1,5 +1,5 @@
 HEAD
-const socket = io();
+
 let adminRoomId = localStorage.getItem('adminRoomId') || null;
 console.log(`[클라이언트] adminRoomId 초기값: ${adminRoomId}`);
 
@@ -72,21 +72,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function updateConnectionStatus(isConnected) {
-    const statusElement = document.getElementById('connectionStatus');
-    if (isConnected) {
-        statusElement.textContent = '온라인';
-        statusElement.style.color = 'var(--color-success)';
-    } else {
-        statusElement.textContent = '오프라인';
-        statusElement.style.color = 'var(--color-danger)';
-    }
-}
-
+// The generic 'connect' event is handled in socket.js.
+// This handler is for admin-specific logic that runs on connection.
 socket.on('connect', () => {
-    console.log('관리자로 서버에 연결되었습니다.');
-    updateConnectionStatus(true);
-    
+    console.log('관리자 클라이언트 연결됨. adminRoomId:', adminRoomId);
     if (adminRoomId) {
         console.log(`[클라이언트] 'reclaim_admin' 이벤트 전송 시도: roomId=${adminRoomId}`);
         socket.emit('reclaim_admin', { roomId: adminRoomId });
@@ -143,8 +132,6 @@ socket.on('admin_reclaimed', (data) => {
 
 
 socket.on('disconnect', () => {
-    console.log('서버 연결이 끊어졌습니다.');
-    updateConnectionStatus(false);
     alert('서버와의 연결이 끊어졌습니다. 페이지를 새로고침 해주세요.');
 });
 
