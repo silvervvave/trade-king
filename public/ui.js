@@ -197,7 +197,7 @@ class UIManager {
             <p>${country.trait}</p>
             <ul class="country-stats">
                 <li>클릭 ${country.clicksPerBatch}회당 생산량: ${country.paPerBatch} PA</li>
-                <li>최대 생산량: ${country.maxProduct} PA</li>
+                <li>최대 생산량: ${country.maxBatchCount * country.paPerBatch} PA</li>
             </ul>
         `;
         document.getElementById('countryDescriptionModal').classList.remove('hidden');
@@ -227,8 +227,7 @@ class UIManager {
         updateText('currentProduction', teamState.productPACount);
 
         // Update click reward info text
-        const bonusPA = teamState.country === 'netherlands' ? 30 : 20;
-        updateText('click-reward-info', `30클릭 보상: ${bonusPA} PA`);
+        updateText('click-reward-info', `${config.clicksPerBatch}클릭 보상: ${config.paPerBatch} PA`);
 
         // Handle Production Click Area UI
         const productionClickArea = document.getElementById('produceBtn');
@@ -239,8 +238,8 @@ class UIManager {
 
         // Handle fill effect based on click count
         if (productionFill) {
-            const clickCount = teamState.productionBoxClickCount;
-            const maxClicks = 30;
+            const clickCount = teamState.clickCount;
+            const maxClicks = config.clicksPerBatch;
             const progress = clickCount / maxClicks;
             productionFill.style.height = `${progress * 100}%`;
 

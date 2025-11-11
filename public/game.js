@@ -247,7 +247,6 @@ class GameClient {
     }
 
     updatePlayerStatsFromServer(teamData) {
-        console.log('[GameClient] updatePlayerStatsFromServer - Received teamData:', teamData);
         // Preserve the individual, client-side click progress
         const localClickCount = this.gameState.team.clickCount || 0;
 
@@ -256,8 +255,6 @@ class GameClient {
             clickCount: localClickCount, // Restore local click progress
         };
         
-        console.log('[GameClient] updatePlayerStatsFromServer - Updated gameState.team.totalPA:', this.gameState.team.totalPA);
-
         this.ui.updatePlayerStats();
         this.ui.updateTokenDisplay();
         this.ui.updateTradeSelectionDisplay();
