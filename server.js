@@ -146,7 +146,8 @@ io.on('connection', (socket) => {
     await deleteUser(socket, data, supabase);
   });
 
-  const safeHandler = (handler, eventName) => async (socket, data) => { // <-- Changed signature
+  const safeHandler = (handler, eventName) => async (data, callback) => {
+    const socket = this; // 'this' refers to the socket in socket.io event handlers
     if (isShuttingDown) {
       socket.emit('error', { message: '서버가 종료 중입니다.' });
       return;
