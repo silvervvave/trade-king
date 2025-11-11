@@ -31,7 +31,6 @@ class GameClient {
         this.countryConfig = {};
         this.playerRegistered = false;
         this.playerRoomId = localStorage.getItem('playerRoomId');
-        this.sessionToken = localStorage.getItem('sessionToken');
         this.localPlayerName = localStorage.getItem('localPlayerName'); // Load from localStorage
         this.localStudentId = localStorage.getItem('localStudentId');   // Load from localStorage
         this.clickBuffer = 0;
@@ -57,9 +56,6 @@ class GameClient {
             return false;
         }
         const dataToSend = { ...payload, roomId: this.playerRoomId };
-        if (this.sessionToken) {
-            dataToSend.token = this.sessionToken; // Automatically include session token
-        }
         this.socket.emit(eventName, dataToSend);
         return true;
     }
@@ -245,9 +241,9 @@ class GameClient {
 
         this.socket.emit('register_player', {
             country: this.gameState.player.country,
-            playerName: this.gameState.player.name,
-            roomId: this.playerRoomId,
-            token: this.sessionToken // Include the session token
+            name: this.gameState.player.name,
+            studentId: this.localStudentId, // Add studentId here
+            roomId: this.playerRoomId
         });
 
         this.playerRegistered = true;
@@ -258,6 +254,7 @@ class GameClient {
     }
 
     updatePlayerStatsFromServer(teamData) {
+        console.log('[GameClient] updatePlayerStatsFromServer - Received teamData:', teamData);
         // Preserve the individual, client-side click progress
         const localClickCount = this.gameState.team.productionBoxClickCount || 0;
 
@@ -266,14 +263,14 @@ class GameClient {
             silk: teamData.silk || 0,
             pepper: teamData.pepper || 0,
             productPACount: teamData.productPACount || 0,
-            maxProduct: teamData.maxProduct || 0, // Update maxProduct
+            batchCount: teamData.batchCount || 0, // Add this
             productionBoxClickCount: 0, // Placeholder, will be restored below
             resetTokens: teamData.resetTokens || 0,
             mercantilismTokens: teamData.mercantilismTokens || 0,
             investmentsMade: teamData.investmentsMade || [],
             tradeSelection: teamData.tradeSelection || null,
             eventDrawnThisRound: teamData.eventDrawnThisRound || false,
-            finalRpsPlayedThisRound: teamData.finalRpsPlayedThisRound || false,
+            finalRpsPlayedThisRound: false,
             eventText: teamData.eventText || '',
             eventResultClass: teamData.eventResultClass || '',
             finalRpsResult: teamData.finalRpsResult || '',
@@ -284,6 +281,7 @@ class GameClient {
 
         // Restore the individual click progress
         this.gameState.team.productionBoxClickCount = localClickCount;
+        console.log('[GameClient] updatePlayerStatsFromServer - Updated gameState.team.totalPA:', this.gameState.team.totalPA);
 
         this.ui.updatePlayerStats();
         this.ui.updateTokenDisplay();
@@ -305,23 +303,22 @@ class GameClient {
     }
 
     produce() {
+        console.log('Produce button clicked!');
         if (!this.gameState.player.country || !this.playerRoomId) {
             return this.ui.showNotification('게임에 참가하지 않았습니다.');
         }
 
         const config = this.countryConfig[this.gameState.player.country];
         
-        // Check against maxProduct (total PA) instead of maxClicks
-        if (this.gameState.team.totalPA >= config.maxProduct) {
-            return this.ui.showNotification('최대 생산량에 도달했습니다!');
+        // Check against maxBatchCount
+        if (this.gameState.team.batchCount >= config.maxBatchCount) {
+            return this.ui.showNotification('최대 생산 횟수에 도달했습니다!');
         }
         
         this.clickBuffer++;
-        this.gameState.team.productionBoxClickCount = (this.gameState.team.productionBoxClickCount + 1) % 30;
+        const newClickCount = (this.gameState.team.productionBoxClickCount + 1) % 30;
+        this.gameState.team.productionBoxClickCount = newClickCount;
 
-        if (this.gameState.team.productionBoxClickCount === 0) {
-            this.emitSocket('production_box_filled');
-        }
         this.ui.updatePlayerStats();
     }
 

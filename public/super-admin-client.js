@@ -1,5 +1,7 @@
 
 
+const socket = io();
+
 // The generic 'connect' event is handled in socket.js.
 // This handler is for super-admin-specific logic that runs on connection.
 

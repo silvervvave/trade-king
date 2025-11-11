@@ -211,30 +211,52 @@ class UIManager {
         if (!this.game.gameState.player.country) return;
 
         const teamState = this.game.gameState.team;
-        document.getElementById('totalPA').textContent = teamState.totalPA;
-        document.getElementById('silkCount').textContent = teamState.silk;
-        document.getElementById('pepperCount').textContent = teamState.pepper;
+        const config = this.game.countryConfig[this.game.gameState.player.country];
 
-        document.getElementById('clickCount').textContent = teamState.clickCount;
-        document.getElementById('maxClicks').textContent = teamState.maxProduct; // Display maxProduct here
-        // The currentProduction display is no longer needed as the UI is now a progress bar
-        // document.getElementById('currentProduction').textContent = teamState.clickCount * this.game.countryConfig[this.game.gameState.player.country].paPerClick;
+        // Helper to update text content safely
+        const updateText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
 
-        const productionClickArea = document.getElementById('produceBtn'); // produceBtn is now the .production-click-area
-        const productionFill = productionClickArea ? productionClickArea.querySelector('.production-fill') : null;
-        const productionClickText = productionClickArea ? productionClickArea.querySelector('.production-click-text') : null;
+        // Update main stats
+        updateText('totalPA', teamState.totalPA);
+        updateText('silkCount', teamState.silk);
+        updateText('pepperCount', teamState.pepper);
+        updateText('productPACount', teamState.productPACount);
+        updateText('currentProduction', teamState.productPACount);
 
-        if (productionFill && productionClickText) {
-            const productionBoxClickCount = teamState.productionBoxClickCount;
-            const maxClicksForFill = 30; // 30 clicks to fill the box
-            const progress = Math.min((productionBoxClickCount / maxClicksForFill) * 100, 100); // Calculate progress based on clicks, cap at 100%
-            productionFill.style.height = `${progress}%`;
+        // Update click reward info text
+        const bonusPA = teamState.country === 'netherlands' ? 30 : 20;
+        updateText('click-reward-info', `30클릭 보상: ${bonusPA} PA`);
 
-            if (progress >= 100) {
-                productionClickArea.classList.add('production-box-filled');
-            } else {
-                productionClickArea.classList.remove('production-box-filled');
+        // Handle Production Click Area UI
+        const productionClickArea = document.getElementById('produceBtn');
+        if (!productionClickArea) return;
+
+        const productionFill = productionClickArea.querySelector('.production-fill');
+        const productionClickText = productionClickArea.querySelector('.production-click-text');
+
+        // Handle fill effect based on click count
+        if (productionFill) {
+            const clickCount = teamState.productionBoxClickCount;
+            const maxClicks = 30;
+            const progress = clickCount / maxClicks;
+            productionFill.style.height = `${progress * 100}%`;
+
+            if (productionClickText) {
+                // This will move the background gradient up
+                productionClickText.style.backgroundPosition = `0% ${progress * 100}%`;
             }
+        }
+        
+        // Handle UI state when max production is reached
+        if (teamState.batchCount >= config.maxBatchCount) { // Changed condition
+            productionClickArea.classList.add('production-box-filled');
+            if (productionClickText) productionClickText.textContent = '생산 종료'; // Changed message
+        } else {
+            productionClickArea.classList.remove('production-box-filled');
+            if (productionClickText) productionClickText.textContent = 'CLICK';
         }
     }
 
@@ -271,7 +293,7 @@ class UIManager {
             panel.classList.add('hidden');
         });
 
-        console.log('UI: updateGameState', gameState);
+        console.log('UI: updateGameState - gameState.gameStarted:', gameState.gameStarted, 'currentPhase:', gameState.currentPhase);
         if (gameState.gameStarted) {
             this.showScreen('gameScreen');
             document.getElementById('gameNav').classList.remove('hidden');
@@ -500,7 +522,7 @@ class UIManager {
         document.querySelector('.destination-grid').classList.remove('hidden');
         document.getElementById('tradeConfirmation').classList.add('hidden');
         this.game.selectedTradeDestination = null;
-        document.getElementById('tradeAmountValue').textContent = '200'; // Reset to default
+        document.getElementById('tradeAmountValue').textContent = '20'; // Reset to default
         this.game.ui.updateTradeSelectionDisplay();
     }
 
@@ -849,4 +871,5 @@ class UIManager {
 
         container.prepend(entry); // Add to the top
     }
+
 }

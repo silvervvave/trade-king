@@ -30,7 +30,7 @@ function broadcastTeamsUpdate(io, room, roomId) {
 function updateTeamMembers(io, team, room, roomId) {
     team.members.forEach(member => {
         if (member.connected) {
-            io.to(member.id).emit('team_state_update', team);
+            io.to(member.id).emit('team_update', team);
         }
     });
     broadcastTeamsUpdate(io, room, roomId);
@@ -163,9 +163,8 @@ function calculateArrivalResults(io, team, room, roomId) {
     }
 }
 
-function registerPlayer(io, socket, data, room, roomId, sessionData) {
-    const { country } = data;
-    const { studentId, name } = sessionData; // Get studentId and name from sessionData
+function registerPlayer(io, socket, data, room, roomId) {
+    const { country, studentId, name } = data;
     
     if (!countryConfig[country]) {
         return socket.emit('error', { message: '유효하지 않은 국가입니다.' });
@@ -205,7 +204,6 @@ function registerPlayer(io, socket, data, room, roomId, sessionData) {
         delete room.players[existingMember.id]; // 이전 소켓 ID 정보 삭제
         existingMember.id = socket.id;
         existingMember.connected = true;
-        // existingMember.token = token; // No longer needed
     } else {
         // 새로운 팀에 접속하거나, 처음 접속하는 경우: 새 멤버로 추가
         team.members.push({ id: socket.id, studentId, name, connected: true }); // Include studentId, remove token
@@ -216,8 +214,6 @@ function registerPlayer(io, socket, data, room, roomId, sessionData) {
     socket.roomId = roomId;
 
     logger.info(`[플레이어 참가] ${name}님이 ${roomId} 방의 ${country} 팀에 참가`);
-    
-    // socket.emit('registration_success', { token }); // No longer needed
 
     const safeRoomState = {
         gameStarted: room.gameStarted,
@@ -253,6 +249,7 @@ function resetProductionPhase(room) {
         t.rerollUsedThisRound = false;
         t.rpsPaChange = 0;
         t.rpsResult = null;
+        t.clickCount = 0; // Reset click count for the new production phase
     });
 }
 
@@ -287,7 +284,7 @@ function resetTradePhase(room) {
     });
 }
 
-function startPhase(io, socket, data, room, roomId, sessionData) {
+function startPhase(io, socket, data, room, roomId) {
     if (socket.id !== room.adminSocketId) return;
 
     const { phase } = data;
@@ -325,7 +322,7 @@ function startPhase(io, socket, data, room, roomId, sessionData) {
 
     broadcastTeamsUpdate(io, room, roomId);
 }
-function productionBatch(io, socket, data, room, roomId, sessionData) {
+function productionBatch(io, socket, data, room, roomId) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
         logger.warn(`플레이어를 찾을 수 없음: ${socket.id}`);
@@ -339,26 +336,27 @@ function productionBatch(io, socket, data, room, roomId, sessionData) {
     }
 
     const clicks = data.clicks || 0;
+
     let paGained = 0;
     for (let i = 0; i < clicks; i++) {
-        // Check against maxProduct (total PA)
-        if (team.totalPA < config.maxProduct) {
+        // Check against maxBatchCount
+        if (team.batchCount < config.maxBatchCount) {
             team.clickCount++; // Track clicks for UI
             // Check if a batch of clicks is complete
             if (team.clickCount % config.clicksPerBatch === 0) {
                 paGained += config.paPerBatch;
+                team.batchCount++; // Increment batchCount when a bonus is awarded
             }
         } else {
+            // If maxBatchCount is reached, stop processing clicks for bonus
             break;
         }
     }
     team.totalPA += paGained;
-    // Ensure totalPA does not exceed maxProduct
-    team.totalPA = Math.min(team.totalPA, config.maxProduct);
     updateTeamMembers(io, team, room, roomId);
 }
 
-function tradeSelection(io, socket, data, room, roomId, sessionData) {
+function tradeSelection(io, socket, data, room, roomId) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
         return socket.emit('error', { message: error });
@@ -406,7 +404,7 @@ function tradeSelection(io, socket, data, room, roomId, sessionData) {
     });
 }
 
-function makeInvestment(io, socket, data, room, roomId, sessionData) {
+function makeInvestment(io, socket, data, room, roomId) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
       return socket.emit('error', { message: error });
@@ -437,7 +435,7 @@ function makeInvestment(io, socket, data, room, roomId, sessionData) {
     updateTeamMembers(io, targetTeam, room, roomId);
 }
 
-function resetTrade(io, socket, data, room, roomId, sessionData) {
+function resetTrade(io, socket, data, room, roomId) {
     if (room.currentPhase !== PHASES.TRADE) {
         return socket.emit('error', { message: '지금은 출항 선택을 초기화할 수 없습니다.' });
     }
@@ -462,7 +460,7 @@ function resetTrade(io, socket, data, room, roomId, sessionData) {
     }
 }
 
-function resetInvestments(io, socket, data, room, roomId, sessionData) {
+function resetInvestments(io, socket, data, room, roomId) {
     if (room.currentPhase !== PHASES.INVESTMENT) {
         return socket.emit('error', { message: '지금은 투자를 초기화할 수 없습니다.' });
     }
@@ -499,7 +497,7 @@ function resetInvestments(io, socket, data, room, roomId, sessionData) {
     }
 }
 
-function playRPS(io, socket, data, room, roomId, sessionData) {
+function playRPS(io, socket, data, room, roomId) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
       return socket.emit('error', { message: error });
@@ -527,7 +525,7 @@ function playRPS(io, socket, data, room, roomId, sessionData) {
     broadcastTeamsUpdate(io, room, roomId);
 }
 
-function _handleReroll(io, socket, room, roomId, sessionData, phase) {
+function _handleReroll(io, socket, room, roomId, phase) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
         return socket.emit('error', { message: error });
@@ -562,11 +560,11 @@ function _handleReroll(io, socket, room, roomId, sessionData, phase) {
     broadcastTeamsUpdate(io, room, roomId);
 }
 
-function rerollRPS(io, socket, data, room, roomId, sessionData) {
-    _handleReroll(io, socket, room, roomId, sessionData, PHASES.PRODUCTION);
+function rerollRPS(io, socket, data, room, roomId) {
+    _handleReroll(io, socket, room, roomId, PHASES.PRODUCTION);
 }
 
-function drawEvent(io, socket, data, room, roomId, sessionData) {
+function drawEvent(io, socket, data, room, roomId) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
         return socket.emit('error', { message: error });
@@ -594,7 +592,7 @@ function drawEvent(io, socket, data, room, roomId, sessionData) {
     calculateArrivalResults(io, team, room, roomId);
 }
 
-function playFinalRPS(io, socket, data, room, roomId, sessionData) {
+function playFinalRPS(io, socket, data, room, roomId) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
         return socket.emit('error', { message: error });
@@ -621,11 +619,11 @@ function playFinalRPS(io, socket, data, room, roomId, sessionData) {
     calculateArrivalResults(io, team, room, roomId);
 }
 
-function rerollFinalRPS(io, socket, data, room, roomId, sessionData) {
-    _handleReroll(io, socket, room, roomId, sessionData, PHASES.ARRIVAL);
+function rerollFinalRPS(io, socket, data, room, roomId) {
+    _handleReroll(io, socket, room, roomId, PHASES.ARRIVAL);
 }
 
-function resetGame(io, socket, data, room, roomId, sessionData) {
+function resetGame(io, socket, data, room, roomId) {
     if (socket.id !== room.adminSocketId) return;
 
     Object.values(room.teams).forEach(team => {
@@ -650,7 +648,7 @@ function resetGame(io, socket, data, room, roomId, sessionData) {
     io.to(roomId).emit('game_state_update', safeRoomState);
 }
 
-async function disconnect(io, socket, room, roomId, sessionData, supabase) {
+async function disconnect(io, socket, room, roomId, supabase) {
     try {
       if (!room) return false;
 
@@ -703,7 +701,7 @@ async function disconnect(io, socket, room, roomId, sessionData, supabase) {
     }
 }
 
-function endGame(io, socket, data, room, roomId, sessionData) {
+function endGame(io, socket, data, room, roomId) {
     if (socket.id !== room.adminSocketId) return;
 
     const finalResults = calculateRankings(room);
@@ -720,7 +718,7 @@ function endGame(io, socket, data, room, roomId, sessionData) {
     io.to(roomId).emit('game_ended', finalResults);
 }
 
-function resetProduction(io, socket, data, room, roomId, sessionData) {
+function resetProduction(io, socket, data, room, roomId) {
     if (socket.id !== room.adminSocketId) return;
 
     Object.values(room.teams).forEach(team => {
@@ -735,9 +733,9 @@ function resetProduction(io, socket, data, room, roomId, sessionData) {
     logger.info(`[관리자] ${roomId} 방의 생산 상태 초기화`);
 }
 
-function reconnectPlayer(io, socket, data, gameState, roomId, sessionData) {
-    // The sessionData contains the authenticated user's studentId and name
-    const { studentId, name } = sessionData;
+function reconnectPlayer(io, socket, data, gameState, roomId) {
+    // The studentId and name are now expected to be in the data object directly
+    const { studentId, name } = data;
 
     let foundPlayer = null;
     let playerTeam = null;
@@ -821,72 +819,8 @@ async function loginOrRegister(socket, data, supabase, redisClient) {
             user = newUser;
         }
 
-        // 4. Generate session token and store in Redis
-        const token = crypto.randomUUID();
-        const sessionData = { userId: user.id, studentId: user.student_id, name: user.name };
-        
-        // Store session in Redis for 24 hours (24 * 60 * 60 seconds)
-        await redisClient.set(`session:${token}`, JSON.stringify(sessionData), {
-            EX: 24 * 60 * 60,
-        });
-
-        // 5. Emit success to client
-        socket.emit('login_success', { token, studentId: user.student_id, name: user.name });
-        logger.info(`[로그인 성공] 학번: ${studentId}, 이름: ${name}`);
-
-    } catch (error) {
-        logger.error('Login or registration failed', error);
-        socket.emit('login_failure', { message: '서버 오류가 발생했습니다. 다시 시도해주세요.' });
-    }
-}
-
-async function loginOrRegister(socket, data, supabase, redisClient) {
-    const { studentId, name } = data;
-    try {
-        // 1. Check if user exists
-        const { data: existingUser, error: selectError } = await supabase
-            .from('users')
-            .select('id, student_id, name')
-            .eq('student_id', studentId)
-            .single();
-
-        if (selectError && selectError.code !== 'PGRST116') { // PGRST116: row not found
-            throw new Error(`Supabase select error: ${selectError.message}`);
-        }
-
-        let user = existingUser;
-
-        if (user) {
-            // 2. User exists, verify name
-            if (user.name !== name) {
-                socket.emit('login_failure', { message: '학번과 이름이 일치하지 않습니다.' });
-                return;
-            }
-        } else {
-            // 3. User does not exist, create new user
-            const { data: newUser, error: insertError } = await supabase
-                .from('users')
-                .insert({ student_id: studentId, name: name })
-                .select('id, student_id, name')
-                .single();
-
-            if (insertError) {
-                throw new Error(`Supabase insert error: ${insertError.message}`);
-            }
-            user = newUser;
-        }
-
-        // 4. Generate session token and store in Redis
-        const token = crypto.randomUUID();
-        const sessionData = { userId: user.id, studentId: user.student_id, name: user.name };
-        
-        // Store session in Redis for 24 hours (24 * 60 * 60 seconds)
-        await redisClient.set(`session:${token}`, JSON.stringify(sessionData), {
-            EX: 24 * 60 * 60,
-        });
-
-        // 5. Emit success to client
-        socket.emit('login_success', { token, studentId: user.student_id, name: user.name });
+        // 4. Emit success to client without token
+        socket.emit('login_success', { studentId: user.student_id, name: user.name });
         logger.info(`[로그인 성공] 학번: ${studentId}, 이름: ${name}`);
 
     } catch (error) {

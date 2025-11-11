@@ -28,7 +28,7 @@ const {
     resetInvestments,
     resetProduction,
     reconnectPlayer,
-    loginOrRegister // <-- Add this
+    loginOrRegister
 } = require('./game-logic/handlers');
 
 const { validate } = require('./game-logic/validation');
@@ -146,28 +146,11 @@ io.on('connection', (socket) => {
     await deleteUser(socket, data, supabase);
   });
 
-  const safeHandler = (handler, eventName) => async (data, callback) => {
-    const socket = this; // 'this' refers to the socket in socket.io event handlers
+  const safeHandler = async (io, socket, handler, eventName, data, callback) => {
     if (isShuttingDown) {
       socket.emit('error', { message: '서버가 종료 중입니다.' });
       return;
     }
-
-    // --- NEW TOKEN VALIDATION LOGIC ---
-    const sessionToken = data?.token; // Assuming token is passed in data
-    if (!sessionToken) {
-        socket.emit('invalid_session', { message: '세션 토큰이 없습니다. 다시 로그인해주세요.' });
-        return;
-    }
-
-    const sessionDataJSON = await redisClient.get(`session:${sessionToken}`);
-    if (!sessionDataJSON) {
-        socket.emit('invalid_session', { message: '유효하지 않거나 만료된 세션입니다. 다시 로그인해주세요.' });
-        return;
-    }
-    const sessionData = JSON.parse(sessionDataJSON);
-    // sessionData will contain { userId, studentId, name }
-    // --- END NEW TOKEN VALIDATION LOGIC ---
 
     const validationResult = validate(eventName, data);
     if (!validationResult.success) {
@@ -196,7 +179,7 @@ io.on('connection', (socket) => {
             let currentGameState = JSON.parse(gameStateJSON);
 
             // 2. 핸들러 실행 (게임 로직 처리)
-            await handler(io, socket, data, currentGameState, roomId, sessionData); // <-- Pass sessionData
+            await handler(io, socket, data, currentGameState, roomId);
             
             // 3. 변경된 게임 상태를 다시 Redis에 저장
             // 타이머 객체는 순환 참조를 일으킬 수 있으므로 저장하지 않음
@@ -224,19 +207,20 @@ io.on('connection', (socket) => {
       newGameState.adminSocketId = socket.id;
 
       // 2. Supabase에 방 정보와 초기 게임 상태 저장
-      const { error } = await supabase.from('rooms').insert([
+      const { error: supabaseError } = await supabase.from('rooms').insert([
         { room_id: roomId, admin_socket_id: socket.id, game_state: newGameState }
       ]);
 
-      if (error) {
-        // Redis에 생성된 방 롤백
-        await redisClient.del(`room:${roomId}`);
-        throw new Error(`Supabase 오류: ${error.message}`);
+      if (supabaseError) {
+        throw new Error(`Supabase 오류: ${supabaseError.message}`);
       }
+
+      // 3. Redis에 게임 상태 저장
+      await redisClient.set(`room:${roomId}`, JSON.stringify(newGameState));
 
       socket.join(roomId);
       socket.roomId = roomId;
-      console.log(`[방 생성] ${roomId} (관리자: ${socket.id}) - Redis에 저장됨`);
+      console.log(`[방 생성] ${roomId} (관리자: ${socket.id}) - Supabase 및 Redis에 저장됨`);
       socket.emit('room_created', { roomId });
     } catch (error) {
       console.error('방 생성 중 오류', error);
@@ -300,14 +284,16 @@ io.on('connection', (socket) => {
 
   socket.on('check_room', async (data) => {
     const { roomId, playerName } = data;
+    console.log(`[Server] check_room 요청 수신: roomId=${roomId}, playerName=${playerName}`);
     try {
       const gameStateJSON = await redisClient.get(`room:${roomId}`);
+      console.log(`[Server] Redis에서 room:${roomId} 조회 결과: ${gameStateJSON ? '찾음' : '찾지 못함'}`);
       const roomExists = !!gameStateJSON;
       const teams = roomExists ? JSON.parse(gameStateJSON).teams : {};
 
       socket.emit('room_check_result', { exists: roomExists, roomId, playerName, countryConfig, teams });
     } catch (error) {
-      console.error(`방 확인 중 오류 (roomId: ${roomId}):`, error);
+      console.error(`[Server] 방 확인 중 오류 (roomId: ${roomId}):`, error);
       socket.emit('error', { message: '방 상태를 확인하는 중 오류가 발생했습니다.' });
     }
   });
@@ -386,24 +372,24 @@ io.on('connection', (socket) => {
   });
 
   // 핸들러 등록
-  socket.on('register_player', safeHandler(registerPlayer, 'register_player'));
-  socket.on('start_phase', safeHandler(startPhase, 'start_phase'));
-  socket.on('production_batch', safeHandler(productionBatch, 'production_batch'));
-  socket.on('trade_selection', safeHandler(tradeSelection, 'trade_selection'));
-  socket.on('make_investment', safeHandler(makeInvestment, 'make_investment'));
-  socket.on('play_rps', safeHandler(playRPS, 'play_rps'));
-  socket.on('reroll_rps', safeHandler(rerollRPS, 'reroll_rps'));
-  socket.on('draw_event', safeHandler(drawEvent, 'draw_event'));
-  socket.on('play_final_rps', safeHandler(playFinalRPS, 'play_final_rps'));
-  socket.on('reroll_final_rps', safeHandler(rerollFinalRPS, 'reroll_final_rps'));
-  socket.on('reset_game', safeHandler(resetGame, 'reset_game'));
-  socket.on('end_game', safeHandler(endGame, 'end_game'));
-  socket.on('reset_trade', safeHandler(resetTrade, 'reset_trade'));
-  socket.on('reset_investments', safeHandler(resetInvestments, 'reset_investments'));
-  socket.on('reset_production', safeHandler(resetProduction, 'reset_production'));
-  socket.on('reconnect_player', safeHandler(reconnectPlayer, 'reconnect_player'));
-  socket.on('start_timer', safeHandler((io, socket, data, gameState) => timerManager.start(socket.roomId, gameState, data.minutes, data.seconds), 'start_timer'));
-  socket.on('stop_timer', safeHandler((io, socket, data, gameState) => timerManager.stop(socket.roomId, gameState), 'stop_timer'));
+  socket.on('register_player', (data, callback) => safeHandler(io, socket, registerPlayer, 'register_player', data, callback));
+  socket.on('start_phase', (data, callback) => safeHandler(io, socket, startPhase, 'start_phase', data, callback));
+  socket.on('production_batch', (data, callback) => safeHandler(io, socket, productionBatch, 'production_batch', data, callback));
+  socket.on('trade_selection', (data, callback) => safeHandler(io, socket, tradeSelection, 'trade_selection', data, callback));
+  socket.on('make_investment', (data, callback) => safeHandler(io, socket, makeInvestment, 'make_investment', data, callback));
+  socket.on('play_rps', (data, callback) => safeHandler(io, socket, playRPS, 'play_rps', data, callback));
+  socket.on('reroll_rps', (data, callback) => safeHandler(io, socket, rerollRPS, 'reroll_rps', data, callback));
+  socket.on('draw_event', (data, callback) => safeHandler(io, socket, drawEvent, 'draw_event', data, callback));
+  socket.on('play_final_rps', (data, callback) => safeHandler(io, socket, playFinalRPS, 'play_final_rps', data, callback));
+  socket.on('reroll_final_rps', (data, callback) => safeHandler(io, socket, rerollFinalRPS, 'reroll_final_rps', data, callback));
+  socket.on('reset_game', (data, callback) => safeHandler(io, socket, resetGame, 'reset_game', data, callback));
+  socket.on('end_game', (data, callback) => safeHandler(io, socket, endGame, 'end_game', data, callback));
+  socket.on('reset_trade', (data, callback) => safeHandler(io, socket, resetTrade, 'reset_trade', data, callback));
+  socket.on('reset_investments', (data, callback) => safeHandler(io, socket, resetInvestments, 'reset_investments', data, callback));
+  socket.on('reset_production', (data, callback) => safeHandler(io, socket, resetProduction, 'reset_production', data, callback));
+  socket.on('reconnect_player', (data, callback) => safeHandler(io, socket, reconnectPlayer, 'reconnect_player', data, callback));
+  socket.on('start_timer', (data, callback) => safeHandler(io, socket, (io, socket, data, gameState) => timerManager.start(socket.roomId, gameState, data.minutes, data.seconds), 'start_timer', data, callback));
+  socket.on('stop_timer', (data, callback) => safeHandler(io, socket, (io, socket, data, gameState) => timerManager.stop(socket.roomId, gameState), 'stop_timer', data, callback));
 });
 
 // 우아한 종료

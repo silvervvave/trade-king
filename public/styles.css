@@ -495,11 +495,7 @@ body {
 /* ============================================
    생산 패널
    ============================================ */
-.production-panel {
-    /* display: grid; */
-    /* grid-template-columns: 1fr 1fr; */
-    /* gap: var(--spacing-lg); */
-}
+
 
 @media (max-width: 768px) {
     .arrival-panel {
@@ -542,22 +538,7 @@ body {
     margin-bottom: var(--spacing-md);
 }
 
-.progress-bar {
-    width: 100%;
-    height: 20px;
-    background: var(--color-gardenia);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
-    overflow: hidden;
-    margin-top: var(--spacing-md);
-}
 
-.progress-fill {
-    height: 100%;
-    background: var(--color-primary);
-    width: 0%;
-    transition: width 0.3s;
-}
 
 /* ============================================
    출항 패널
@@ -647,12 +628,7 @@ body {
     text-align: center;
 }
 
-.investment-grid {
-    /* display: grid; */
-    /* grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); */
-    /* gap: var(--spacing-lg); */
-    /* margin-top: var(--spacing-lg); */
-}
+
 
 .investment-card {
     background: var(--color-gardenia);
@@ -705,11 +681,7 @@ body {
 /* ============================================
    입항 패널
    ============================================ */
-.arrival-panel {
-    /* display: grid; */
-    /* grid-template-columns: 1fr 1fr; */
-    /* gap: var(--spacing-lg); */
-}
+
 
 .event-section,
 .final-rps-section {
@@ -1666,10 +1638,15 @@ body {
     position: relative;
     font-size: 3em;
     font-weight: bold;
-    color: var(--color-text); /* Default text color */
+    color: transparent;
+    background-image: linear-gradient(to bottom, var(--color-chocolate-martini), var(--color-cannoli-cream));
+    background-size: 100% 200%;
+    background-position: 0% 0%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    transition: background-position 0.1s ease-out;
+    user-select: none;
     z-index: 2;
-    transition: color 0.1s ease-out;
-    user-select: none; /* Prevent text selection on click */
 }
 
 /* Style for when the production box is filled */
@@ -1679,7 +1656,10 @@ body {
 
 .production-click-area.production-box-filled .production-click-text {
     color: var(--color-gardenia); /* Change text color when filled */
+    background-image: none; /* Remove gradient when maxed out */
 }
+
+
 
 /* ============================================
    하단 팀 현황 토글 버튼

@@ -9,14 +9,6 @@ class SocketHandler {
         this.socket.on('connect', () => {
             console.log('서버에 연결되었습니다.');
             this.game.ui.updateConnectionStatus(true);
-
-            // Re-register if we have a session
-            if (this.game.sessionToken && this.game.playerRoomId) {
-                this.emit('reconnect_player', {
-                    roomId: this.game.playerRoomId,
-                    token: this.game.sessionToken // Pass the session token
-                });
-            }
         });
 
         this.socket.on('disconnect', () => {
@@ -27,13 +19,11 @@ class SocketHandler {
 
         this.socket.on('login_success', (data) => {
             console.log('Login successful', data);
-            this.game.sessionToken = data.token;
             this.game.localPlayerName = data.name;
             this.game.localStudentId = data.studentId;
         
-            localStorage.setItem('sessionToken', data.token);
-            localStorage.setItem('localStudentId', data.studentId); // Store studentId in localStorage
-            localStorage.setItem('localPlayerName', data.name); // Store player name in localStorage
+            localStorage.setItem('localStudentId', data.studentId);
+            localStorage.setItem('localPlayerName', data.name);
         
             this.game.ui.showScreen('roomCodeInputScreen');
             
@@ -181,9 +171,7 @@ class SocketHandler {
         });
 
         this.socket.on('registration_success', (data) => {
-            this.game.sessionToken = data.token;
             // playerRoomId is already set from the room_check_result
-            localStorage.setItem('sessionToken', data.token);
             localStorage.setItem('playerRoomId', this.game.playerRoomId);
         });
     }

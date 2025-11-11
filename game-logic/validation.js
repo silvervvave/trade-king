@@ -21,7 +21,7 @@ const schemas = {
   register_player: z.object({
     roomId: z.string().length(4),
     country: z.enum(Object.values(COUNTRIES)),
-    playerName: z.string().min(1).max(20),
+    name: z.string().min(1).max(20),
   }),
   start_phase: z.object({
     roomId: z.string().length(4),
@@ -34,7 +34,7 @@ const schemas = {
   trade_selection: z.object({
     roomId: z.string().length(4),
     type: z.enum(['china', 'india', 'none']),
-    amount: z.number().int().min(0),
+    amount: z.number().int().min(20),
   }),
   make_investment: z.object({
     roomId: z.string().length(4),
