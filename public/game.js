@@ -275,7 +275,6 @@ class GameClient {
     }
 
     produce() {
-        console.log('Produce button clicked!');
         if (!this.gameState.player.country || !this.playerRoomId) {
             return this.ui.showNotification('게임에 참가하지 않았습니다.');
         }

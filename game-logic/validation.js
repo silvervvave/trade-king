@@ -27,9 +27,8 @@ const schemas = {
     roomId: z.string().length(4),
     phase: z.enum(Object.values(PHASES)),
   }),
-  production_batch: z.object({
+  complete_production_batch: z.object({
     roomId: z.string().length(4),
-    clicks: z.number().int().min(0),
   }),
   trade_selection: z.object({
     roomId: z.string().length(4),

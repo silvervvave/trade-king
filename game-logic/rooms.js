@@ -54,7 +54,6 @@ function createInitialTeamState(country, config) {
     totalPA: 0, 
     silk: 0, 
     pepper: 0, 
-    clickCount: 0,
     batchCount: 0,
     tradeSelection: null, 
     rpsPlayedThisRound: false, 
