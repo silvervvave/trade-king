@@ -82,6 +82,14 @@ const schemas = {
     roomId: z.string().length(4),
     token: z.string().uuid(),
   }),
+  login_or_register: z.object({
+    studentId: z.string().min(1).max(20),
+    name: z.string().min(1).max(20),
+  }),
+  get_users: z.object({}), // New schema for getting all users
+  delete_user: z.object({ // New schema for deleting a user
+    studentId: z.string().min(1).max(20),
+  }),
 };
 
 function validate(eventName, data) {

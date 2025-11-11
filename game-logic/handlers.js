@@ -163,15 +163,12 @@ function calculateArrivalResults(io, team, room, roomId) {
     }
 }
 
-function registerPlayer(io, socket, data, room, roomId) {
-    const { country, playerName } = data;
+function registerPlayer(io, socket, data, room, roomId, sessionData) {
+    const { country } = data;
+    const { studentId, name } = sessionData; // Get studentId and name from sessionData
+    
     if (!countryConfig[country]) {
         return socket.emit('error', { message: '유효하지 않은 국가입니다.' });
-    }
-
-    const sanitizedPlayerName = escape(playerName.trim());
-    if (sanitizedPlayerName.length === 0 || sanitizedPlayerName.length > 20) {
-        return socket.emit('error', { message: '이름은 1~20자 사이여야 합니다.' });
     }
 
     // 플레이어가 접속하려는 팀이 없으면 생성
@@ -186,12 +183,12 @@ function registerPlayer(io, socket, data, room, roomId) {
         if (room.teams.hasOwnProperty(existingCountry) && existingCountry !== country) {
             const otherTeam = room.teams[existingCountry];
             const initialMemberCount = otherTeam.members.length;
-            otherTeam.members = otherTeam.members.filter(m => m.name !== sanitizedPlayerName);
+            otherTeam.members = otherTeam.members.filter(m => m.name !== name); // Use 'name' from sessionData
             
             // 만약 다른 팀에서 플레이어가 실제로 제거되었다면, players 객체에서도 정리
             if (otherTeam.members.length < initialMemberCount) {
                 for (const playerId in room.players) {
-                    if (room.players[playerId].name === sanitizedPlayerName) {
+                    if (room.players[playerId].name === name) { // Use 'name' from sessionData
                         delete room.players[playerId];
                         break; // 한 명만 찾아서 삭제
                     }
@@ -201,27 +198,26 @@ function registerPlayer(io, socket, data, room, roomId) {
     }
 
     const team = room.teams[country];
-    const existingMember = team.members.find(m => m.name === sanitizedPlayerName);
-    const token = crypto.randomUUID();
+    const existingMember = team.members.find(m => m.name === name); // Use 'name' from sessionData
 
     if (existingMember) {
-        // 같은 팀에 재접속하는 경우: 소켓 ID와 접속 상태, 토큰만 갱신
+        // 같은 팀에 재접속하는 경우: 소켓 ID와 접속 상태만 갱신 (토큰은 login_or_register에서 처리)
         delete room.players[existingMember.id]; // 이전 소켓 ID 정보 삭제
         existingMember.id = socket.id;
         existingMember.connected = true;
-        existingMember.token = token;
+        // existingMember.token = token; // No longer needed
     } else {
         // 새로운 팀에 접속하거나, 처음 접속하는 경우: 새 멤버로 추가
-        team.members.push({ id: socket.id, name: sanitizedPlayerName, connected: true, token });
+        team.members.push({ id: socket.id, studentId, name, connected: true }); // Include studentId, remove token
     }
 
-    room.players[socket.id] = { name: sanitizedPlayerName, team: country };
+    room.players[socket.id] = { studentId, name, team: country }; // Include studentId
     socket.join(roomId);
     socket.roomId = roomId;
 
-    logger.info(`[플레이어 참가] ${sanitizedPlayerName}님이 ${roomId} 방의 ${country} 팀에 참가`);
+    logger.info(`[플레이어 참가] ${name}님이 ${roomId} 방의 ${country} 팀에 참가`);
     
-    socket.emit('registration_success', { token });
+    // socket.emit('registration_success', { token }); // No longer needed
 
     const safeRoomState = {
         gameStarted: room.gameStarted,
@@ -291,7 +287,7 @@ function resetTradePhase(room) {
     });
 }
 
-function startPhase(io, socket, data, room, roomId) {
+function startPhase(io, socket, data, room, roomId, sessionData) {
     if (socket.id !== room.adminSocketId) return;
 
     const { phase } = data;
@@ -329,7 +325,7 @@ function startPhase(io, socket, data, room, roomId) {
 
     broadcastTeamsUpdate(io, room, roomId);
 }
-function productionBatch(io, socket, data, room, roomId) {
+function productionBatch(io, socket, data, room, roomId, sessionData) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
         logger.warn(`플레이어를 찾을 수 없음: ${socket.id}`);
@@ -362,7 +358,7 @@ function productionBatch(io, socket, data, room, roomId) {
     updateTeamMembers(io, team, room, roomId);
 }
 
-function tradeSelection(io, socket, data, room, roomId) {
+function tradeSelection(io, socket, data, room, roomId, sessionData) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
         return socket.emit('error', { message: error });
@@ -410,7 +406,7 @@ function tradeSelection(io, socket, data, room, roomId) {
     });
 }
 
-function makeInvestment(io, socket, data, room, roomId) {
+function makeInvestment(io, socket, data, room, roomId, sessionData) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
       return socket.emit('error', { message: error });
@@ -441,7 +437,7 @@ function makeInvestment(io, socket, data, room, roomId) {
     updateTeamMembers(io, targetTeam, room, roomId);
 }
 
-function resetTrade(io, socket, data, room, roomId) {
+function resetTrade(io, socket, data, room, roomId, sessionData) {
     if (room.currentPhase !== PHASES.TRADE) {
         return socket.emit('error', { message: '지금은 출항 선택을 초기화할 수 없습니다.' });
     }
@@ -466,7 +462,7 @@ function resetTrade(io, socket, data, room, roomId) {
     }
 }
 
-function resetInvestments(io, socket, data, room, roomId) {
+function resetInvestments(io, socket, data, room, roomId, sessionData) {
     if (room.currentPhase !== PHASES.INVESTMENT) {
         return socket.emit('error', { message: '지금은 투자를 초기화할 수 없습니다.' });
     }
@@ -503,7 +499,7 @@ function resetInvestments(io, socket, data, room, roomId) {
     }
 }
 
-function playRPS(io, socket, data, room, roomId) {
+function playRPS(io, socket, data, room, roomId, sessionData) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
       return socket.emit('error', { message: error });
@@ -531,7 +527,7 @@ function playRPS(io, socket, data, room, roomId) {
     broadcastTeamsUpdate(io, room, roomId);
 }
 
-function _handleReroll(io, socket, room, roomId, phase) {
+function _handleReroll(io, socket, room, roomId, sessionData, phase) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
         return socket.emit('error', { message: error });
@@ -566,11 +562,11 @@ function _handleReroll(io, socket, room, roomId, phase) {
     broadcastTeamsUpdate(io, room, roomId);
 }
 
-function rerollRPS(io, socket, data, room, roomId) {
-    _handleReroll(io, socket, room, roomId, PHASES.PRODUCTION);
+function rerollRPS(io, socket, data, room, roomId, sessionData) {
+    _handleReroll(io, socket, room, roomId, sessionData, PHASES.PRODUCTION);
 }
 
-function drawEvent(io, socket, data, room, roomId) {
+function drawEvent(io, socket, data, room, roomId, sessionData) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
         return socket.emit('error', { message: error });
@@ -598,7 +594,7 @@ function drawEvent(io, socket, data, room, roomId) {
     calculateArrivalResults(io, team, room, roomId);
 }
 
-function playFinalRPS(io, socket, data, room, roomId) {
+function playFinalRPS(io, socket, data, room, roomId, sessionData) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
         return socket.emit('error', { message: error });
@@ -625,11 +621,11 @@ function playFinalRPS(io, socket, data, room, roomId) {
     calculateArrivalResults(io, team, room, roomId);
 }
 
-function rerollFinalRPS(io, socket, data, room, roomId) {
-    _handleReroll(io, socket, room, roomId, PHASES.ARRIVAL);
+function rerollFinalRPS(io, socket, data, room, roomId, sessionData) {
+    _handleReroll(io, socket, room, roomId, sessionData, PHASES.ARRIVAL);
 }
 
-function resetGame(io, socket, data, room, roomId) {
+function resetGame(io, socket, data, room, roomId, sessionData) {
     if (socket.id !== room.adminSocketId) return;
 
     Object.values(room.teams).forEach(team => {
@@ -654,7 +650,7 @@ function resetGame(io, socket, data, room, roomId) {
     io.to(roomId).emit('game_state_update', safeRoomState);
 }
 
-async function disconnect(io, socket, room, roomId, supabase) {
+async function disconnect(io, socket, room, roomId, sessionData, supabase) {
     try {
       if (!room) return false;
 
@@ -707,7 +703,7 @@ async function disconnect(io, socket, room, roomId, supabase) {
     }
 }
 
-function endGame(io, socket, data, room, roomId) {
+function endGame(io, socket, data, room, roomId, sessionData) {
     if (socket.id !== room.adminSocketId) return;
 
     const finalResults = calculateRankings(room);
@@ -724,7 +720,7 @@ function endGame(io, socket, data, room, roomId) {
     io.to(roomId).emit('game_ended', finalResults);
 }
 
-function resetProduction(io, socket, data, room, roomId) {
+function resetProduction(io, socket, data, room, roomId, sessionData) {
     if (socket.id !== room.adminSocketId) return;
 
     Object.values(room.teams).forEach(team => {
@@ -739,17 +735,17 @@ function resetProduction(io, socket, data, room, roomId) {
     logger.info(`[관리자] ${roomId} 방의 생산 상태 초기화`);
 }
 
-function reconnectPlayer(io, socket, data, gameState, roomId) {
-    const { token } = data;
-    if (!token) return;
+function reconnectPlayer(io, socket, data, gameState, roomId, sessionData) {
+    // The sessionData contains the authenticated user's studentId and name
+    const { studentId, name } = sessionData;
 
     let foundPlayer = null;
     let playerTeam = null;
     let oldSocketId = null;
 
-    // Find the player and their old socket ID by token
+    // Find the player and their old socket ID by studentId
     for (const team of Object.values(gameState.teams)) {
-        const member = team.members.find(m => m.token === token);
+        const member = team.members.find(m => m.studentId === studentId); // Use studentId for identification
         if (member) {
             foundPlayer = member;
             playerTeam = team;
@@ -767,7 +763,7 @@ function reconnectPlayer(io, socket, data, gameState, roomId) {
         // Update player data with new socket ID
         foundPlayer.id = socket.id;
         foundPlayer.connected = true;
-        gameState.players[socket.id] = { name: foundPlayer.name, team: playerTeam.country };
+        gameState.players[socket.id] = { studentId: foundPlayer.studentId, name: foundPlayer.name, team: playerTeam.country }; // Store studentId
 
         socket.join(roomId);
         socket.roomId = roomId;
@@ -781,12 +777,166 @@ function reconnectPlayer(io, socket, data, gameState, roomId) {
         io.to(roomId).emit('teams_update', { teams: gameState.teams });
 
     } else {
-        // Invalid token
-        socket.emit('invalid_session', { message: '유효하지 않은 세션입니다. 새로고침 후 다시 시도해주세요.' });
+        // This case should ideally not be reached if safeHandler already validated the token
+        // and the user is expected to be in a room.
+        // However, if the user is authenticated but not in this specific room,
+        // or if their team member entry was somehow removed, this handles it.
+        socket.emit('error', { message: '인증된 사용자이지만, 이 방에서 플레이어 정보를 찾을 수 없습니다.' });
+    }
+}
+
+async function loginOrRegister(socket, data, supabase, redisClient) {
+    const { studentId, name } = data;
+    try {
+        // 1. Check if user exists
+        const { data: existingUser, error: selectError } = await supabase
+            .from('users')
+            .select('id, student_id, name')
+            .eq('student_id', studentId)
+            .single();
+
+        if (selectError && selectError.code !== 'PGRST116') { // PGRST116: row not found
+            throw new Error(`Supabase select error: ${selectError.message}`);
+        }
+
+        let user = existingUser;
+
+        if (user) {
+            // 2. User exists, verify name
+            if (user.name !== name) {
+                socket.emit('login_failure', { message: '학번과 이름이 일치하지 않습니다.' });
+                return;
+            }
+        } else {
+            // 3. User does not exist, create new user
+            const { data: newUser, error: insertError } = await supabase
+                .from('users')
+                .insert({ student_id: studentId, name: name })
+                .select('id, student_id, name')
+                .single();
+
+            if (insertError) {
+                throw new Error(`Supabase insert error: ${insertError.message}`);
+            }
+            user = newUser;
+        }
+
+        // 4. Generate session token and store in Redis
+        const token = crypto.randomUUID();
+        const sessionData = { userId: user.id, studentId: user.student_id, name: user.name };
+        
+        // Store session in Redis for 24 hours (24 * 60 * 60 seconds)
+        await redisClient.set(`session:${token}`, JSON.stringify(sessionData), {
+            EX: 24 * 60 * 60,
+        });
+
+        // 5. Emit success to client
+        socket.emit('login_success', { token, studentId: user.student_id, name: user.name });
+        logger.info(`[로그인 성공] 학번: ${studentId}, 이름: ${name}`);
+
+    } catch (error) {
+        logger.error('Login or registration failed', error);
+        socket.emit('login_failure', { message: '서버 오류가 발생했습니다. 다시 시도해주세요.' });
+    }
+}
+
+async function loginOrRegister(socket, data, supabase, redisClient) {
+    const { studentId, name } = data;
+    try {
+        // 1. Check if user exists
+        const { data: existingUser, error: selectError } = await supabase
+            .from('users')
+            .select('id, student_id, name')
+            .eq('student_id', studentId)
+            .single();
+
+        if (selectError && selectError.code !== 'PGRST116') { // PGRST116: row not found
+            throw new Error(`Supabase select error: ${selectError.message}`);
+        }
+
+        let user = existingUser;
+
+        if (user) {
+            // 2. User exists, verify name
+            if (user.name !== name) {
+                socket.emit('login_failure', { message: '학번과 이름이 일치하지 않습니다.' });
+                return;
+            }
+        } else {
+            // 3. User does not exist, create new user
+            const { data: newUser, error: insertError } = await supabase
+                .from('users')
+                .insert({ student_id: studentId, name: name })
+                .select('id, student_id, name')
+                .single();
+
+            if (insertError) {
+                throw new Error(`Supabase insert error: ${insertError.message}`);
+            }
+            user = newUser;
+        }
+
+        // 4. Generate session token and store in Redis
+        const token = crypto.randomUUID();
+        const sessionData = { userId: user.id, studentId: user.student_id, name: user.name };
+        
+        // Store session in Redis for 24 hours (24 * 60 * 60 seconds)
+        await redisClient.set(`session:${token}`, JSON.stringify(sessionData), {
+            EX: 24 * 60 * 60,
+        });
+
+        // 5. Emit success to client
+        socket.emit('login_success', { token, studentId: user.student_id, name: user.name });
+        logger.info(`[로그인 성공] 학번: ${studentId}, 이름: ${name}`);
+
+    } catch (error) {
+        logger.error('Login or registration failed', error);
+        socket.emit('login_failure', { message: '서버 오류가 발생했습니다. 다시 시도해주세요.' });
+    }
+}
+
+async function getUsers(socket, supabase) {
+    try {
+        const { data: users, error } = await supabase
+            .from('users')
+            .select('student_id, name, created_at')
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            throw new Error(`Supabase fetch users error: ${error.message}`);
+        }
+
+        socket.emit('users_list_update', users);
+    } catch (error) {
+        logger.error('Failed to get users list', error);
+        socket.emit('error', { message: '사용자 목록을 가져오는 데 실패했습니다.' });
+    }
+}
+
+async function deleteUser(socket, data, supabase) {
+    const { studentId } = data;
+    try {
+        const { error } = await supabase
+            .from('users')
+            .delete()
+            .eq('student_id', studentId);
+
+        if (error) {
+            throw new Error(`Supabase delete user error: ${error.message}`);
+        }
+
+        socket.emit('user_deleted_success', { studentId, message: '사용자가 성공적으로 삭제되었습니다.' });
+        logger.info(`[사용자 삭제] 학번: ${studentId}`);
+    } catch (error) {
+        logger.error(`Failed to delete user ${studentId}`, error);
+        socket.emit('user_deleted_failure', { studentId, message: '사용자 삭제에 실패했습니다.' });
     }
 }
 
 module.exports = {
+    loginOrRegister,
+    getUsers, // Export new function
+    deleteUser, // Export new function
     registerPlayer,
     startPhase,
     productionBatch,

@@ -32,7 +32,8 @@ class GameClient {
         this.playerRegistered = false;
         this.playerRoomId = localStorage.getItem('playerRoomId');
         this.sessionToken = localStorage.getItem('sessionToken');
-        this.localPlayerName = null;
+        this.localPlayerName = localStorage.getItem('localPlayerName'); // Load from localStorage
+        this.localStudentId = localStorage.getItem('localStudentId');   // Load from localStorage
         this.clickBuffer = 0;
         this.selectedTradeDestination = null;
         this.teams = {};
@@ -55,7 +56,11 @@ class GameClient {
             this.ui.showNotification('게임에 참가하지 않았습니다.');
             return false;
         }
-        this.socket.emit(eventName, { ...payload, roomId: this.playerRoomId });
+        const dataToSend = { ...payload, roomId: this.playerRoomId };
+        if (this.sessionToken) {
+            dataToSend.token = this.sessionToken; // Automatically include session token
+        }
+        this.socket.emit(eventName, dataToSend);
         return true;
     }
 
@@ -148,20 +153,34 @@ class GameClient {
     }
 
     handleNameSubmit() {
+        const studentIdInput = document.getElementById('studentIdInput');
         const nameInput = document.getElementById('playerNameInput');
+        
+        const studentId = studentIdInput.value.trim();
         const name = nameInput.value.trim();
 
-        if (!this.validatePlayerName(name)) {
+        if (!this.validateInput(studentId)) {
+            this.ui.showNotification('학번은 1~20자의 한글, 영문, 숫자만 가능합니다.');
+            studentIdInput.focus();
+            return;
+        }
+        if (!this.validateInput(name)) {
             this.ui.showNotification('이름은 1~20자의 한글, 영문, 숫자만 가능합니다.');
             nameInput.focus();
             return;
         }
 
-        this.localPlayerName = name;
-        this.ui.showScreen('roomCodeInputScreen');
+        const submitBtn = document.getElementById('submitNameBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = '로그인 중...';
+
+        this.socket.emit('login_or_register', {
+            studentId: studentId,
+            name: name
+        });
     }
 
-    validatePlayerName(name) {
+    validateInput(name) {
         return /^[a-zA-Z0-9가-힣]{1,20}$/.test(name);
     }
 
@@ -227,7 +246,8 @@ class GameClient {
         this.socket.emit('register_player', {
             country: this.gameState.player.country,
             playerName: this.gameState.player.name,
-            roomId: this.playerRoomId
+            roomId: this.playerRoomId,
+            token: this.sessionToken // Include the session token
         });
 
         this.playerRegistered = true;
@@ -449,6 +469,7 @@ class GameClient {
         // Clear local storage
         localStorage.removeItem('playerRoomId');
         localStorage.removeItem('sessionToken');
+        localStorage.removeItem('localStudentId'); // Clear localStudentId from localStorage
 
         // Reload the page to ensure a completely clean state
         window.location.reload();

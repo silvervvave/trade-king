@@ -14,7 +14,7 @@ class SocketHandler {
             if (this.game.sessionToken && this.game.playerRoomId) {
                 this.emit('reconnect_player', {
                     roomId: this.game.playerRoomId,
-                    token: this.game.sessionToken
+                    token: this.game.sessionToken // Pass the session token
                 });
             }
         });
@@ -23,6 +23,34 @@ class SocketHandler {
             console.log('서버 연결이 끊어졌습니다.');
             this.game.ui.updateConnectionStatus(false);
             this.game.ui.showNotification('서버 연결이 끊겼습니다. 재연결 중...');
+        });
+
+        this.socket.on('login_success', (data) => {
+            console.log('Login successful', data);
+            this.game.sessionToken = data.token;
+            this.game.localPlayerName = data.name;
+            this.game.localStudentId = data.studentId;
+        
+            localStorage.setItem('sessionToken', data.token);
+            localStorage.setItem('localStudentId', data.studentId); // Store studentId in localStorage
+            localStorage.setItem('localPlayerName', data.name); // Store player name in localStorage
+        
+            this.game.ui.showScreen('roomCodeInputScreen');
+            
+            const submitBtn = document.getElementById('submitNameBtn');
+            if(submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '입력 완료';
+            }
+        });
+        
+        this.socket.on('login_failure', (data) => {
+            this.game.ui.showNotification(`로그인 실패: ${data.message}`);
+            const submitBtn = document.getElementById('submitNameBtn');
+            if(submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '입력 완료';
+            }
         });
 
         this.socket.on('error', (data) => {
