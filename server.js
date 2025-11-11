@@ -1,4 +1,6 @@
 require('dotenv').config();
+console.log('[Server] 스크립트 시작');
+
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -348,27 +350,6 @@ io.on('connection', (socket) => {
   socket.on('stop_timer', safeHandler((io, socket, data, gameState) => timerManager.stop(socket.roomId, gameState), 'stop_timer'));
 });
 
-// 서버 시작 함수
-async function startServer() {
-  // Redis 연결을 먼저 기다림
-  await initializeRedis();
-
-  server.listen(PORT, () => {
-    console.log(`
-========================================`);
-    console.log(`나는 무역왕이 될거야! (Redis-powered)`);
-    console.log(`========================================`);
-    console.log(`포트: ${PORT}`);
-    console.log(`학생용 주소: http://localhost:${PORT}`);
-    console.log(`관리자용 주소: http://localhost:${PORT}/admin`);
-    console.log(`========================================
-`);
-  });
-}
-
-// 서버 시작
-startServer();
-
 // 우아한 종료
 async function handleShutdown(signal) {
   console.log(`
@@ -388,3 +369,27 @@ async function handleShutdown(signal) {
 
 process.on('SIGTERM', handleShutdown);
 process.on('SIGINT', handleShutdown);
+
+// 서버 시작 함수
+async function startServer() {
+  console.log('[Server] startServer 함수 진입');
+  // Redis 연결을 먼저 기다림
+  await initializeRedis();
+  console.log('[Server] Redis 초기화 완료');
+
+  server.listen(PORT, () => {
+    console.log(`
+========================================`);
+    console.log(`나는 무역왕이 될거야! (Redis-powered)`);
+    console.log(`========================================`);
+    console.log(`포트: ${PORT}`);
+    console.log(`학생용 주소: http://localhost:${PORT}`);
+    console.log(`관리자용 주소: http://localhost:${PORT}/admin`);
+    console.log(`========================================
+`);
+  });
+}
+
+// 서버 시작
+console.log('[Server] 스크립트 마지막 줄, startServer 호출 직전');
+startServer();
