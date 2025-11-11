@@ -27,7 +27,8 @@ const {
     resetTrade,
     resetInvestments,
     resetProduction,
-    reconnectPlayer
+    reconnectPlayer,
+    loginOrRegister // <-- Add this
 } = require('./game-logic/handlers');
 
 const { validate } = require('./game-logic/validation');
@@ -104,11 +105,68 @@ io.on('connection', (socket) => {
   }
   console.log(`새로운 연결: ${socket.id}`);
 
-  const safeHandler = (handler, eventName) => async (data) => {
+  // New login_or_register event handler
+  socket.on('login_or_register', async (data) => {
+    const validationResult = validate('login_or_register', data);
+    if (!validationResult.success) {
+        socket.emit('login_failure', { message: '유효하지 않은 학번 또는 이름 형식입니다.', errors: validationResult.error });
+        return;
+    }
+    await loginOrRegister(socket, data, supabase, redisClient);
+  });
+
+  // Super Admin Key for authorization (for socket events)
+  const SUPER_ADMIN_KEY = process.env.SUPER_ADMIN_KEY;
+
+  // Super Admin: Get Users List
+  socket.on('get_users', async (data) => {
+    if (data.superAdminKey !== SUPER_ADMIN_KEY) {
+      socket.emit('error', { message: '권한이 없습니다.' });
+      return;
+    }
+    const validationResult = validate('get_users', data);
+    if (!validationResult.success) {
+        socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
+        return;
+    }
+    await getUsers(socket, supabase);
+  });
+
+  // Super Admin: Delete User
+  socket.on('delete_user', async (data) => {
+    if (data.superAdminKey !== SUPER_ADMIN_KEY) {
+      socket.emit('error', { message: '권한이 없습니다.' });
+      return;
+    }
+    const validationResult = validate('delete_user', data);
+    if (!validationResult.success) {
+        socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
+        return;
+    }
+    await deleteUser(socket, data, supabase);
+  });
+
+  const safeHandler = (handler, eventName) => async (socket, data) => { // <-- Changed signature
     if (isShuttingDown) {
       socket.emit('error', { message: '서버가 종료 중입니다.' });
       return;
     }
+
+    // --- NEW TOKEN VALIDATION LOGIC ---
+    const sessionToken = data?.token; // Assuming token is passed in data
+    if (!sessionToken) {
+        socket.emit('invalid_session', { message: '세션 토큰이 없습니다. 다시 로그인해주세요.' });
+        return;
+    }
+
+    const sessionDataJSON = await redisClient.get(`session:${sessionToken}`);
+    if (!sessionDataJSON) {
+        socket.emit('invalid_session', { message: '유효하지 않거나 만료된 세션입니다. 다시 로그인해주세요.' });
+        return;
+    }
+    const sessionData = JSON.parse(sessionDataJSON);
+    // sessionData will contain { userId, studentId, name }
+    // --- END NEW TOKEN VALIDATION LOGIC ---
 
     const validationResult = validate(eventName, data);
     if (!validationResult.success) {
@@ -137,8 +195,8 @@ io.on('connection', (socket) => {
             let currentGameState = JSON.parse(gameStateJSON);
 
             // 2. 핸들러 실행 (게임 로직 처리)
-            await handler(io, socket, data, currentGameState, roomId);
-
+            await handler(io, socket, data, currentGameState, roomId, sessionData); // <-- Pass sessionData
+            
             // 3. 변경된 게임 상태를 다시 Redis에 저장
             // 타이머 객체는 순환 참조를 일으킬 수 있으므로 저장하지 않음
             if (currentGameState.timer) {
@@ -163,9 +221,6 @@ io.on('connection', (socket) => {
       const roomId = await generateRoomId(); // ID 중복 확인은 이제 Redis 사용
       const newGameState = createNewGameState();
       newGameState.adminSocketId = socket.id;
-
-      // 1. Redis에 새로운 게임 상태 저장
-      await redisClient.set(`room:${roomId}`, JSON.stringify(newGameState));
 
       // 2. Supabase에 방 정보와 초기 게임 상태 저장
       const { error } = await supabase.from('rooms').insert([
