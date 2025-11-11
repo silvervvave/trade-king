@@ -5,8 +5,8 @@ function calculateRankings(room) {
     const totalSilk = teams.reduce((sum, team) => sum + team.silk, 0);
     const totalPepper = teams.reduce((sum, team) => sum + team.pepper, 0);
 
-    let silkValue = 100;
-    let pepperValue = 100;
+    let silkValue = 10;
+    let pepperValue = 10;
     let scarceGood = null;
 
     if (totalSilk > 0 && totalSilk < totalPepper) {
@@ -24,11 +24,11 @@ function calculateRankings(room) {
         totalAssets += team.pepper * pepperValue;
 
         if (totalSilk > 0 && (team.silk / totalSilk) > 0.5) {
-            totalAssets += 150;
+            totalAssets += 15;
             team.premiums.push('비단 독점');
         }
         if (totalPepper > 0 && (team.pepper / totalPepper) > 0.5) {
-            totalAssets += 150;
+            totalAssets += 15;
             team.premiums.push('후추 독점');
         }
         

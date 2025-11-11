@@ -64,7 +64,7 @@ function distributeInvestmentReturns(io, team, room, roomId, goodsMultiplier, rp
                         }
                     }
                     
-                    if (investorTeam.country === COUNTRIES.FRANCE && goodsMultiplier > 1) {
+                    if (investorTeam.country === COUNTRIES.FRANCE && goodsMultiplier > 0) {
                         investorTeam.totalPA += FRANCE_MERCANTILISM_BONUS_PA;
                     }
                     updateTeamMembers(io, investorTeam, room, roomId);
@@ -145,10 +145,8 @@ function calculateArrivalResults(io, team, room, roomId) {
 
         
 
-                    if (team.country === COUNTRIES.FRANCE && paMultiplier > 1) {
-
-                        team.totalPA += 15; // Adjusted for new monopoly premium
-
+                    if (team.country === COUNTRIES.FRANCE && goodsMultiplier > 0) {
+                        team.totalPA += FRANCE_MERCANTILISM_BONUS_PA; // France's Mercantilism Bonus
                     }
 
             io.to(roomId).emit('arrival_summary', {
@@ -322,7 +320,7 @@ function startPhase(io, socket, data, room, roomId) {
 
     broadcastTeamsUpdate(io, room, roomId);
 }
-function productionBatch(io, socket, data, room, roomId) {
+function completeProductionBatch(io, socket, data, room, roomId) {
     const { player, team, error } = _getPlayerAndTeam(room, socket.id);
     if (error) {
         logger.warn(`플레이어를 찾을 수 없음: ${socket.id}`);
@@ -335,25 +333,17 @@ function productionBatch(io, socket, data, room, roomId) {
         return socket.emit('error', { message: '국가 정보를 찾을 수 없습니다.' });
     }
 
-    const clicks = data.clicks || 0;
-
-    let paGained = 0;
-    for (let i = 0; i < clicks; i++) {
-        // Check against maxBatchCount
-        if (team.batchCount < config.maxBatchCount) {
-            team.clickCount++; // Track clicks for UI
-            // Check if a batch of clicks is complete
-            if (team.clickCount % config.clicksPerBatch === 0) {
-                paGained += config.paPerBatch;
-                team.batchCount++; // Increment batchCount when a bonus is awarded
-            }
-        } else {
-            // If maxBatchCount is reached, stop processing clicks for bonus
-            break;
-        }
+    // Check if the team can still produce more batches
+    if (team.batchCount < config.maxBatchCount) {
+        team.batchCount++;
+        team.totalPA += config.paPerBatch;
+        
+        // Update all team members with the new state
+        updateTeamMembers(io, team, room, roomId);
+    } else {
+        // Optionally, notify the player that they have reached the max batch count
+        socket.emit('notification', { message: '최대 생산 횟수에 도달했습니다!' });
     }
-    team.totalPA += paGained;
-    updateTeamMembers(io, team, room, roomId);
 }
 
 function tradeSelection(io, socket, data, room, roomId) {
@@ -873,7 +863,7 @@ module.exports = {
     deleteUser, // Export new function
     registerPlayer,
     startPhase,
-    productionBatch,
+    completeProductionBatch,
     tradeSelection,
     makeInvestment,
     playRPS,

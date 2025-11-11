@@ -13,7 +13,7 @@ const { redisClient, initialize: initializeRedis } = require('./redisClient'); /
 const { 
     registerPlayer, 
     startPhase, 
-    productionBatch, 
+    completeProductionBatch,
     tradeSelection, 
     makeInvestment, 
     playRPS, 
@@ -374,7 +374,7 @@ io.on('connection', (socket) => {
   // 핸들러 등록
   socket.on('register_player', (data, callback) => safeHandler(io, socket, registerPlayer, 'register_player', data, callback));
   socket.on('start_phase', (data, callback) => safeHandler(io, socket, startPhase, 'start_phase', data, callback));
-  socket.on('production_batch', (data, callback) => safeHandler(io, socket, productionBatch, 'production_batch', data, callback));
+  socket.on('complete_production_batch', (data, callback) => safeHandler(io, socket, completeProductionBatch, 'complete_production_batch', data, callback));
   socket.on('trade_selection', (data, callback) => safeHandler(io, socket, tradeSelection, 'trade_selection', data, callback));
   socket.on('make_investment', (data, callback) => safeHandler(io, socket, makeInvestment, 'make_investment', data, callback));
   socket.on('play_rps', (data, callback) => safeHandler(io, socket, playRPS, 'play_rps', data, callback));

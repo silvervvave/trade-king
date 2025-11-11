@@ -14,7 +14,8 @@ class GameClient {
                 resetTokens: 0,
                 mercantilismTokens: 0,
                 investmentsMade: [],
-                productionBoxClickCount: 0,
+                clickCount: 0, // Tracks clicks within a batch
+                batchCount: 0,
                 eventDrawnThisRound: false,
                 finalRpsPlayedThisRound: false,
                 eventText: '',
@@ -33,7 +34,6 @@ class GameClient {
         this.playerRoomId = localStorage.getItem('playerRoomId');
         this.localPlayerName = localStorage.getItem('localPlayerName'); // Load from localStorage
         this.localStudentId = localStorage.getItem('localStudentId');   // Load from localStorage
-        this.clickBuffer = 0;
         this.selectedTradeDestination = null;
         this.teams = {};
 
@@ -41,13 +41,6 @@ class GameClient {
         this.socket = new SocketHandler(this);
 
         this.initializeUI();
-
-        setInterval(() => {
-            if (this.clickBuffer > 0) {
-                this.socket.emit('production_batch', { roomId: this.playerRoomId, clicks: this.clickBuffer });
-                this.clickBuffer = 0;
-            }
-        }, 100);
     }
 
     emitSocket(eventName, payload) {
@@ -256,31 +249,13 @@ class GameClient {
     updatePlayerStatsFromServer(teamData) {
         console.log('[GameClient] updatePlayerStatsFromServer - Received teamData:', teamData);
         // Preserve the individual, client-side click progress
-        const localClickCount = this.gameState.team.productionBoxClickCount || 0;
+        const localClickCount = this.gameState.team.clickCount || 0;
 
         this.gameState.team = {
-            totalPA: teamData.totalPA || 0,
-            silk: teamData.silk || 0,
-            pepper: teamData.pepper || 0,
-            productPACount: teamData.productPACount || 0,
-            batchCount: teamData.batchCount || 0, // Add this
-            productionBoxClickCount: 0, // Placeholder, will be restored below
-            resetTokens: teamData.resetTokens || 0,
-            mercantilismTokens: teamData.mercantilismTokens || 0,
-            investmentsMade: teamData.investmentsMade || [],
-            tradeSelection: teamData.tradeSelection || null,
-            eventDrawnThisRound: teamData.eventDrawnThisRound || false,
-            finalRpsPlayedThisRound: false,
-            eventText: teamData.eventText || '',
-            eventResultClass: teamData.eventResultClass || '',
-            finalRpsResult: teamData.finalRpsResult || '',
-            rpsResult: teamData.rpsResult || null,
-            eventResult: teamData.eventResult || null,
-            finalRpsResultData: teamData.finalRpsResultData || null
+            ...teamData,
+            clickCount: localClickCount, // Restore local click progress
         };
-
-        // Restore the individual click progress
-        this.gameState.team.productionBoxClickCount = localClickCount;
+        
         console.log('[GameClient] updatePlayerStatsFromServer - Updated gameState.team.totalPA:', this.gameState.team.totalPA);
 
         this.ui.updatePlayerStats();
@@ -309,17 +284,28 @@ class GameClient {
         }
 
         const config = this.countryConfig[this.gameState.player.country];
+        if (!config) {
+            return this.ui.showNotification('국가 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+        }
         
         // Check against maxBatchCount
         if (this.gameState.team.batchCount >= config.maxBatchCount) {
             return this.ui.showNotification('최대 생산 횟수에 도달했습니다!');
         }
         
-        this.clickBuffer++;
-        const newClickCount = (this.gameState.team.productionBoxClickCount + 1) % 30;
-        this.gameState.team.productionBoxClickCount = newClickCount;
+        // Increment local click count
+        this.gameState.team.clickCount++;
 
+        // Update UI immediately for responsiveness
         this.ui.updatePlayerStats();
+
+        // Check if a batch is completed
+        if (this.gameState.team.clickCount >= config.clicksPerBatch) {
+            // Send a single event for the completed batch
+            this.emitSocket('complete_production_batch', {});
+            // Reset local click counter
+            this.gameState.team.clickCount = 0;
+        }
     }
 
     playRPS(choice) {
