@@ -135,6 +135,11 @@ socket.on('disconnect', () => {
     alert('서버와의 연결이 끊어졌습니다. 페이지를 새로고침 해주세요.');
 });
 
+socket.on('error', (data) => {
+    console.error('서버 오류 수신:', data);
+    showNotification(`오류: ${data.message || '알 수 없는 오류가 발생했습니다.'}`);
+});
+
 socket.on('game_state_update', (state) => {
     console.log('게임 상태 업데이트:', state);
     updateAdminDashboard(state);
