@@ -1,6 +1,6 @@
 
 
-const redisClient = require('../redisClient');
+const { redisClient } = require('../redisClient');
 
 async function generateRoomId(length = 4) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

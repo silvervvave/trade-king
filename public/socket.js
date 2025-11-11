@@ -14,7 +14,7 @@ class SocketHandler {
             if (this.game.sessionToken && this.game.playerRoomId) {
                 this.emit('reconnect_player', {
                     roomId: this.game.playerRoomId,
-                    sessionToken: this.game.sessionToken
+                    token: this.game.sessionToken
                 });
             }
         });
@@ -56,6 +56,27 @@ class SocketHandler {
             const joinButton = document.getElementById('submitRoomCodeBtn');
             joinButton.disabled = false;
             joinButton.textContent = '준비 완료';
+        });
+
+        this.socket.on('room_check_result', (data) => {
+            if (data.exists) {
+                this.game.playerRoomId = data.roomId;
+                this.game.countryConfig = data.countryConfig;
+                this.game.teams = data.teams;
+
+                const playerCounts = {};
+                for (const countryKey in data.countryConfig) {
+                    playerCounts[countryKey] = data.teams[countryKey] ? data.teams[countryKey].members.length : 0;
+                }
+
+                this.game.ui.renderCountrySelection(data.countryConfig, playerCounts);
+                this.game.ui.showScreen('countrySelection');
+            } else {
+                this.game.ui.showNotification('방을 찾을 수 없습니다.');
+                const joinButton = document.getElementById('submitRoomCodeBtn');
+                joinButton.disabled = false;
+                joinButton.textContent = '준비 완료';
+            }
         });
         
         this.socket.on('invalid_session', (data) => {
@@ -127,6 +148,13 @@ class SocketHandler {
 
         this.socket.on('game_ended', (data) => {
             this.game.ui.displayFinalResults(data);
+        });
+
+        this.socket.on('registration_success', (data) => {
+            this.game.sessionToken = data.token;
+            // playerRoomId is already set from the room_check_result
+            localStorage.setItem('sessionToken', data.token);
+            localStorage.setItem('playerRoomId', this.game.playerRoomId);
         });
     }
 

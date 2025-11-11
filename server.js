@@ -167,9 +167,9 @@ io.on('connection', (socket) => {
       // 1. Redis에 새로운 게임 상태 저장
       await redisClient.set(`room:${roomId}`, JSON.stringify(newGameState));
 
-      // 2. Supabase에는 방의 존재 여부만 기록 (game_state 제외)
+      // 2. Supabase에 방 정보와 초기 게임 상태 저장
       const { error } = await supabase.from('rooms').insert([
-        { room_id: roomId, admin_socket_id: socket.id }
+        { room_id: roomId, admin_socket_id: socket.id, game_state: newGameState }
       ]);
 
       if (error) {

@@ -1,5 +1,4 @@
-HEAD
-
+const socket = io();
 let adminRoomId = localStorage.getItem('adminRoomId') || null;
 console.log(`[클라이언트] adminRoomId 초기값: ${adminRoomId}`);
 
@@ -70,6 +69,13 @@ document.addEventListener('DOMContentLoaded', () => {
             socket.emit('reclaim_admin', { roomId: roomId });
         });
     }
+
+    const createRoomBtn = document.getElementById('createRoomBtn');
+    if (createRoomBtn) {
+        createRoomBtn.addEventListener('click', () => {
+            socket.emit('create_room', {});
+        });
+    }
 });
 
 // The generic 'connect' event is handled in socket.js.
@@ -86,11 +92,6 @@ socket.on('connect', () => {
         document.getElementById('mainDashboard').classList.add('hidden');
     }
 });
-
-// 방 생성 요청
-function createRoom() {
-    socket.emit('create_room');
-}
 
 // 방 생성 완료 이벤트
 socket.on('room_created', (data) => {
