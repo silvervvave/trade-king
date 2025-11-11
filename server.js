@@ -7,7 +7,7 @@ const basicAuth = require('express-basic-auth');
 const { countryConfig } = require('./config');
 const { generateRoomId, createNewGameState } = require('./game-logic/rooms');
 const supabase = require('./supabaseClient');
-const redisClient = require('./redisClient'); // Redis 클라이언트 가져오기
+const { redisClient, initialize: initializeRedis } = require('./redisClient'); // Redis 클라이언트 및 초기화 함수 가져오기
 const { 
     registerPlayer, 
     startPhase, 
@@ -348,18 +348,26 @@ io.on('connection', (socket) => {
   socket.on('stop_timer', safeHandler((io, socket, data, gameState) => timerManager.stop(socket.roomId, gameState), 'stop_timer'));
 });
 
-// 서버 시작
-server.listen(PORT, () => {
-  console.log(`
+// 서버 시작 함수
+async function startServer() {
+  // Redis 연결을 먼저 기다림
+  await initializeRedis();
+
+  server.listen(PORT, () => {
+    console.log(`
 ========================================`);
-  console.log(`나는 무역왕이 될거야! (Redis-powered)`);
-  console.log(`========================================`);
-  console.log(`포트: ${PORT}`);
-  console.log(`학생용 주소: http://localhost:${PORT}`);
-  console.log(`관리자용 주소: http://localhost:${PORT}/admin`);
-  console.log(`========================================
+    console.log(`나는 무역왕이 될거야! (Redis-powered)`);
+    console.log(`========================================`);
+    console.log(`포트: ${PORT}`);
+    console.log(`학생용 주소: http://localhost:${PORT}`);
+    console.log(`관리자용 주소: http://localhost:${PORT}/admin`);
+    console.log(`========================================
 `);
-});
+  });
+}
+
+// 서버 시작
+startServer();
 
 // 우아한 종료
 async function handleShutdown(signal) {
