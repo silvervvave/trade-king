@@ -450,14 +450,8 @@ class GameClient {
         localStorage.removeItem('playerRoomId');
         localStorage.removeItem('sessionToken');
 
-        // Reset internal state
-        this.playerRoomId = null;
-        this.sessionToken = null;
-        this.playerRegistered = false;
-        this.gameState = { /* ... re-initialize or reset gameState ... */ };
-
-        // Reset UI to the very first screen
-        this.ui.showScreen('startScreen');
+        // Reload the page to ensure a completely clean state
+        window.location.reload();
     }
 }
 

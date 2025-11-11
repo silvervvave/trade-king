@@ -33,13 +33,13 @@ const schemas = {
   }),
   trade_selection: z.object({
     roomId: z.string().length(4),
-    type: z.enum(['buy', 'sell']),
+    type: z.enum(['china', 'india', 'none']),
     amount: z.number().int().min(0),
   }),
   make_investment: z.object({
     roomId: z.string().length(4),
     targetCountry: z.enum(Object.keys(COUNTRIES)),
-    amount: z.number().int().min(100),
+    amount: z.number().int().min(10),
   }),
   play_rps: z.object({
     roomId: z.string().length(4),

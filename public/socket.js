@@ -80,8 +80,10 @@ class SocketHandler {
         });
         
         this.socket.on('invalid_session', (data) => {
-            console.log(data.message);
-            this.game.clearSessionAndReset();
+            console.error('Invalid session:', data.message);
+            if (confirm(data.message + '\n\n처음 화면으로 돌아가시겠습니까?')) {
+                this.game.clearSessionAndReset();
+            }
         });
 
         this.socket.on('game_state_update', (newState) => {

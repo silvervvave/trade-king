@@ -782,7 +782,7 @@ function reconnectPlayer(io, socket, data, gameState, roomId) {
 
     } else {
         // Invalid token
-        socket.emit('error', { message: '유효하지 않은 세션입니다. 페이지를 새로고침 해주세요.', action: 'reload' });
+        socket.emit('invalid_session', { message: '유효하지 않은 세션입니다. 새로고침 후 다시 시도해주세요.' });
     }
 }
 
