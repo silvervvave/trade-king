@@ -247,7 +247,7 @@ function resetProductionPhase(room) {
         t.rerollUsedThisRound = false;
         t.rpsPaChange = 0;
         t.rpsResult = null;
-        t.clickCount = 0; // Reset click count for the new production phase
+        t.batchCount = 0; // Reset batch count for the new production phase
     });
 }
 
@@ -714,7 +714,7 @@ function resetProduction(io, socket, data, room, roomId) {
     Object.values(room.teams).forEach(team => {
         // Reverse PA from RPS before resetting counters
         team.totalPA = Math.max(0, team.totalPA - (team.rpsPaChange || 0));
-        team.clickCount = 0;
+        team.batchCount = 0;
     });
 
     resetProductionPhase(room); 
