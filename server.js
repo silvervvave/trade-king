@@ -28,7 +28,9 @@ const {
     resetInvestments,
     resetProduction,
     reconnectPlayer,
-    loginOrRegister
+    loginOrRegister,
+    getUsers,
+    deleteUser
 } = require('./game-logic/handlers');
 
 const { validate } = require('./game-logic/validation');

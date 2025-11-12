@@ -85,17 +85,33 @@ class UIManager {
         const allTeamsStatusToggle = document.getElementById('allTeamsStatusToggle');
         const allTeamsStatusContainer = document.getElementById('allTeamsStatusContainer');
         if (allTeamsStatusToggle && allTeamsStatusContainer) {
+            const setStatusContainerOpen = (isOpen) => {
+                allTeamsStatusContainer.classList.toggle('open', isOpen);
+                localStorage.setItem('allTeamsStatusOpen', isOpen);
+
+                if (isOpen) {
+                    // Use a small timeout to allow the container to start rendering and transitioning
+                    setTimeout(() => {
+                        const containerHeight = allTeamsStatusContainer.offsetHeight;
+                        allTeamsStatusToggle.style.bottom = `${containerHeight}px`;
+                    }, 50);
+                } else {
+                    allTeamsStatusToggle.style.bottom = '10px'; // Back to initial position
+                }
+            };
+
             allTeamsStatusToggle.addEventListener('click', () => {
-                allTeamsStatusContainer.classList.toggle('hidden');
-                const isHidden = allTeamsStatusContainer.classList.contains('hidden');
-                localStorage.setItem('allTeamsStatusHidden', isHidden);
+                const isOpen = allTeamsStatusContainer.classList.contains('open');
+                setStatusContainerOpen(!isOpen);
             });
 
             // Load initial state from localStorage
-            const savedState = localStorage.getItem('allTeamsStatusHidden');
+            const savedState = localStorage.getItem('allTeamsStatusOpen');
             if (savedState === 'true') {
-                allTeamsStatusContainer.classList.add('hidden');
+                // Use a timeout to ensure the UI is ready before opening
+                setTimeout(() => setStatusContainerOpen(true), 100);
             } else {
+                // Ensure the container is closed initially, removing the .hidden class if it exists
                 allTeamsStatusContainer.classList.remove('hidden');
             }
         }
@@ -769,7 +785,10 @@ class UIManager {
             }
 
             card.innerHTML = `
-                <h4><span class="team-icon-display">${team.icon}</span> <span class="team-name-display">${team.name}</span></h4>
+                <div class="team-info-left">
+                    <span class="team-icon-display">${team.icon}</span>
+                    <span class="team-name-display">${team.name}</span>
+                </div>
                 <div class="team-status-resources">
                     <p>비단: ${team.silk}</p>
                     <p>후추: ${team.pepper}</p>

@@ -511,6 +511,8 @@ function playRPS(io, socket, data, room, roomId) {
             result: result,
             playerName: player.name
         };
+    
+    socket.emit('rps_result', team.rpsResult);
     updateTeamMembers(io, team, room, roomId);
     broadcastTeamsUpdate(io, room, roomId);
 }
@@ -605,6 +607,7 @@ function playFinalRPS(io, socket, data, room, roomId) {
         playerName: player.name
     };
 
+    socket.emit('final_rps_result', team.finalRpsResultData);
     updateTeamMembers(io, team, room, roomId);
     calculateArrivalResults(io, team, room, roomId);
 }

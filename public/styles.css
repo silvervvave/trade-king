@@ -480,9 +480,8 @@ body {
    게임 영역
    ============================================ */
 .game-area {
-    max-width: 1000px;
     margin: var(--spacing-xl) auto;
-    padding: 0 var(--spacing-lg);
+    padding: 0;
 }
 
 .game-area h2 {
@@ -506,7 +505,7 @@ body {
 .click-section,
 .rps-section {
     background: var(--color-surface);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
     border-radius: var(--radius-lg);
     border: 2px solid var(--color-border);
     box-shadow: var(--shadow-md);
@@ -545,7 +544,7 @@ body {
    ============================================ */
 .trade-panel {
     background: var(--color-surface);
-    padding: var(--spacing-xl);
+    padding: var(--spacing-md);
     border-radius: var(--radius-lg);
     border: 2px solid var(--color-border);
     box-shadow: var(--shadow-md);
@@ -616,7 +615,7 @@ body {
    ============================================ */
 .investment-panel {
     background: var(--color-surface);
-    padding: var(--spacing-xl);
+    padding: var(--spacing-md);
     border-radius: var(--radius-lg);
     border: 2px solid var(--color-border);
     box-shadow: var(--shadow-md);
@@ -686,7 +685,7 @@ body {
 .event-section,
 .final-rps-section {
     background: var(--color-surface);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
     border-radius: var(--radius-lg);
     border: 2px solid var(--color-border);
     box-shadow: var(--shadow-md);
@@ -764,7 +763,7 @@ body {
    ============================================ */
 .results-panel {
     background: var(--color-surface);
-    padding: var(--spacing-xl);
+    padding: var(--spacing-md);
     border-radius: var(--radius-lg);
     border: 2px solid var(--color-border);
     box-shadow: var(--shadow-md);
@@ -1177,6 +1176,12 @@ body {
     overflow-x: auto; /* Remove horizontal scrolling */
     gap: var(--spacing-md);
     z-index: 200;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-in-out;
+}
+
+.all-teams-status-container.open {
+    transform: translateY(0);
 }
 
 .team-status-card {
@@ -1205,8 +1210,8 @@ body {
 
 /* New Team Status Card Styles */
 .teams-grid-container {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: var(--spacing-lg);
     margin-top: var(--spacing-lg);
 }
@@ -1217,10 +1222,31 @@ body {
     border-radius: var(--radius-lg);
     padding: var(--spacing-md);
     display: flex; /* Use flexbox for internal layout */
-    justify-content: space-between;
-    align-items: center;
+    justify-content: flex-start; /* Align items to the start */
+    align-items: center; /* Align items vertically */
+    gap: var(--spacing-md); /* Add gap between sections */
     box-shadow: var(--shadow-md);
     transition: all 0.2s ease-in-out;
+}
+
+.team-info-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Pushes icon to top, name to bottom */
+    height: 100%; /* Make it take full height of the card */
+    min-height: 40px; /* Ensure enough space for icon and name */
+}
+
+.team-icon-display {
+    font-size: 2.5em; /* Adjust size as needed */
+    line-height: 1;
+}
+
+.team-name-display {
+    font-weight: bold;
+    color: var(--color-primary);
+    font-size: 1.1em;
+    white-space: nowrap; /* Prevent wrapping */
 }
 
 .team-status-card:hover {
@@ -1666,8 +1692,9 @@ body {
    ============================================ */
 .all-teams-status-toggle-bottom {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
     width: 60px;
     height: 60px;
     background-color: var(--color-primary);
@@ -1680,7 +1707,7 @@ body {
     box-shadow: var(--shadow-lg);
     cursor: pointer;
     z-index: 1002; /* Higher than topBanner */
-    transition: transform 0.3s;
+    transition: all 0.3s ease-in-out;
 }
 
 .all-teams-status-toggle-bottom:hover {
@@ -1697,7 +1724,7 @@ body {
    ============================================ */
 .carousel-container {
     position: relative;
-    padding: 0 50px; /* Space for arrows */
+    padding: 0; /* Space for arrows */
 }
 
 .carousel-slide {
@@ -1707,15 +1734,14 @@ body {
 .carousel-prev,
 .carousel-next {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: -30px;
     background-color: var(--color-surface);
     color: var(--color-primary);
     border: 2px solid var(--color-border);
     border-radius: 50%;
-    width: 44px;
-    height: 44px;
-    font-size: 20px;
+    width: 22px;
+    height: 22px;
+    font-size: 10px;
     font-weight: bold;
     cursor: pointer;
     z-index: 10;
@@ -1730,9 +1756,11 @@ body {
 }
 
 .carousel-prev {
-    left: 0;
+    left: 50%;
+    transform: translateX(-25px);
 }
 
 .carousel-next {
-    right: 0;
+    left: 50%;
+    transform: translateX(25px);
 }
