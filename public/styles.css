@@ -1220,7 +1220,7 @@ body {
     background: var(--color-surface);
     border: 2px solid var(--color-border);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm);
     display: flex; /* Use flexbox for internal layout */
     justify-content: flex-start; /* Align items to the start */
     align-items: center; /* Align items vertically */
@@ -1692,15 +1692,16 @@ body {
    ============================================ */
 .all-teams-status-toggle-bottom {
     position: fixed;
-    bottom: 10px;
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 60px;
-    height: 60px;
+    width: 120px;
+    height: 40px;
     background-color: var(--color-primary);
     color: var(--color-gardenia);
     border: none;
-    border-radius: 50%;
+    border-top-left-radius: var(--radius-md);
+    border-top-right-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1710,9 +1711,7 @@ body {
     transition: all 0.3s ease-in-out;
 }
 
-.all-teams-status-toggle-bottom:hover {
-    transform: scale(1.1);
-}
+
 
 .all-teams-status-toggle-bottom svg {
     stroke: var(--color-gardenia);
