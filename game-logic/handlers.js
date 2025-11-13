@@ -776,6 +776,70 @@ function reconnectPlayer(io, socket, data, gameState, roomId) {
     }
 }
 
+async function joinOrReconnectRoom(io, socket, data, redisClient, supabase) {
+    const { roomId, studentId, name } = data;
+
+    try {
+        const gameStateJSON = await redisClient.get(`room:${roomId}`);
+        if (!gameStateJSON) {
+            socket.emit('room_not_found');
+            logger.warn(`[접속 시도] ${name} (${studentId})님이 존재하지 않는 방 ${roomId}에 접속 시도.`);
+            return;
+        }
+
+        let gameState = JSON.parse(gameStateJSON);
+        let foundPlayer = null;
+        let playerTeam = null;
+        let oldSocketId = null;
+
+        // Check if player with studentId already exists in any team
+        for (const team of Object.values(gameState.teams)) {
+            const member = team.members.find(m => m.studentId === studentId);
+            if (member) {
+                foundPlayer = member;
+                playerTeam = team;
+                oldSocketId = member.id;
+                break;
+            }
+        }
+
+        if (foundPlayer && playerTeam) {
+            // --- RECONNECTION PATH ---
+            logger.info(`[재접속] ${name} (${studentId})님이 ${roomId} 방에 다시 연결합니다.`);
+
+            if (oldSocketId && gameState.players[oldSocketId]) {
+                delete gameState.players[oldSocketId];
+            }
+
+            foundPlayer.id = socket.id;
+            foundPlayer.connected = true;
+            gameState.players[socket.id] = { studentId: foundPlayer.studentId, name: foundPlayer.name, team: playerTeam.country };
+
+            socket.join(roomId);
+            socket.roomId = roomId;
+
+            // Send full game state to restore client
+            socket.emit('game_state_update', gameState);
+            
+            // Notify all other players of the team update
+            broadcastTeamsUpdate(io, gameState, roomId);
+
+            // Persist the updated state back to Redis
+            await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));
+
+        } else {
+            // --- NEW JOIN PATH ---
+            logger.info(`[신규 접속] ${name} (${studentId})님이 ${roomId} 방에 새로 접속합니다.`);
+            
+            const teams = gameState.teams || {};
+            socket.emit('room_check_result', { exists: true, roomId, playerName: name, countryConfig, teams });
+        }
+    } catch (error) {
+        logger.error(`[접속 처리 오류] Room: ${roomId}, User: ${name}`, error);
+        socket.emit('error', { message: '방에 접속하는 중 오류가 발생했습니다.' });
+    }
+}
+
 async function loginOrRegister(socket, data, supabase, redisClient) {
     const { studentId, name } = data;
     try {
@@ -861,6 +925,7 @@ async function deleteUser(socket, data, supabase) {
 }
 
 module.exports = {
+    joinOrReconnectRoom, // Export new function
     loginOrRegister,
     getUsers, // Export new function
     deleteUser, // Export new function

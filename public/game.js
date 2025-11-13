@@ -63,6 +63,7 @@ class GameClient {
 
         // Initial screen
         addClick('playerBtn', () => this.ui.showScreen('nameInputScreen'));
+        addClick('reconnectBtn', () => this.handleReconnect());
         addClick('submitNameBtn', () => this.handleNameSubmit());
         addClick('submitRoomCodeBtn', () => this.joinRoom());
         addClick('modalCloseBtn', () => this.ui.hideCountryDescription());
@@ -190,7 +191,11 @@ class GameClient {
         const joinButton = document.getElementById('submitRoomCodeBtn');
         joinButton.disabled = true;
         joinButton.textContent = '확인 중...';
-        this.socket.emit('check_room', { roomId, playerName: this.localPlayerName });
+        this.socket.emit('join_or_reconnect_room', {
+            roomId: roomId,
+            studentId: this.localStudentId,
+            name: this.localPlayerName
+        });
     }
 
     handleCountryClick(country) {

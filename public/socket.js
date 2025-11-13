@@ -105,8 +105,15 @@ class SocketHandler {
         });
 
         this.socket.on('game_state_update', (newState) => {
+            const isReconnecting = !this.game.gameState.gameStarted && newState.gameStarted;
+
             this.game.gameState = { ...this.game.gameState, ...newState };
             this.game.ui.updateGameState(this.game.gameState);
+
+            if (isReconnecting) {
+                this.game.ui.showScreen('gameScreen');
+                this.game.ui.showAreaBasedOnPhase(newState.currentPhase);
+            }
         });
 
         this.socket.on('team_update', (teamData) => {

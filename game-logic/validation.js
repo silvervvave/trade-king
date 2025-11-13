@@ -8,9 +8,10 @@ const schemas = {
   force_close_room: z.object({
     roomId: z.string().length(4),
   }),
-  check_room: z.object({
+  join_or_reconnect_room: z.object({
     roomId: z.string().length(4),
-    playerName: z.string().min(1).max(20),
+    studentId: z.string().min(1).max(20),
+    name: z.string().min(1).max(20),
   }),
   reclaim_admin: z.object({
     roomId: z.string().length(4),
@@ -76,10 +77,6 @@ const schemas = {
   }),
   stop_timer: z.object({
     roomId: z.string().length(4),
-  }),
-  reconnect_player: z.object({
-    roomId: z.string().length(4),
-    token: z.string().uuid(),
   }),
   login_or_register: z.object({
     studentId: z.string().min(1).max(20),

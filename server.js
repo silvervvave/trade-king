@@ -30,7 +30,8 @@ const {
     reconnectPlayer,
     loginOrRegister,
     getUsers,
-    deleteUser
+    deleteUser,
+    joinOrReconnectRoom
 } = require('./game-logic/handlers');
 
 const { validate } = require('./game-logic/validation');
@@ -115,6 +116,15 @@ io.on('connection', (socket) => {
         return;
     }
     await loginOrRegister(socket, data, supabase, redisClient);
+  });
+
+  socket.on('join_or_reconnect_room', async (data) => {
+    const validationResult = validate('join_or_reconnect_room', data);
+    if (!validationResult.success) {
+        socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
+        return;
+    }
+    await joinOrReconnectRoom(io, socket, data, redisClient, supabase);
   });
 
   // Super Admin Key for authorization (for socket events)
@@ -284,22 +294,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('check_room', async (data) => {
-    const { roomId, playerName } = data;
-    console.log(`[Server] check_room 요청 수신: roomId=${roomId}, playerName=${playerName}`);
-    try {
-      const gameStateJSON = await redisClient.get(`room:${roomId}`);
-      console.log(`[Server] Redis에서 room:${roomId} 조회 결과: ${gameStateJSON ? '찾음' : '찾지 못함'}`);
-      const roomExists = !!gameStateJSON;
-      const teams = roomExists ? JSON.parse(gameStateJSON).teams : {};
-
-      socket.emit('room_check_result', { exists: roomExists, roomId, playerName, countryConfig, teams });
-    } catch (error) {
-      console.error(`[Server] 방 확인 중 오류 (roomId: ${roomId}):`, error);
-      socket.emit('error', { message: '방 상태를 확인하는 중 오류가 발생했습니다.' });
-    }
-  });
-
   socket.on('reclaim_admin', async (data) => {
     const { roomId } = data;
     try {
@@ -389,7 +383,6 @@ io.on('connection', (socket) => {
   socket.on('reset_trade', (data, callback) => safeHandler(io, socket, resetTrade, 'reset_trade', data, callback));
   socket.on('reset_investments', (data, callback) => safeHandler(io, socket, resetInvestments, 'reset_investments', data, callback));
   socket.on('reset_production', (data, callback) => safeHandler(io, socket, resetProduction, 'reset_production', data, callback));
-  socket.on('reconnect_player', (data, callback) => safeHandler(io, socket, reconnectPlayer, 'reconnect_player', data, callback));
   socket.on('start_timer', (data, callback) => safeHandler(io, socket, (io, socket, data, gameState) => timerManager.start(socket.roomId, gameState, data.minutes, data.seconds), 'start_timer', data, callback));
   socket.on('stop_timer', (data, callback) => safeHandler(io, socket, (io, socket, data, gameState) => timerManager.stop(socket.roomId, gameState), 'stop_timer', data, callback));
 });
