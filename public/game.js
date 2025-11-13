@@ -41,6 +41,22 @@ class GameClient {
         this.socket = new SocketHandler(this);
 
         this.initializeUI();
+        this.handleReconnect();
+    }
+
+    handleReconnect() {
+        if (this.playerRoomId && this.localStudentId && this.localPlayerName) {
+            console.log('재연결 시도:', {
+                roomId: this.playerRoomId,
+                studentId: this.localStudentId,
+                name: this.localPlayerName
+            });
+            this.socket.emit('join_or_reconnect_room', {
+                roomId: this.playerRoomId,
+                studentId: this.localStudentId,
+                name: this.localPlayerName
+            });
+        }
     }
 
     emitSocket(eventName, payload) {
@@ -63,7 +79,6 @@ class GameClient {
 
         // Initial screen
         addClick('playerBtn', () => this.ui.showScreen('nameInputScreen'));
-        addClick('reconnectBtn', () => this.handleReconnect());
         addClick('submitNameBtn', () => this.handleNameSubmit());
         addClick('submitRoomCodeBtn', () => this.joinRoom());
         addClick('modalCloseBtn', () => this.ui.hideCountryDescription());
