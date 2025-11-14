@@ -1119,14 +1119,20 @@ body {
     gap: var(--spacing-sm);
     align-items: center;
     flex-wrap: wrap;
+    justify-content: space-between;
 }
 
 .timer-controls input {
-    width: 80px;
+    width: 70px;
     padding: var(--spacing-md);
     border: 2px solid var(--color-border);
     border-radius: var(--radius-md);
     background-color: var(--color-gardenia);
+    text-align: center;
+}
+
+.timer-controls .admin-btn {
+    flex-grow: 1;
 }
 
 .status-grid {
@@ -1171,8 +1177,8 @@ body {
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
     border-top: 2px solid var(--color-border);
     display: flex;
-    flex-wrap: nowrap; /* Allow cards to wrap to the next line */
-    justify-content: flex-start; /* Center cards horizontally */
+    flex-wrap: wrap; /* Allow cards to wrap to the next line */
+    /* justify-content: center; */ /* Removed as cards will be full width */
     overflow-x: auto; /* Remove horizontal scrolling */
     gap: var(--spacing-md);
     z-index: 200;
@@ -1184,36 +1190,15 @@ body {
     transform: translateY(0);
 }
 
-.team-status-card {
-    flex: 0 0 auto; /* Allow cards to size automatically, remove fixed width */
-    width: 300px; /* Keep a default width, but allow it to be overridden by media queries if needed */
-    max-width: calc(33.333% - var(--spacing-md) * 2 / 3); /* Max 3 cards per row on larger screens */
-    padding: var(--spacing-sm);
-    background: var(--color-background);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
-    text-align: center; /* 중앙 정렬 */
-}
-
-/* Media query for smaller screens to stack cards */
-@media (max-width: 768px) {
-    .team-status-card {
-        max-width: calc(50% - var(--spacing-md) / 2); /* 2 cards per row on medium screens */
-    }
-}
-
-@media (max-width: 480px) {
-    .team-status-card {
-        max-width: 100%; /* 1 card per row on small screens */
-    }
-}
-
 /* New Team Status Card Styles */
 .teams-grid-container {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-lg);
     margin-top: var(--spacing-lg);
+    width: 100%; /* Ensure it takes full width */
+    align-items: center; /* Center cards if they don't take full width due to max-width */
+    max-width: calc(1200px - (2 * var(--spacing-lg))); /* Align with admin-container content width */
 }
 
 .team-status-card {
@@ -1227,6 +1212,8 @@ body {
     gap: var(--spacing-md); /* Add gap between sections */
     box-shadow: var(--shadow-md);
     transition: all 0.2s ease-in-out;
+    width: 100%; /* Ensure cards fill their grid area */
+    max-width: calc(1200px - (2 * var(--spacing-lg))); /* Align with admin-container content width */
 }
 
 .team-info-left {
@@ -1310,8 +1297,9 @@ body {
 
 .status-box-stack {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     gap: var(--spacing-xs);
+    width: 80px; /* Fixed width for the stack */
 }
 
 .status-box {
