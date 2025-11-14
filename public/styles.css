@@ -1177,9 +1177,11 @@ body {
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
     border-top: 2px solid var(--color-border);
     display: flex;
-    flex-wrap: wrap; /* Allow cards to wrap to the next line */
-    /* justify-content: center; */ /* Removed as cards will be full width */
-    overflow-x: auto; /* Remove horizontal scrolling */
+    flex-wrap: nowrap; /* 카드들이 한 줄에 정렬되도록 변경 */
+    overflow-x: auto; /* 가로 스크롤 활성화 */
+    overflow-y: hidden; /* 세로 스크롤 방지 */
+    max-height: 120px; /* 컨테이너 최대 높이를 카드 하나 높이로 제한 */
+    align-items: flex-start; /* 카드들이 컨테이너 상단에 정렬되도록 */
     gap: var(--spacing-md);
     z-index: 200;
     transform: translateY(100%);
@@ -1193,12 +1195,12 @@ body {
 /* New Team Status Card Styles */
 .teams-grid-container {
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* 내부 카드들이 가로로 정렬되도록 변경 */
     gap: var(--spacing-lg);
     margin-top: var(--spacing-lg);
-    width: 100%; /* Ensure it takes full width */
-    align-items: center; /* Center cards if they don't take full width due to max-width */
-    max-width: calc(1200px - (2 * var(--spacing-lg))); /* Align with admin-container content width */
+    width: auto; /* 너비가 내용물에 따라 유동적으로 변하도록 */
+    align-items: center;
+    max-width: none; /* 너비 제한 해제 */
 }
 
 .team-status-card {
@@ -1206,14 +1208,15 @@ body {
     border: 2px solid var(--color-border);
     border-radius: var(--radius-lg);
     padding: var(--spacing-sm);
-    display: flex; /* Use flexbox for internal layout */
-    justify-content: flex-start; /* Align items to the start */
-    align-items: center; /* Align items vertically */
-    gap: var(--spacing-md); /* Add gap between sections */
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: var(--spacing-md);
     box-shadow: var(--shadow-md);
     transition: all 0.2s ease-in-out;
-    width: 100%; /* Ensure cards fill their grid area */
-    max-width: calc(1200px - (2 * var(--spacing-lg))); /* Align with admin-container content width */
+    min-width: 280px; /* 카드 최소 너비 설정 */
+    width: auto; /* 카드 너비 유동적으로 변경 */
+    max-width: none; /* 개별 카드 너비 제한 해제 */
 }
 
 .team-info-left {
@@ -1683,13 +1686,13 @@ body {
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 120px;
-    height: 40px;
+    width: 60px; /* 50% 감소 */
+    height: 20px; /* 50% 감소 */
     background-color: var(--color-primary);
     color: var(--color-gardenia);
     border: none;
-    border-top-left-radius: var(--radius-md);
-    border-top-right-radius: var(--radius-md);
+    border-top-left-radius: var(--radius-sm); /* 크기에 맞춰 조정 */
+    border-top-right-radius: var(--radius-sm); /* 크기에 맞춰 조정 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1699,12 +1702,11 @@ body {
     transition: all 0.3s ease-in-out;
 }
 
-
-
 .all-teams-status-toggle-bottom svg {
     stroke: var(--color-gardenia);
-    width: 32px;
-    height: 32px;
+    width: 16px; /* 50% 감소 */
+    height: 16px; /* 50% 감소 */
+    stroke-width: 1; /* 50% 감소 */
 }
 /* ============================================
    Carousel Styles
@@ -1721,14 +1723,14 @@ body {
 .carousel-prev,
 .carousel-next {
     position: absolute;
-    bottom: -30px;
+    bottom: -40px; /* 2배 커진 버튼에 맞춰 조정 */
     background-color: var(--color-surface);
     color: var(--color-primary);
     border: 2px solid var(--color-border);
     border-radius: 50%;
-    width: 22px;
-    height: 22px;
-    font-size: 10px;
+    width: 44px; /* 2배 증가 */
+    height: 44px; /* 2배 증가 */
+    font-size: 20px; /* 2배 증가 */
     font-weight: bold;
     cursor: pointer;
     z-index: 10;
@@ -1744,10 +1746,10 @@ body {
 
 .carousel-prev {
     left: 50%;
-    transform: translateX(-25px);
+    transform: translateX(-45px); /* 2배 커진 버튼에 맞춰 조정 */
 }
 
 .carousel-next {
     left: 50%;
-    transform: translateX(25px);
+    transform: translateX(45px); /* 2배 커진 버튼에 맞춰 조정 */
 }

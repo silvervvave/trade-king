@@ -467,7 +467,6 @@ class GameClient {
         console.log("Clearing session and resetting UI...");
         // Clear local storage
         localStorage.removeItem('playerRoomId');
-        localStorage.removeItem('sessionToken');
         localStorage.removeItem('localStudentId'); // Clear localStudentId from localStorage
 
         // Reload the page to ensure a completely clean state

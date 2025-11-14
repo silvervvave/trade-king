@@ -65,7 +65,6 @@ class UIManager {
             bannerLeft.addEventListener('click', () => {
                 if (confirm('진행 상황이 초기화됩니다. 정말 처음으로 돌아가시겠습니까?')) {
                     // Clear session data for a fresh start
-                    localStorage.removeItem('sessionToken');
                     localStorage.removeItem('playerRoomId');
                     window.location.reload();
                 }

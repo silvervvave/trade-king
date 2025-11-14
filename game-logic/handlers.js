@@ -840,8 +840,16 @@ async function joinOrReconnectRoom(io, socket, data, redisClient, supabase) {
     }
 }
 
-async function loginOrRegister(socket, data, supabase, redisClient) {
+async function loginOrRegister(socket, data, supabase) {
     const { studentId, name } = data;
+
+    // Server-side validation
+    const validInput = /^[a-zA-Z0-9가-힣]{1,20}$/;
+    if (!studentId || !name || !validInput.test(studentId) || !validInput.test(name)) {
+        socket.emit('login_failure', { message: '학번과 이름은 1~20자의 한글, 영문, 숫자만 가능합니다.' });
+        return;
+    }
+
     try {
         // 1. Check if user exists
         const { data: existingUser, error: selectError } = await supabase
@@ -871,6 +879,11 @@ async function loginOrRegister(socket, data, supabase, redisClient) {
                 .single();
 
             if (insertError) {
+                // Handle potential race condition where user was created between select and insert
+                if (insertError.code === '23505') { // Unique violation
+                    socket.emit('login_failure', { message: '이미 등록된 학번입니다. 이름이 정확한지 확인 후 다시 시도해주세요.' });
+                    return;
+                }
                 throw new Error(`Supabase insert error: ${insertError.message}`);
             }
             user = newUser;

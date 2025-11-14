@@ -115,7 +115,7 @@ io.on('connection', (socket) => {
         socket.emit('login_failure', { message: '유효하지 않은 학번 또는 이름 형식입니다.', errors: validationResult.error });
         return;
     }
-    await loginOrRegister(socket, data, supabase, redisClient);
+    await loginOrRegister(socket, data, supabase);
   });
 
   socket.on('join_or_reconnect_room', async (data) => {

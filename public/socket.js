@@ -50,10 +50,11 @@ class SocketHandler {
 
         this.socket.on('room_joined', (data) => {
             this.game.playerRoomId = data.roomId;
-            this.game.sessionToken = data.sessionToken;
             this.game.countryConfig = data.countryConfig;
             localStorage.setItem('playerRoomId', data.roomId);
-            localStorage.setItem('sessionToken', data.sessionToken);
+            // 재연결을 위해 학번과 이름도 저장
+            localStorage.setItem('localStudentId', this.game.localStudentId);
+            localStorage.setItem('localPlayerName', this.game.localPlayerName);
 
             this.game.ui.renderCountrySelection(data.countryConfig, data.playerCounts);
             this.game.ui.showScreen('countrySelection');
@@ -81,6 +82,10 @@ class SocketHandler {
                 this.game.playerRoomId = data.roomId;
                 this.game.countryConfig = data.countryConfig;
                 this.game.teams = data.teams;
+                // 재연결을 위해 학번과 이름도 저장
+                localStorage.setItem('playerRoomId', data.roomId);
+                localStorage.setItem('localStudentId', this.game.localStudentId);
+                localStorage.setItem('localPlayerName', this.game.localPlayerName);
 
                 const playerCounts = {};
                 for (const countryKey in data.countryConfig) {
