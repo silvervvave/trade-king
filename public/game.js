@@ -477,4 +477,18 @@ class GameClient {
 document.addEventListener('DOMContentLoaded', () => {
     const game = new GameClient();
     window.game = game; 
+
+    // Prevent double-tap zoom on mobile devices
+    document.addEventListener('dblclick', function(e) {
+        e.preventDefault();
+    }, { passive: false });
+
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) { // 300ms is a common threshold for double-tap
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
 });

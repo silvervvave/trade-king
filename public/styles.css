@@ -51,6 +51,7 @@ body {
     color: var(--color-text);
     padding-top: 60px; /* Height of the banner */
     touch-action: manipulation;
+    overscroll-behavior-y: contain; /* Prevent pull-to-refresh */
 }
 
 .hidden {
