@@ -309,7 +309,7 @@ function addGameLog(message) {
 
 socket.on('game_ended', (data) => {
     if (data.rankings) {
-        displayFinalResults(data.rankings);
+        displayFinalResults(data);
     }
 });
 
@@ -337,7 +337,7 @@ function displayFinalResults(data) {
             <div class="premium-info-card">
                 <h4>프리미엄 정보</h4>
                 <p>희귀 프리미엄: <strong>${premiumInfo.scarceGood}</strong> (가치: ${premiumInfo.scarceGood === '비단' ? premiumInfo.silkValue : premiumInfo.pepperValue} PA)</p>
-                <p>독점 프리미엄: <strong>150 PA</strong> (한 종류의 무역품 50% 이상 보유 시)</p>
+                <p>독점 프리미엄: <strong>15 PA</strong> (한 종류의 무역품 50% 이상 보유 시)</p>
             </div>
         `;
     }

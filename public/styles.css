@@ -1648,7 +1648,7 @@ body {
     width: 100%;
     height: 0%;
     background-color: var(--color-chocolate-martini);
-    transition: height 0.1s ease-out; /* Smooth fill animation */
+    /* transition: height 0.1s ease-out; */ /* Smooth fill animation */
     z-index: 1;
 }
 
@@ -1656,13 +1656,7 @@ body {
     position: relative;
     font-size: 3em;
     font-weight: bold;
-    color: transparent;
-    background-image: linear-gradient(to bottom, var(--color-chocolate-martini), var(--color-cannoli-cream));
-    background-size: 100% 200%;
-    background-position: 0% 0%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    transition: background-position 0.1s ease-out;
+    color: var(--color-mocha-mousse); /* Changed to solid color */
     user-select: none;
     z-index: 2;
 }
@@ -1671,13 +1665,6 @@ body {
 .production-click-area.production-box-filled {
     background-color: var(--color-primary); /* Change background when filled */
 }
-
-.production-click-area.production-box-filled .production-click-text {
-    color: var(--color-gardenia); /* Change text color when filled */
-    background-image: none; /* Remove gradient when maxed out */
-}
-
-
 
 /* ============================================
    하단 팀 현황 토글 버튼

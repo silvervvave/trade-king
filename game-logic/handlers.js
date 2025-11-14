@@ -3,7 +3,7 @@ const escape = require('escape-html');
 const { createInitialTeamState } = require('./rooms');
 const { countryConfig, EVENT_CONFIG } = require('../config');
 const { isValidAmount, determineRPSResult, determineEvent, calculateRankings } = require('./utils');
-const { PHASES, COUNTRIES, INVESTMENT_FAILURE_COMPENSATION_PA, CAMUSARI_COMPENSATION_PA, RPS_WIN_PA_CHANGE, RPS_LOSE_PA_CHANGE, FRANCE_MERCANTILISM_BONUS_PA, FINAL_RPS_WIN_GOODS_CHANGE, FINAL_RPS_LOSE_GOODS_CHANGE } = require('./constants');
+const { PHASES, COUNTRIES, RPS_WIN_PA_CHANGE, RPS_LOSE_PA_CHANGE, FRANCE_MERCANTILISM_BONUS_PA, FINAL_RPS_WIN_GOODS_CHANGE, FINAL_RPS_LOSE_GOODS_CHANGE } = require('./constants');
 
 const logger = {
   info: (message) => console.log(`[INFO] ${message}`),
@@ -43,7 +43,7 @@ function distributeInvestmentReturns(io, team, room, roomId, goodsMultiplier, rp
             team.investmentsReceived.forEach(investment => {
                 const investorTeam = room.teams[investment.fromTeam];
                 if (investorTeam) {
-                    investorTeam.totalPA += INVESTMENT_FAILURE_COMPENSATION_PA; // 투자 실패 보상금
+                    investorTeam.totalPA += investment.amount; // 투자 원금 보전
                     updateTeamMembers(io, investorTeam, room, roomId);
                 }
             });
@@ -80,27 +80,17 @@ function calculateArrivalResults(io, team, room, roomId) {
         if (!tradeData) return;
 
                 if (team.camusariHappened) {
-
-                    // 카무사리 발생 시 항해자 처리
-
-                    team.totalPA += CAMUSARI_COMPENSATION_PA; // 실패 보상금
+                    // 카무사리 발생 시 항해자 처리 (항해비 보전)
+                    team.totalPA += tradeData.amount; 
 
                     distributeInvestmentReturns(io, team, room, roomId, 0, 0, null); // 투자자 처리 호출
 
-        
-
                     io.to(roomId).emit('arrival_summary', {
-
                         country: team.country,
-
                         goodsAcquired: 0,
-
-                        profit: CAMUSARI_COMPENSATION_PA - (tradeData.amount / 10), // 실제 이익은 (10 - 출항금액/10)
-
+                        profit: 0, // 항해비가 보전되므로 이익은 0
                         destination: tradeData.type,
-
                         camusari: true
-
                     });
 
         
@@ -235,6 +225,8 @@ function initializeNewRound(room) {
         t.eventText = '';
         t.eventResultClass = '';
         t.eventResult = null;
+        t.rpsResult = null; // 생산 단계 RPS 결과 초기화
+        t.finalRpsResultData = null; // 도착 단계 RPS 결과 초기화
         if (t.country === COUNTRIES.ENGLAND) {
             t.rpsRerolls = 1;
         }
@@ -369,7 +361,7 @@ function tradeSelection(io, socket, data, room, roomId) {
             return socket.emit('error', { message: '유효하지 않은 금액입니다. (20 PA 이상, 10 PA 단위로 입력)' });
         }
         if (parsedAmount > availablePA) {
-            return socket.emit('error', { message: '보유한 PA가 부족합니다.' });
+            return socket.emit('trade_selection_error', { message: '보유한 PA가 부족합니다.' });
         }
 
         team.totalPA = Math.max(0, availablePA - parsedAmount);
@@ -715,15 +707,14 @@ function resetProduction(io, socket, data, room, roomId) {
     if (socket.id !== room.adminSocketId) return;
 
     Object.values(room.teams).forEach(team => {
-        // Reverse PA from RPS before resetting counters
-        team.totalPA = Math.max(0, team.totalPA - (team.rpsPaChange || 0));
-        team.batchCount = 0;
+        team.batchCount = 0; // Reset batch count to allow additional production opportunities
     });
 
-    resetProductionPhase(room); 
+    // Do NOT call resetProductionPhase as it resets RPS related states.
+    // Do NOT reverse PA from RPS as the user wants to preserve accumulated PA.
 
     broadcastTeamsUpdate(io, room, roomId);
-    logger.info(`[관리자] ${roomId} 방의 생산 상태 초기화`);
+    logger.info(`[관리자] ${roomId} 방의 생산 상태 초기화 (RPS 및 PA 초기화 제외)`);
 }
 
 function reconnectPlayer(io, socket, data, gameState, roomId) {

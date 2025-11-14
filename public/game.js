@@ -11,7 +11,7 @@ class GameClient {
                 pepper: 0,
                 productPACount: 0,
                 maxProduct: 0, // Initialize maxProduct
-                resetTokens: 0,
+                rpsRerolls: 0,
                 mercantilismTokens: 0,
                 investmentsMade: [],
                 clickCount: 0, // Tracks clicks within a batch
@@ -353,11 +353,11 @@ class GameClient {
             return this.ui.showNotification('영국만 리롤 토큰을 사용할 수 있습니다!');
         }
 
-        if (this.gameState.team.resetTokens <= 0) {
+        if (this.gameState.team.rpsRerolls <= 0) {
             return this.ui.showNotification('리롤 토큰이 없습니다!');
         }
 
-        if (confirm(`리롤 토큰을 사용하시겠습니까?\n\n남은 토큰: ${this.gameState.team.resetTokens}개`)) {
+        if (confirm(`리롤 토큰을 사용하시겠습니까?\n\n남은 토큰: ${this.gameState.team.rpsRerolls}개`)) {
             const eventName = type === 'final' ? 'reroll_final_rps' : 'reroll_rps';
             if (this.emitSocket(eventName)) {
                 this.ui.showNotification('리롤 토큰을 사용했습니다!');

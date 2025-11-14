@@ -48,6 +48,11 @@ class SocketHandler {
             this.game.ui.showNotification(`오류: ${data.message}`);
         });
 
+        this.socket.on('trade_selection_error', (data) => {
+            this.game.ui.showNotification(`오류: ${data.message}`);
+            this.game.ui.cancelTrade();
+        });
+
         this.socket.on('room_joined', (data) => {
             this.game.playerRoomId = data.roomId;
             this.game.countryConfig = data.countryConfig;

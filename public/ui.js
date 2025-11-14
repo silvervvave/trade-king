@@ -360,7 +360,7 @@ class UIManager {
                 rerollInfo.innerHTML = `
                     <div class="token-info">
                                 <span class="token-icon"></span>
-                                <span class="token-text">절대왕정 권력: ${this.game.gameState.team.resetTokens}개</span>
+                                <span class="token-text">절대왕정 권력: ${this.game.gameState.team.rpsRerolls}개</span>
                     </div>
                 `;
             } else {
