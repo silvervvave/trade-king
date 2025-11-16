@@ -109,7 +109,7 @@ function calculateArrivalResults(io, team, room, roomId) {
 
         
 
-                    let goodsAcquired = (baseAmount / 10) * goodsMultiplier; // Adjusted for 10 PA per good
+                    let goodsAcquired = Math.floor((baseAmount / 10) * goodsMultiplier); // Adjusted for 10 PA per good
 
                     goodsAcquired = Math.max(0, goodsAcquired + rpsGoodsChange);
 
