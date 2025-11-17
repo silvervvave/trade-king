@@ -267,7 +267,13 @@ function prepareInvestmentPhase(io, room, roomId) {
         .map(t => ({ 
             country: t.country, 
             destination: t.tradeSelection.type, 
-            amount: t.tradeSelection.amount 
+            amount: t.tradeSelection.amount,
+            investments: t.investmentsReceived.map(inv => ({
+                fromTeam: inv.fromTeam,
+                amount: inv.amount,
+                playerName: inv.playerName,
+                teamName: room.teams[inv.fromTeam] ? room.teams[inv.fromTeam].name : 'Unknown'
+            }))
         }));
     io.to(roomId).emit('investment_info', { voyages: voyageInfo });
 }
