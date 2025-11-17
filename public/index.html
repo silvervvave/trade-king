@@ -81,7 +81,7 @@
     <!-- 대기 화면 -->
     <div id="waitingScreen" class="screen hidden">
         <div class="waiting-container">
-            <h2>게임 시작 대기중...</h2>
+            <h2>게임 대기중...</h2>
             <p class="info-text">관리자가 게임을 시작할 때까지 기다려주세요</p>
             <div class="loading-spinner"></div>
         </div>
@@ -110,7 +110,7 @@
                 </div>
                 <div class="resource-display">
                     <div class="resource-item">
-                        <span class="resource-label">총 PA</span>
+                        <span class="resource-label">PA</span>
                         <span class="resource-value" id="totalPA">0</span>
                     </div>
                     <div class="resource-item">
@@ -126,7 +126,7 @@
 
             <!-- 생산 영역 -->
             <div id="productionArea" class="game-area hidden">
-                <h2>생산 라운드</h2>
+                <h2>생산 단계</h2>
                 
                 <!-- 토큰 정보 표시 영역 (추가됨) -->
                 <div id="rerollTokenInfo" style="display: none; margin-top: 10px;">
@@ -156,7 +156,7 @@
                     <div class="carousel-slide">
                         <div class="rps-section">
                             <h3>✌️✊✋</h3>
-                            <p class="info-info">승리: +50PA / 무승부: 0PA / 패배: -50PA</p>
+                            <p class="info-info">승리: +5PA / 무승부: 0PA / 패배: -5PA</p>
                             <div class="rps-buttons">
                                 <button class="rps-btn" data-choice="✊">✊</button>
                                 <button class="rps-btn" data-choice="✋">✋</button>
@@ -175,7 +175,7 @@
 
             <!-- 무역 영역 -->
             <div id="tradeArea" class="game-area hidden">
-                <h2>출항 라운드</h2>
+                <h2>출항 단계</h2>
                 
                 <div class="trade-panel">
                     <h3>항해지 선택</h3>
@@ -198,7 +198,7 @@
                     <div id="tradeConfirmation" class="hidden" style="margin-top: 20px;">
                         <h3 id="tradeDestinationTitle"></h3>
                         <div class="input-group">
-                            <label for="tradeAmount">PA 금액 (100 단위)</label>
+                            <label for="tradeAmount">PA 금액 (10단위)</label>
                             <div class="toggle-input" data-step="10" data-min="20">
                                 <button class="btn-toggle minus">-</button>
                                 <span id="tradeAmountValue" class="toggle-value">200</span>
@@ -226,7 +226,7 @@
 
             <!-- 투자 영역 -->
             <div id="investmentArea" class="game-area hidden">
-                <h2>투자 라운드</h2>
+                <h2>투자 단계</h2>
                 
                 <div class="investment-panel carousel-container">
                     <h3>다른 팀에 투자하기</h3>
@@ -243,7 +243,7 @@
 
             <!-- 입항 영역 -->
             <div id="arrivalArea" class="game-area hidden">
-                <h2>입항 라운드</h2>
+                <h2>입항 단계</h2>
                 
                 <div class="arrival-panel carousel-container">
                     <div class="carousel-slide">
@@ -290,8 +290,6 @@
                 <div id="arrival-status-container" class="investment-grid" style="margin-top: 24px;">
                     <!-- Other countries' arrival status will be rendered here -->
                 </div>
-
-                <div id="arrivalSummaryLog" class="log-container"></div>
             </div>
 
             <!-- 결과 영역 -->

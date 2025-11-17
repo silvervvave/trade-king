@@ -27,6 +27,27 @@
         .close-btn {
             background-color: var(--color-danger);
         }
+        .user-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-text-light);
+            border-radius: var(--radius-lg);
+            padding: var(--space-16);
+            margin-bottom: var(--space-16);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-16);
+            flex-grow: 1;
+        }
+        .user-info span {
+            margin-right: var(--space-24);
+            font-size: var(--font-size-lg);
+        }
     </style>
 </head>
 <body>
@@ -54,7 +75,15 @@
 
         <div class="control-panel">
             <h2>사용자 관리</h2>
-            <button class="game-btn btn-primary" id="refreshUsersBtn">사용자 목록 새로고침</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div>
+                    <button class="admin-btn close-btn" id="deleteSelectedUsersBtn">선택 항목 삭제</button>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <input type="checkbox" id="selectAllCheckbox" style="margin-right: 8px;">
+                    <label for="selectAllCheckbox">전체 선택</label>
+                </div>
+            </div>
             <div id="userListContainer">
                 <!-- 사용자 목록이 여기에 동적으로 추가됩니다. -->
             </div>

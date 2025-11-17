@@ -1196,10 +1196,10 @@ body {
 /* New Team Status Card Styles */
 .teams-grid-container {
     display: flex;
-    flex-direction: row; /* 내부 카드들이 가로로 정렬되도록 변경 */
+    flex-direction: column; /* 내부 카드들이 세로로 정렬되도록 변경 */
     gap: var(--spacing-lg);
     margin-top: var(--spacing-lg);
-    width: auto; /* 너비가 내용물에 따라 유동적으로 변하도록 */
+    width: 100%; /* 컨테이너 너비를 100%로 설정 */
     align-items: center;
     max-width: none; /* 너비 제한 해제 */
 }
@@ -1215,8 +1215,7 @@ body {
     gap: var(--spacing-md);
     box-shadow: var(--shadow-md);
     transition: all 0.2s ease-in-out;
-    min-width: 280px; /* 카드 최소 너비 설정 */
-    width: auto; /* 카드 너비 유동적으로 변경 */
+    width: 100%; /* 카드가 전체 너비를 차지하도록 변경 */
     max-width: none; /* 개별 카드 너비 제한 해제 */
 }
 

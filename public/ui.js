@@ -716,18 +716,6 @@ class UIManager {
 
         const otherTeamsOnVoyage = Object.values(teams).filter(team => team.country !== myCountry && team.tradeSelection);
 
-        if (otherTeamsOnVoyage.length === 0) {
-            container.innerHTML = '<p class="info-text">다른 팀의 항해 정보가 없습니다.</p>';
-            return;
-        }
-
-        const title = document.createElement('h3');
-        title.textContent = '다른 팀 입항 현황';
-        title.style.color = 'var(--color-primary)';
-        title.style.marginBottom = 'var(--spacing-md)';
-        title.style.textAlign = 'center';
-        container.appendChild(title);
-
         otherTeamsOnVoyage.forEach(team => {
             const card = document.createElement('div');
             card.className = 'investment-card';
@@ -868,25 +856,6 @@ class UIManager {
         return choice;
     }
 
-    addArrivalSummary(data) {
-        const container = document.getElementById('arrivalSummaryLog');
-        if (!container) return;
 
-        const teamName = this.game.countryConfig[data.country]?.name || data.country;
-        let message = '';
-
-        if (data.camusari) {
-            message = `<strong>${teamName}:</strong> 카무사리 발생! (손실: ${data.profit} PA)`;
-        } else {
-            const goodsName = data.destination === 'china' ? '비단' : '후추';
-            message = `<strong>${teamName}:</strong> ${goodsName} ${data.goodsAcquired}개 획득! (수익: ${data.profit} PA)`;
-        }
-
-        const entry = document.createElement('div');
-        entry.className = 'log-entry';
-        entry.innerHTML = message;
-
-        container.prepend(entry); // Add to the top
-    }
 
 }

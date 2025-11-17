@@ -115,15 +115,8 @@ class SocketHandler {
         });
 
         this.socket.on('game_state_update', (newState) => {
-            const isReconnecting = !this.game.gameState.gameStarted && newState.gameStarted;
-
             this.game.gameState = { ...this.game.gameState, ...newState };
             this.game.ui.updateGameState(this.game.gameState);
-
-            if (isReconnecting) {
-                this.game.ui.showScreen('gameScreen');
-                this.game.ui.showAreaBasedOnPhase(newState.currentPhase);
-            }
         });
 
         this.socket.on('team_update', (teamData) => {
@@ -154,7 +147,7 @@ class SocketHandler {
             this.game.ui.showNotification('시간 종료!');
         });
 
-        this.socket.on('investment_options', (data) => {
+        this.socket.on('investment_info', (data) => {
             this.game.ui.setupInvestmentScreen(data.voyages);
         });
 
@@ -179,9 +172,7 @@ class SocketHandler {
             this.game.ui.renderArrivalResults();
         });
 
-        this.socket.on('arrival_summary', (data) => {
-            this.game.ui.addArrivalSummary(data);
-        });
+
 
         this.socket.on('game_ended', (data) => {
             this.game.ui.displayFinalResults(data);

@@ -11,17 +11,12 @@ const SUPER_ADMIN_KEY = 'superadmin';
 socket.on('connect', () => {
     console.log('Super Admin 클라이언트 연결됨.');
     
-    // 3초마다 방 목록 요청
-    setInterval(() => {
-        socket.emit('get_room_list');
-    }, 3000);
-    socket.emit('get_room_list'); // 즉시 1회 실행
+    // 서버의 전용 룸에 참가하여 실시간 업데이트를 구독
+    socket.emit('join_super_admin_room');
 
-    // 5초마다 사용자 목록 요청
-    setInterval(() => {
-        socket.emit('get_users', { superAdminKey: SUPER_ADMIN_KEY }); // Include key
-    }, 5000);
-    socket.emit('get_users', { superAdminKey: SUPER_ADMIN_KEY }); // 즉시 1회 실행
+    // 초기 데이터 로드를 위해 한 번만 요청
+    socket.emit('get_room_list');
+    socket.emit('get_users', { superAdminKey: SUPER_ADMIN_KEY });
 });
 
 // The generic 'disconnect' event is handled in socket.js.
@@ -68,12 +63,13 @@ socket.on('users_list_update', (users) => {
 
     users.forEach(user => {
         const card = document.createElement('div');
-        card.className = 'room-card'; // Re-using room-card style for consistency
+        card.className = 'user-card'; // Use new user-card class
         
         const createdAt = new Date(user.created_at).toLocaleString();
 
         card.innerHTML = `
-            <div class="room-info">
+            <div class="user-info">
+                <input type="checkbox" class="user-checkbox" data-studentid="${user.student_id}">
                 <span>학번: <strong>${user.student_id}</strong></span>
                 <span>이름: <strong>${user.name}</strong></span>
                 <span>등록일: <strong>${createdAt}</strong></span>
@@ -98,11 +94,48 @@ function deleteUser(studentId) {
     }
 }
 
+// 방 강제 종료 성공 시 목록 즉시 갱신
+socket.on('room_closed_success', (data) => {
+    console.log(`[클라이언트] ${data.roomId} 방 강제 종료 완료. 목록을 새로고침합니다.`);
+    showNotification(`${data.roomId} 방이 종료되었습니다.`);
+    socket.emit('get_room_list');
+});
+
+// 단일 또는 다중 사용자 삭제 성공 시 목록 즉시 갱신
+socket.on('user_deleted_success', (data) => {
+    const message = data.message || `${data.studentId} 사용자가 삭제되었습니다.`;
+    console.log(`[클라이언트] 사용자 삭제 완료. 메시지: ${message}`);
+    showNotification(message);
+    socket.emit('get_users', { superAdminKey: SUPER_ADMIN_KEY });
+});
+
+
 document.addEventListener('DOMContentLoaded', () => {
-    const refreshUsersBtn = document.getElementById('refreshUsersBtn');
-    if (refreshUsersBtn) {
-        refreshUsersBtn.addEventListener('click', () => {
-            socket.emit('get_users', { superAdminKey: SUPER_ADMIN_KEY }); // Include key
+    const deleteSelectedBtn = document.getElementById('deleteSelectedUsersBtn');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', () => {
+            const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked');
+            const studentIdsToDelete = Array.from(selectedCheckboxes).map(cb => cb.dataset.studentid);
+
+            if (studentIdsToDelete.length === 0) {
+                showNotification('삭제할 사용자를 선택해주세요.');
+                return;
+            }
+
+            if (confirm(`정말로 선택된 ${studentIdsToDelete.length}명의 사용자를 삭제하시겠습니까?`)) {
+                socket.emit('delete_multiple_users', { studentIds: studentIdsToDelete, superAdminKey: SUPER_ADMIN_KEY });
+            }
+        });
+    }
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('click', (event) => {
+            const allCheckboxes = document.querySelectorAll('.user-checkbox');
+            allCheckboxes.forEach(checkbox => {
+                checkbox.checked = event.target.checked;
+            });
         });
     }
 });

@@ -10,18 +10,18 @@ const { countryConfig } = require('./config');
 const { generateRoomId, createNewGameState } = require('./game-logic/rooms');
 const supabase = require('./supabaseClient');
 const { redisClient, initialize: initializeRedis } = require('./redisClient'); // Redis 클라이언트 및 초기화 함수 가져오기
-const { 
-    registerPlayer, 
-    startPhase, 
+const {
+    registerPlayer,
+    startPhase,
     completeProductionBatch,
-    tradeSelection, 
-    makeInvestment, 
-    playRPS, 
-    rerollRPS, 
-    drawEvent, 
-    playFinalRPS, 
-    rerollFinalRPS, 
-    resetGame, 
+    tradeSelection,
+    makeInvestment,
+    playRPS,
+    rerollRPS,
+    drawEvent,
+    playFinalRPS,
+    rerollFinalRPS,
+    resetGame,
     disconnect,
     endGame,
     resetTrade,
@@ -31,11 +31,13 @@ const {
     loginOrRegister,
     getUsers,
     deleteUser,
+    deleteMultipleUsers,
     joinOrReconnectRoom
 } = require('./game-logic/handlers');
 
 const { validate } = require('./game-logic/validation');
 const TimerManager = require('./game-logic/timer');
+const { SUPER_ADMIN_ROOM, broadcastRoomListUpdate, broadcastUserListUpdate } = require('./game-logic/superAdminUtils');
 
 const app = express();
 const server = http.createServer(app);
@@ -53,8 +55,6 @@ const io = socketIo(server, {
 });
 
 const timerManager = new TimerManager(io);
-
-// 주기적/일괄 저장 로직 (saveGameState, saveAllGameStates, setInterval) 제거
 
 // 이벤트 큐 시스템은 유지 (동시성 문제 방지)
 const roomQueues = {};
@@ -82,7 +82,6 @@ async function processQueue(roomId) {
         }
     }
 }
-
 app.use('/super-admin', basicAuth({
     users: { 'superadmin': 'superadmin' },
     challenge: true,
@@ -115,7 +114,10 @@ io.on('connection', (socket) => {
         socket.emit('login_failure', { message: '유효하지 않은 학번 또는 이름 형식입니다.', errors: validationResult.error });
         return;
     }
-    await loginOrRegister(socket, data, supabase);
+    const { newUserCreated } = await loginOrRegister(socket, data, supabase);
+    if (newUserCreated) {
+        broadcastUserListUpdate(io);
+    }
   });
 
   socket.on('join_or_reconnect_room', async (data) => {
@@ -130,6 +132,12 @@ io.on('connection', (socket) => {
   // Super Admin Key for authorization (for socket events)
   const SUPER_ADMIN_KEY = process.env.SUPER_ADMIN_KEY;
 
+  // Super Admin: Join Room for real-time updates
+  socket.on('join_super_admin_room', () => {
+      socket.join(SUPER_ADMIN_ROOM);
+      console.log(`[Super Admin] 소켓 ${socket.id}이(가) ${SUPER_ADMIN_ROOM}에 참가했습니다.`);
+  });
+
   // Super Admin: Get Users List
   socket.on('get_users', async (data) => {
     if (data.superAdminKey !== SUPER_ADMIN_KEY) {
@@ -141,7 +149,8 @@ io.on('connection', (socket) => {
         socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
         return;
     }
-    await getUsers(socket, supabase);
+    // 이제 개별 요청이 아닌, 모든 super-admin에게 브로드캐스트합니다.
+    await broadcastUserListUpdate(io);
   });
 
   // Super Admin: Delete User
@@ -156,6 +165,24 @@ io.on('connection', (socket) => {
         return;
     }
     await deleteUser(socket, data, supabase);
+    // 사용자 삭제 후, 모든 super-admin에게 목록 업데이트
+    broadcastUserListUpdate(io);
+  });
+
+  // Super Admin: Delete Multiple Users
+  socket.on('delete_multiple_users', async (data) => {
+    if (data.superAdminKey !== SUPER_ADMIN_KEY) {
+      socket.emit('error', { message: '권한이 없습니다.' });
+      return;
+    }
+    const validationResult = validate('delete_multiple_users', data);
+    if (!validationResult.success) {
+        socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
+        return;
+    }
+    await deleteMultipleUsers(socket, data, supabase);
+    // 사용자 삭제 후, 모든 super-admin에게 목록 업데이트
+    broadcastUserListUpdate(io);
   });
 
   const safeHandler = async (io, socket, handler, eventName, data, callback) => {
@@ -200,6 +227,11 @@ io.on('connection', (socket) => {
             }
             await redisClient.set(`room:${roomId}`, JSON.stringify(currentGameState));
 
+            // 4. 방 상태 변경 후 super-admin에게 업데이트 브로드캐스트
+            if (eventName === 'start_phase' || eventName === 'end_game' || eventName === 'reset_game') {
+                broadcastRoomListUpdate(io);
+            }
+
         } catch (error) {
             console.error(`이벤트 처리 중 오류 (roomId: ${roomId}): ${error.message}`, error.stack);
             socket.emit('error', { message: '요청 처리 중 서버에서 오류가 발생했습니다.' });
@@ -234,40 +266,18 @@ io.on('connection', (socket) => {
       socket.roomId = roomId;
       console.log(`[방 생성] ${roomId} (관리자: ${socket.id}) - Supabase 및 Redis에 저장됨`);
       socket.emit('room_created', { roomId });
+
+      // 4. Super-admin에게 방 목록 업데이트
+      broadcastRoomListUpdate(io);
     } catch (error) {
       console.error('방 생성 중 오류', error);
       socket.emit('error', { message: `방 생성 중 오류가 발생했습니다: ${error.message}` });
     }
   });
 
+  // 이제 get_room_list는 요청한 클라이언트뿐만 아니라 모든 super-admin에게 브로드캐스트합니다.
   socket.on('get_room_list', async () => {
-    try {
-      // Redis에서 모든 방 키를 가져옴
-      const roomKeys = await redisClient.keys('room:*');
-      if (roomKeys.length === 0) {
-        socket.emit('room_list_update', []);
-        return;
-      }
-
-      // 모든 방의 게임 상태를 한 번에 가져옴
-      const gameStatesJSON = await redisClient.mGet(roomKeys);
-      
-      const roomList = gameStatesJSON.map((stateJSON, index) => {
-        const gameState = JSON.parse(stateJSON);
-        return {
-          roomId: roomKeys[index].replace('room:', ''),
-          playerCount: Object.keys(gameState.players).length,
-          currentPhase: gameState.currentPhase,
-          currentRound: gameState.currentRound,
-          gameStarted: gameState.gameStarted
-        };
-      });
-
-      socket.emit('room_list_update', roomList);
-    } catch (error) {
-      console.error('방 목록 가져오기 중 오류:', error);
-      socket.emit('error', { message: '방 목록을 가져오는 중 오류가 발생했습니다.' });
-    }
+    await broadcastRoomListUpdate(io);
   });
 
   socket.on('force_close_room', async (data) => {
@@ -288,6 +298,12 @@ io.on('connection', (socket) => {
       
       delete roomQueues[roomId];
       console.warn(`[방 강제종료] ${roomId} 방이 슈퍼 관리자에 의해 삭제되었습니다.`);
+      
+      // 요청한 클라이언트에게 성공 이벤트 전송
+      socket.emit('room_closed_success', { roomId });
+
+      // 모든 Super-admin에게 방 목록 업데이트
+      broadcastRoomListUpdate(io);
     } catch (error) {
       console.error(`방 강제 종료 중 오류 (roomId: ${roomId}):`, error);
       socket.emit('error', { message: '방을 강제 종료하는 중 오류가 발생했습니다.' });
@@ -327,6 +343,9 @@ io.on('connection', (socket) => {
   
   socket.on('disconnect', () => {
     const roomId = socket.roomId;
+    // Also handle if the socket was a super-admin
+    socket.leave(SUPER_ADMIN_ROOM);
+
     if (!roomId) return;
 
     if (!roomQueues[roomId]) {
@@ -347,10 +366,10 @@ io.on('connection', (socket) => {
 
             if (roomWasDeleted) {
                 timerManager.stop(roomId, gameState);
-                await redisClient.del(`room:${roomId}`);
-                await supabase.from('rooms').delete().eq('room_id', roomId);
+                // No need to delete from Redis/Supabase here, disconnect handler does it.
                 delete roomQueues[roomId];
                 console.log(`[메모리 정리] 빈 방 ${roomId}의 상태를 Redis에서 삭제했습니다.`);
+                broadcastRoomListUpdate(io); // 방이 삭제되었으므로 목록 업데이트
             } else {
                 // 상태가 변경되었으므로 다시 저장
                 await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));

@@ -164,44 +164,50 @@ function registerPlayer(io, socket, data, room, roomId) {
         room.teams[country] = createInitialTeamState(country, config);
     }
     
-    // **[수정된 로직]**
-    // 플레이어가 접속하려는 팀을 '제외'한 다른 팀들에서만 해당 플레이어를 제거
+    // [수정된 로직] 플레이어가 팀을 변경하는 경우, 이전 팀에서 플레이어 정보를 정리합니다.
+    // studentId를 고유 식별자로 사용합니다.
     for (const existingCountry in room.teams) {
         if (room.teams.hasOwnProperty(existingCountry) && existingCountry !== country) {
             const otherTeam = room.teams[existingCountry];
-            const initialMemberCount = otherTeam.members.length;
-            otherTeam.members = otherTeam.members.filter(m => m.name !== name); // Use 'name' from sessionData
+            const memberIndex = otherTeam.members.findIndex(m => m.studentId === studentId);
             
-            // 만약 다른 팀에서 플레이어가 실제로 제거되었다면, players 객체에서도 정리
-            if (otherTeam.members.length < initialMemberCount) {
-                for (const playerId in room.players) {
-                    if (room.players[playerId].name === name) { // Use 'name' from sessionData
-                        delete room.players[playerId];
-                        break; // 한 명만 찾아서 삭제
-                    }
+            if (memberIndex !== -1) {
+                // 다른 팀에서 플레이어를 찾았으면 제거합니다.
+                const oldSocketId = otherTeam.members[memberIndex].id;
+                otherTeam.members.splice(memberIndex, 1); // 배열에서 제거
+                
+                // players 객체에서도 해당 소켓 ID 정보를 정리합니다.
+                if (room.players[oldSocketId]) {
+                    delete room.players[oldSocketId];
                 }
+                logger.info(`[팀 변경] ${name} (${studentId})님이 ${existingCountry} 팀에서 나와 ${country} 팀으로 이동합니다.`);
             }
         }
     }
 
     const team = room.teams[country];
-    const existingMember = team.members.find(m => m.name === name); // Use 'name' from sessionData
+    const existingMember = team.members.find(m => m.studentId === studentId);
 
     if (existingMember) {
-        // 같은 팀에 재접속하는 경우: 소켓 ID와 접속 상태만 갱신 (토큰은 login_or_register에서 처리)
-        delete room.players[existingMember.id]; // 이전 소켓 ID 정보 삭제
+        // 같은 팀에 재접속하거나, 팀 변경을 완료하는 경우: 소켓 ID와 접속 상태만 갱신합니다.
+        // 이전 소켓 ID가 players 객체에 남아있을 수 있으므로 정리합니다.
+        if (room.players[existingMember.id]) {
+            delete room.players[existingMember.id];
+        }
         existingMember.id = socket.id;
         existingMember.connected = true;
+        existingMember.name = name; // 이름이 변경되었을 수 있으니 업데이트
     } else {
-        // 새로운 팀에 접속하거나, 처음 접속하는 경우: 새 멤버로 추가
-        team.members.push({ id: socket.id, studentId, name, connected: true }); // Include studentId, remove token
+        // 이 팀에 처음으로 합류하는 경우: 새 멤버로 추가합니다.
+        team.members.push({ id: socket.id, studentId, name, connected: true });
     }
 
-    room.players[socket.id] = { studentId, name, team: country }; // Include studentId
+    // 현재 소켓 ID로 players 객체를 업데이트합니다.
+    room.players[socket.id] = { studentId, name, team: country };
     socket.join(roomId);
     socket.roomId = roomId;
 
-    logger.info(`[플레이어 참가] ${name}님이 ${roomId} 방의 ${country} 팀에 참가`);
+    logger.info(`[플레이어 참가] ${name}(${studentId})님이 ${roomId} 방의 ${country} 팀에 참가`);
 
     const safeRoomState = {
         gameStarted: room.gameStarted,
@@ -833,12 +839,13 @@ async function joinOrReconnectRoom(io, socket, data, redisClient, supabase) {
 
 async function loginOrRegister(socket, data, supabase) {
     const { studentId, name } = data;
+    let newUserCreated = false;
 
     // Server-side validation
     const validInput = /^[a-zA-Z0-9가-힣]{1,20}$/;
     if (!studentId || !name || !validInput.test(studentId) || !validInput.test(name)) {
         socket.emit('login_failure', { message: '학번과 이름은 1~20자의 한글, 영문, 숫자만 가능합니다.' });
-        return;
+        return { newUserCreated: false };
     }
 
     try {
@@ -859,7 +866,7 @@ async function loginOrRegister(socket, data, supabase) {
             // 2. User exists, verify name
             if (user.name !== name) {
                 socket.emit('login_failure', { message: '학번과 이름이 일치하지 않습니다.' });
-                return;
+                return { newUserCreated: false };
             }
         } else {
             // 3. User does not exist, create new user
@@ -873,20 +880,23 @@ async function loginOrRegister(socket, data, supabase) {
                 // Handle potential race condition where user was created between select and insert
                 if (insertError.code === '23505') { // Unique violation
                     socket.emit('login_failure', { message: '이미 등록된 학번입니다. 이름이 정확한지 확인 후 다시 시도해주세요.' });
-                    return;
+                    return { newUserCreated: false };
                 }
                 throw new Error(`Supabase insert error: ${insertError.message}`);
             }
             user = newUser;
+            newUserCreated = true;
         }
 
         // 4. Emit success to client without token
         socket.emit('login_success', { studentId: user.student_id, name: user.name });
         logger.info(`[로그인 성공] 학번: ${studentId}, 이름: ${name}`);
+        return { newUserCreated };
 
     } catch (error) {
         logger.error('Login or registration failed', error);
         socket.emit('login_failure', { message: '서버 오류가 발생했습니다. 다시 시도해주세요.' });
+        return { newUserCreated: false };
     }
 }
 
@@ -928,11 +938,37 @@ async function deleteUser(socket, data, supabase) {
     }
 }
 
+async function deleteMultipleUsers(socket, data, supabase) {
+    const { studentIds } = data;
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+        return socket.emit('user_deleted_failure', { message: '삭제할 사용자 ID가 없습니다.' });
+    }
+
+    try {
+        const { error } = await supabase
+            .from('users')
+            .delete()
+            .in('student_id', studentIds);
+
+        if (error) {
+            throw new Error(`Supabase multi-delete user error: ${error.message}`);
+        }
+
+        const successMsg = `${studentIds.length}명의 사용자가 성공적으로 삭제되었습니다.`;
+        socket.emit('user_deleted_success', { message: successMsg });
+        logger.info(`[다중 사용자 삭제] 학번: ${studentIds.join(', ')}`);
+    } catch (error) {
+        logger.error(`Failed to delete multiple users`, error);
+        socket.emit('user_deleted_failure', { message: '여러 사용자 삭제에 실패했습니다.' });
+    }
+}
+
 module.exports = {
     joinOrReconnectRoom, // Export new function
     loginOrRegister,
     getUsers, // Export new function
     deleteUser, // Export new function
+    deleteMultipleUsers, // Export new function
     registerPlayer,
     startPhase,
     completeProductionBatch,
