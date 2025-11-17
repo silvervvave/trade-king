@@ -82,9 +82,16 @@ const schemas = {
     studentId: z.string().min(1).max(20),
     name: z.string().min(1).max(20),
   }),
-  get_users: z.object({}), // New schema for getting all users
-  delete_user: z.object({ // New schema for deleting a user
+  get_users: z.object({
+    superAdminKey: z.string(),
+  }),
+  delete_user: z.object({
     studentId: z.string().min(1).max(20),
+    superAdminKey: z.string(),
+  }),
+  delete_multiple_users: z.object({
+    studentIds: z.array(z.string().min(1).max(20)),
+    superAdminKey: z.string(),
   }),
 };
 
