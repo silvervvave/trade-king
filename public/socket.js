@@ -116,6 +116,17 @@ class SocketHandler {
 
         this.socket.on('game_state_update', (newState) => {
             this.game.gameState = { ...this.game.gameState, ...newState };
+
+            // [FIX] If player joins mid-game, team data might not be initialized yet.
+            // The 'game_state_update' payload includes the full 'teams' object.
+            // We can use this to initialize the player's specific team data.
+            const playerTeam = this.game.gameState.team;
+            const playerCountry = this.game.gameState.player.country;
+            if (playerCountry && (!playerTeam || !playerTeam.country) && newState.teams && newState.teams[playerCountry]) {
+                console.log(`Player team data not found for ${playerCountry}. Initializing from game_state_update.`);
+                this.game.gameState.team = newState.teams[playerCountry];
+            }
+
             this.game.ui.updateGameState(this.game.gameState);
         });
 
@@ -162,7 +173,7 @@ class SocketHandler {
 
         this.socket.on('final_rps_result', (data) => {
             this.game.gameState.team.finalRpsResultData = data;
-            this.game.ui.renderArrivalResults();
+            this.game.ui.setupArrivalScreen();
         });
 
         this.socket.on('event_result', (data) => {
