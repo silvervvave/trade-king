@@ -241,11 +241,19 @@ function initializeNewRound(room) {
 
 function resetProductionPhase(room) {
     Object.values(room.teams).forEach(t => { 
+        // Reset production phase state
         t.rpsPlayedThisRound = false; 
         t.rerollUsedThisRound = false;
         t.rpsPaChange = 0;
         t.rpsResult = null;
         t.batchCount = 0; // Reset batch count for the new production phase
+
+        // Reset previous arrival phase results
+        t.finalRpsResultData = null;
+        t.eventDrawnThisRound = false;
+        t.eventText = '';
+        t.eventResultClass = '';
+        t.finalRpsPlayedThisRound = false;
     });
 }
 
