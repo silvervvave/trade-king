@@ -7,9 +7,9 @@ const countryConfig = {
 };
 
 const EVENT_CONFIG = {
-    goodFortune: { threshold: 15, text: '순풍을 만나 무역품을 2배로 획득합니다!', paMultiplier: 1, goodsMultiplier: 2, class: 'win' },
-    disaster: { threshold: 35, text: '카무사리를 당해 무역품을 모두 잃습니다!', paMultiplier: 0, goodsMultiplier: 0, class: 'lose' },
-    normal: { threshold: 100, text: '무사히 항해를 마쳤습니다.', paMultiplier: 1, goodsMultiplier: 1, class: 'draw' }
+    goodFortune: { threshold: 15, text: '무역풍을 만나 무역품을 2배로 획득합니다!', paMultiplier: 1, goodsMultiplier: 2, class: 'win' },
+    disaster: { threshold: 35, text: '카무사리를 당해 무역품을 모두 잃습니다!', paMultiplier: 1, goodsMultiplier: 0, class: 'lose' },
+    normal: { threshold: 100, text: '순풍을 만나 무사히 항해를 마쳤습니다.', paMultiplier: 1, goodsMultiplier: 1, class: 'draw' }
 };
 
 module.exports = {

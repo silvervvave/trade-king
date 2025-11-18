@@ -229,6 +229,12 @@ class UIManager {
         }
 
         const teamState = this.game.gameState.team;
+        // [FIX] Add a guard for teamState itself, as it might be null during state transitions.
+        if (!teamState) {
+            // If there's no team state, we can't update stats, so we should clear them or return.
+            // Returning is safer to avoid clearing stats during a temporary state update.
+            return;
+        }
         const config = this.game.countryConfig[this.game.gameState.player.country];
 
         // Helper to update text content safely
@@ -667,7 +673,7 @@ class UIManager {
 
         if (teamState.eventDrawnThisRound) {
             if (teamState.camusariHappened) {
-                summaryHtml = `<div class="result-preview lose"><p>카무사리 발생! 모든 것을 잃었습니다.</p></div>`;
+                summaryHtml = `<div class="result-preview lose"><p>카무사리 발생! 모든 것을 잃었지만, 항해비 ${tradeSelection.amount} PA는 보전됩니다.</p></div>`;
             } else {
                 const baseAmount = tradeSelection.amount;
                 const goodsMultiplier = teamState.eventMultipliers?.goodsMultiplier ?? 1;
@@ -718,19 +724,31 @@ class UIManager {
         let resultsHtml = '<h3>투자 수익</h3>';
         myInvestments.forEach(investment => {
             const targetTeam = this.game.teams[investment.toTeam];
-            if (targetTeam) {
+            if (targetTeam && targetTeam.tradeSelection) {
                 const teamName = this.game.countryConfig[targetTeam.country].name;
-                // NOTE: The actual profit calculation is on the server. 
-                // This UI part just shows the status. We'd need a new socket event or updated game state
-                // to show the actual return PA. For now, I'll show the status.
-                const eventStatus = targetTeam.eventDrawnThisRound ? '완료' : '대기중';
-                const rpsStatus = targetTeam.finalRpsPlayedThisRound ? '완료' : '대기중';
+                const goodsName = targetTeam.tradeSelection.type === 'china' ? '비단' : '후추';
+                let expectedGoods = 0;
+                let statusMessage = '이벤트 결과 대기중...';
+
+                if (targetTeam.eventDrawnThisRound) {
+                    if (targetTeam.camusariHappened) {
+                        statusMessage = '카무사리 발생! 투자금은 보전됩니다.';
+                        expectedGoods = 0;
+                    } else {
+                        const goodsMultiplier = targetTeam.eventMultipliers?.goodsMultiplier ?? 1;
+                        expectedGoods = Math.floor(investment.amount / 10) * goodsMultiplier;
+                        statusMessage = `이벤트: ${targetTeam.eventText}`;
+                    }
+                }
+
                 resultsHtml += `
                     <div class="investment-card" style="margin-top: 10px;">
-                        <h4>${teamName}</h4>
+                        <h4>${teamName} (${goodsName})</h4>
                         <p><strong>투자 금액:</strong> ${investment.amount} PA</p>
-                        <p>이벤트: ${eventStatus} / 최종 ✌️✊✋: ${rpsStatus}</p>
-                        <p><em>최종 수익은 서버에서 집계 중입니다.</em></p>
+                        <div class="result-preview">
+                            <p>예상 수익: <strong>${goodsName} ${expectedGoods}개</strong></p>
+                        </div>
+                        <p><em>${statusMessage}</em></p>
                     </div>
                 `;
             }
@@ -741,36 +759,7 @@ class UIManager {
     updateArrivalStatus(teams) {
         const container = document.getElementById('arrival-status-container');
         if (!container) return;
-
-        container.innerHTML = '';
-
-        const myCountry = this.game.gameState.player.country;
-        const myInvestments = this.game.gameState.team.investmentsMade || [];
-
-        const otherTeamsOnVoyage = Object.values(teams).filter(team => team.country !== myCountry && team.tradeSelection);
-
-        otherTeamsOnVoyage.forEach(team => {
-            const card = document.createElement('div');
-            card.className = 'investment-card';
-
-            const investment = myInvestments.find(inv => inv.toTeam === team.country);
-            let investmentInfo = '';
-            if (investment) {
-                investmentInfo = `<p style="color: var(--color-primary); font-weight: bold; margin-top: 8px;">내가 투자한 금액: ${investment.amount} PA</p>`;
-            }
-
-            const eventStatus = team.eventDrawnThisRound ? team.eventText : '대기중';
-            const rpsStatus = team.finalRpsPlayedThisRound ? this.getRPSResultKorean(team.finalRpsResult) : '대기중';
-
-            card.innerHTML = `
-                <h4>${this.game.countryConfig[team.country].name}</h4>
-                <p>이벤트 카드: ${eventStatus}</p>
-                <p>최종 가위바위보: ${rpsStatus}</p>
-                ${investmentInfo}
-            `;
-            
-            container.appendChild(card);
-        });
+        container.innerHTML = ''; // Remove the cards below the carousel as requested
     }
 
     getPhaseKorean(phase) {

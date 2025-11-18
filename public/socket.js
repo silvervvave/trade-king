@@ -160,6 +160,13 @@ class SocketHandler {
 
         this.socket.on('teams_update', (data) => {
             this.game.teams = data.teams;
+
+            // Update the player's own team state from the broadcast
+            const myCountry = this.game.gameState.player.country;
+            if (myCountry && data.teams[myCountry]) {
+                this.game.updatePlayerStatsFromServer(data.teams[myCountry]);
+            }
+
             this.game.ui.updateAllTeamsStatus(data.teams);
             this.game.ui.updateMyTeamStatus(data.teams);
             this.game.ui.updateInvestmentStatus();

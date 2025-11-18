@@ -125,7 +125,7 @@ class GameClient {
             }
             // Investment Buttons (Investment Phase)
             if (event.target.matches('#investmentOptions .game-btn')) {
-                const targetCountry = event.target.onclick.toString().match(/makeInvestment\('(.*?)'\)/)[1];
+                const targetCountry = event.target.dataset.country;
                 if (targetCountry) {
                     this.makeInvestment(targetCountry);
                 }

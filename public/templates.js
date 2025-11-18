@@ -46,7 +46,7 @@ const templates = {
                 <span id="investAmountValue-${voyage.country}" class="toggle-value">10</span>
                 <button class="btn-toggle plus">+</button>
             </div>
-            <button class="game-btn" onclick="game.makeInvestment('${voyage.country}')">투자하기</button>
+            <button class="game-btn" data-country="${voyage.country}">투자하기</button>
         </div>
         <div class="investment-status" id="investment-status-${voyage.country}">
             <ul class="investment-status-list">${investorsHtml}</ul>

@@ -202,9 +202,16 @@ function registerPlayer(io, socket, data, room, roomId) {
 function initializeNewRound(room) {
     room.currentRound++;
     Object.values(room.teams).forEach(t => {
+        // Logic from resetTradePhase
+        t.tradeSelection = null;
+        t.investmentsMade = [];
+        t.investmentsReceived = [];
+
+        // Existing logic
         t.eventDrawnThisRound = false;
         t.finalRpsPlayedThisRound = false;
         t.rerollUsedThisRound = false;
+        t.camusariHappened = false; // 카무사리 상태 초기화
         t.eventText = '';
         t.eventResultClass = '';
         t.eventResult = null;
@@ -264,14 +271,6 @@ function prepareInvestmentPhase(io, room, roomId) {
     io.to(roomId).emit('investment_info', { voyages: voyageInfo });
 }
 
-function resetTradePhase(room) {
-    Object.values(room.teams).forEach(t => {
-        t.tradeSelection = null;
-        t.investmentsMade = [];
-        t.investmentsReceived = [];
-    });
-}
-
 function startPhase(io, socket, data, room, roomId) {
     if (socket.id !== room.adminSocketId) return;
 
@@ -305,7 +304,7 @@ function startPhase(io, socket, data, room, roomId) {
             prepareInvestmentPhase(io, room, roomId);
             break;
         case PHASES.TRADE:
-            resetTradePhase(room);
+            // No longer needed here, logic moved to initializeNewRound
             break;
     }
 

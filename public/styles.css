@@ -1710,7 +1710,7 @@ body {
 .carousel-prev,
 .carousel-next {
     position: absolute;
-    bottom: -40px; /* 2배 커진 버튼에 맞춰 조정 */
+    bottom: -60px; /* 2배 커진 버튼에 맞춰 조정 */
     background-color: var(--color-surface);
     color: var(--color-primary);
     border: 2px solid var(--color-border);
