@@ -584,6 +584,21 @@ body {
     box-shadow: var(--shadow-lg);
 }
 
+.destination-card:active {
+    transform: translateY(-2px) scale(0.98);
+    box-shadow: var(--shadow-md);
+    background-color: var(--color-primary);
+    color: var(--color-gardenia);
+}
+
+.destination-card.active-feedback {
+    transform: translateY(-2px) scale(0.98);
+    box-shadow: var(--shadow-md);
+    background-color: var(--color-primary);
+    color: var(--color-gardenia);
+    border-color: var(--color-primary);
+}
+
 .destination-icon {
     font-size: 3em;
     margin-bottom: var(--spacing-md);

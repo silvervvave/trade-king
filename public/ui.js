@@ -554,7 +554,15 @@ class UIManager {
         document.getElementById('tradeDestinationTitle').textContent = `${destination === 'china' ? '중국' : '인도'}에 투자할 금액`;
         document.querySelector('.destination-grid').classList.add('hidden');
         document.getElementById('tradeConfirmation').classList.remove('hidden');
-        // Removed focus() call as tradeAmount is no longer an input
+
+        // Add temporary active class for visual feedback
+        const clickedCard = document.querySelector(`.destination-card[data-destination="${destination}"]`);
+        if (clickedCard) {
+            clickedCard.classList.add('active-feedback');
+            setTimeout(() => {
+                clickedCard.classList.remove('active-feedback');
+            }, 200); // Remove after 200ms
+        }
     }
 
     cancelTrade() {
