@@ -358,7 +358,7 @@ class UIManager {
     updateTokenDisplay() {
         const rerollInfo = document.getElementById('rerollTokenInfo');
         if (rerollInfo) {
-            if (this.game.gameState.player.country === 'england') {
+            if (this.game.gameState && this.game.gameState.player && this.game.gameState.player.country === 'england') {
                 rerollInfo.style.display = 'block';
                 rerollInfo.innerHTML = `
                     <div class="token-info">

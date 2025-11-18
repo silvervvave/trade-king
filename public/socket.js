@@ -64,22 +64,28 @@ class SocketHandler {
             this.game.ui.renderCountrySelection(data.countryConfig, data.playerCounts);
             this.game.ui.showScreen('countrySelection');
             const joinButton = document.getElementById('submitRoomCodeBtn');
-            joinButton.disabled = false;
-            joinButton.textContent = '준비 완료';
+            if (joinButton) {
+                joinButton.disabled = false;
+                joinButton.textContent = '준비 완료';
+            }
         });
 
         this.socket.on('room_full', () => {
             this.game.ui.showNotification('방이 가득 찼습니다.');
             const joinButton = document.getElementById('submitRoomCodeBtn');
-            joinButton.disabled = false;
-            joinButton.textContent = '준비 완료';
+            if (joinButton) {
+                joinButton.disabled = false;
+                joinButton.textContent = '준비 완료';
+            }
         });
 
         this.socket.on('room_not_found', () => {
             this.game.ui.showNotification('방을 찾을 수 없습니다.');
             const joinButton = document.getElementById('submitRoomCodeBtn');
-            joinButton.disabled = false;
-            joinButton.textContent = '준비 완료';
+            if (joinButton) {
+                joinButton.disabled = false;
+                joinButton.textContent = '준비 완료';
+            }
         });
 
         this.socket.on('room_check_result', (data) => {
@@ -102,8 +108,10 @@ class SocketHandler {
             } else {
                 this.game.ui.showNotification('방을 찾을 수 없습니다.');
                 const joinButton = document.getElementById('submitRoomCodeBtn');
-                joinButton.disabled = false;
-                joinButton.textContent = '준비 완료';
+                if (joinButton) {
+                    joinButton.disabled = false;
+                    joinButton.textContent = '준비 완료';
+                }
             }
         });
         
@@ -115,24 +123,29 @@ class SocketHandler {
         });
 
         this.socket.on('game_state_update', (newState) => {
-            // [FIX] Replace the entire game state with the authoritative state from the server.
-            this.game.gameState = newState;
-
-            // [FIX] Ensure essential objects exist to prevent downstream errors.
-            if (!this.game.gameState.player) {
-                this.game.gameState.player = { name: '', country: null };
-            }
-            if (!this.game.gameState.team) {
-                // Initialize with minimal structure based on constructor defaults
-                this.game.gameState.team = {
-                    totalPA: 0, silk: 0, pepper: 0, productPACount: 0, maxProduct: 0,
-                    rpsRerolls: 0, mercantilismTokens: 0, investmentsMade: [],
-                    clickCount: 0, batchCount: 0, eventDrawnThisRound: false,
-                    finalRpsPlayedThisRound: false, eventText: '', eventResultClass: '',
-                    finalRpsResult: '', rpsResult: null, eventResult: null, finalRpsResultData: null
-                };
+            if (!newState) {
+                console.warn('game_state_update received with empty state. Ignoring.');
+                return;
             }
 
+            // [REVISED FIX] Perform a targeted, deep-enough merge to prevent state loss from partial updates.
+            const mergedState = {
+                ...this.game.gameState, // Start with the old state
+                ...newState, // Apply the new state (shallowly)
+                
+                // Crucially, if the new state has a 'player' or 'team' object,
+                // we need to merge it with the old one to prevent losing nested properties.
+                player: {
+                    ...(this.game.gameState.player || {}),
+                    ...(newState.player || {}),
+                },
+                team: {
+                    ...(this.game.gameState.team || {}),
+                    ...(newState.team || {}),
+                }
+            };
+
+            this.game.gameState = mergedState;
             this.game.ui.updateGameState(this.game.gameState);
         });
 

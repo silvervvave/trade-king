@@ -1,4 +1,4 @@
-const { z } = require('zod');
+const { z, ZodError } = require('zod');
 const { PHASES, COUNTRIES, RPS_CHOICES } = require('./constants');
 const { countryConfig } = require('../config');
 
@@ -38,7 +38,7 @@ const schemas = {
   }),
   make_investment: z.object({
     roomId: z.string().length(4),
-    targetCountry: z.enum(Object.keys(COUNTRIES)),
+    targetCountry: z.enum(Object.values(COUNTRIES)),
     amount: z.number().int().min(10),
   }),
   play_rps: z.object({
@@ -98,14 +98,19 @@ const schemas = {
 function validate(eventName, data) {
   const schema = schemas[eventName];
   if (!schema) {
-    return { error: `Unknown event: ${eventName}` };
+    return { success: false, error: [{ message: `Unknown event: ${eventName}`, path: ['eventName'] }] };
   }
 
   try {
     schema.parse(data);
     return { success: true };
   } catch (error) {
-    return { error: error.errors || [{ message: 'Unknown validation error', path: [] }] };
+    if (error instanceof ZodError) {
+      // Use Zod's own error array, which is more reliable
+      return { success: false, error: error.errors };
+    }
+    // Fallback for non-Zod errors
+    return { success: false, error: [{ message: error.message || 'Unknown validation error', path: [] }] };
   }
 }
 
