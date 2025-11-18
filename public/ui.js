@@ -473,7 +473,7 @@ class UIManager {
         } else if (phase === 'trade') {
             this.setupTradeScreen();
         } else if (phase === 'investment') {
-            this.setupInvestmentScreen();
+            // this.setupInvestmentScreen(); // This call is removed to prevent a race condition
         } else if (phase === 'arrival') {
             this.setupArrivalScreen();
         }
@@ -658,17 +658,47 @@ class UIManager {
         const destination = tradeSelection.type === 'china' ? '중국' : '인도';
         const goodsName = tradeSelection.type === 'china' ? '비단' : '후추';
         const eventText = teamState.eventText || '이벤트 결과 대기중...';
-        const rpsResult = teamState.finalRpsResultData ? this.getRPSResultKorean(teamState.finalRpsResultData.result) : '가위바위보 결과 대기중...';
-        
-        // This is a simplified summary. The actual calculation happens on the server.
-        // We can get the final profit from the arrivalSummaryLog data if needed, but for now, this is a display template.
+        const rpsResultText = teamState.finalRpsPlayedThisRound ? this.getRPSResultKorean(teamState.finalRpsResult) : '가위바위보 결과 대기중...';
+
+        let summaryHtml = '';
+
+        if (teamState.eventDrawnThisRound) {
+            if (teamState.camusariHappened) {
+                summaryHtml = `<div class="result-preview lose"><p>카무사리 발생! 모든 것을 잃었습니다.</p></div>`;
+            } else {
+                const baseAmount = tradeSelection.amount;
+                const goodsMultiplier = teamState.eventMultipliers?.goodsMultiplier ?? 1;
+                const paMultiplier = teamState.eventMultipliers?.paMultiplier ?? 1;
+                
+                let goodsAcquired = Math.floor((baseAmount / 10) * goodsMultiplier);
+                const paReturn = baseAmount * paMultiplier;
+
+                let rpsBonusText = '';
+                if (teamState.finalRpsPlayedThisRound) {
+                    const rpsGoodsChange = teamState.rpsGoodsChange || 0;
+                    goodsAcquired = Math.max(0, goodsAcquired + rpsGoodsChange);
+                    rpsBonusText = ` (가위바위보 ${rpsGoodsChange >= 0 ? '+' : ''}${rpsGoodsChange})`;
+                }
+                
+                summaryHtml = `
+                    <div class="result-preview">
+                        <p>예상 수익: <strong>${goodsName} ${goodsAcquired}개${rpsBonusText}</strong></p>
+                        <p>돌려받을 항해비: <strong>${paReturn} PA</strong></p>
+                    </div>
+                `;
+            }
+        }
+
         container.innerHTML = `
             <h3>우리 팀 입항 결과</h3>
-            <p><strong>목적지:</strong> ${destination}</p>
-            <p><strong>투자 금액:</strong> ${tradeSelection.amount} PA</p>
-            <p><strong>이벤트:</strong> ${eventText}</p>
-            <p><strong>최종 가위바위보:</strong> ${rpsResult}</p>
-            <p><em>서버에서 최종 집계 후 정산됩니다.</em></p>
+            <div class="arrival-summary-details">
+                <p><strong>목적지:</strong> ${destination}</p>
+                <p><strong>투자 금액:</strong> ${tradeSelection.amount} PA</p>
+                <p><strong>이벤트:</strong> ${eventText}</p>
+                <p><strong>최종 가위바위보:</strong> ${rpsResultText}</p>
+            </div>
+            ${summaryHtml}
+            <p class="final-tally-notice"><em>서버에서 최종 집계 후 정산됩니다.</em></p>
         `;
     }
 

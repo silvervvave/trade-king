@@ -75,80 +75,57 @@ function distributeInvestmentReturns(io, team, room, roomId, goodsMultiplier, rp
 }
 
 function calculateArrivalResults(io, team, room, roomId) {
-    if (team.eventDrawnThisRound && team.finalRpsPlayedThisRound) {
-        const tradeData = team.tradeSelection;
-        if (!tradeData) return;
-
-                if (team.camusariHappened) {
-                    // 카무사리 발생 시 항해자 처리 (항해비 보전)
-                    team.totalPA += tradeData.amount; 
-
-                    distributeInvestmentReturns(io, team, room, roomId, 0, 0, null); // 투자자 처리 호출
-
-                    io.to(roomId).emit('arrival_summary', {
-                        country: team.country,
-                        goodsAcquired: 0,
-                        profit: 0, // 항해비가 보전되므로 이익은 0
-                        destination: tradeData.type,
-                        camusari: true
-                    });
-
-        
-
-                } else {
-
-                    // 일반 도착 결과 계산
-
-                    const destination = tradeData.type;
-
-                    const baseAmount = tradeData.amount;
-
-                    const { paMultiplier, goodsMultiplier } = team.eventMultipliers;
-
-                    const rpsGoodsChange = team.rpsGoodsChange;
-
-        
-
-                    let goodsAcquired = Math.floor((baseAmount / 10) * goodsMultiplier); // Adjusted for 10 PA per good
-
-                    goodsAcquired = Math.max(0, goodsAcquired + rpsGoodsChange);
-
-        
-
-                    if (destination === 'china') {
-
-                        if (goodsAcquired > 0) team.silk += goodsAcquired;
-
-                    } else if (destination === 'india') {
-
-                        if (goodsAcquired > 0) team.pepper += goodsAcquired;
-
-                    }
-
-        
-
-                    distributeInvestmentReturns(io, team, room, roomId, goodsMultiplier, rpsGoodsChange, destination);
-
-                    
-
-                    team.totalPA += (baseAmount * paMultiplier);
-
-        
-
-                    if (team.country === COUNTRIES.FRANCE && goodsMultiplier > 0) {
-                        team.totalPA += FRANCE_MERCANTILISM_BONUS_PA; // France's Mercantilism Bonus
-                    }
-
-            io.to(roomId).emit('arrival_summary', {
-                country: team.country,
-                goodsAcquired,
-                profit: (baseAmount * paMultiplier) - baseAmount,
-                destination
-            });
-        }
-        
-        broadcastTeamsUpdate(io, room, roomId);
+    if (!team.tradeSelection || !team.eventDrawnThisRound || team.arrivalCalculationDone) {
+        return;
     }
+
+    // 가위바위보를 하지 않은 경우를 위해 기본값 설정
+    const rpsGoodsChange = team.finalRpsPlayedThisRound ? team.rpsGoodsChange : 0;
+
+    if (team.camusariHappened) {
+        // 카무사리 발생 시 항해자 처리 (항해비 보전)
+        team.totalPA += team.tradeSelection.amount;
+        distributeInvestmentReturns(io, team, room, roomId, 0, 0, null);
+        io.to(roomId).emit('arrival_summary', {
+            country: team.country,
+            goodsAcquired: 0,
+            profit: 0,
+            destination: team.tradeSelection.type,
+            camusari: true
+        });
+    } else {
+        // 일반 도착 결과 계산
+        const destination = team.tradeSelection.type;
+        const baseAmount = team.tradeSelection.amount;
+        const { paMultiplier, goodsMultiplier } = team.eventMultipliers;
+
+        let goodsAcquired = Math.floor((baseAmount / 10) * goodsMultiplier);
+        goodsAcquired = Math.max(0, goodsAcquired + rpsGoodsChange);
+
+        if (destination === 'china') {
+            if (goodsAcquired > 0) team.silk += goodsAcquired;
+        } else if (destination === 'india') {
+            if (goodsAcquired > 0) team.pepper += goodsAcquired;
+        }
+
+        distributeInvestmentReturns(io, team, room, roomId, goodsMultiplier, rpsGoodsChange, destination);
+        
+        team.totalPA += (baseAmount * paMultiplier);
+
+        if (team.country === COUNTRIES.FRANCE && goodsMultiplier > 0) {
+            team.totalPA += FRANCE_MERCANTILISM_BONUS_PA;
+        }
+
+        io.to(roomId).emit('arrival_summary', {
+            country: team.country,
+            goodsAcquired,
+            profit: (baseAmount * paMultiplier) - baseAmount,
+            destination
+        });
+    }
+    
+    team.arrivalCalculationDone = true; // 계산 완료 플래그 설정
+    // broadcastTeamsUpdate(io, room, roomId); // This will be done in a batch later
 }
 
 function registerPlayer(io, socket, data, room, roomId) {
@@ -233,6 +210,7 @@ function initializeNewRound(room) {
         t.eventResult = null;
         t.rpsResult = null; // 생산 단계 RPS 결과 초기화
         t.finalRpsResultData = null; // 도착 단계 RPS 결과 초기화
+        t.arrivalCalculationDone = false; // 보상 계산 플래그 초기화
         if (t.country === COUNTRIES.ENGLAND) {
             t.rpsRerolls = 1;
         }
@@ -302,6 +280,14 @@ function startPhase(io, socket, data, room, roomId) {
         room.gameStarted = true;
         room.currentRound = 1;
     } else if (phase === PHASES.TRADE && room.currentPhase === PHASES.ARRIVAL) {
+        // 입항 단계가 종료되고 다음 라운드의 출항 단계가 시작되기 전,
+        // 모든 팀의 최종 결과를 계산하고 정산합니다.
+        Object.values(room.teams).forEach(team => {
+            calculateArrivalResults(io, team, room, roomId);
+        });
+        // 모든 계산이 끝난 후, 한 번에 모든 클라이언트에 업데이트된 정보를 브로드캐스트합니다.
+        broadcastTeamsUpdate(io, room, roomId);
+
         initializeNewRound(room);
     }
 
@@ -593,7 +579,7 @@ function drawEvent(io, socket, data, room, roomId) {
     team.eventResult = { html: event.text, resultClass: event.class, playerName: player.name };
 
     updateTeamMembers(io, team, room, roomId);
-    calculateArrivalResults(io, team, room, roomId);
+    // calculateArrivalResults(io, team, room, roomId); // REMOVED: Calculation is now deferred to the end of the phase.
 }
 
 function playFinalRPS(io, socket, data, room, roomId) {
@@ -621,7 +607,7 @@ function playFinalRPS(io, socket, data, room, roomId) {
 
     socket.emit('final_rps_result', team.finalRpsResultData);
     updateTeamMembers(io, team, room, roomId);
-    calculateArrivalResults(io, team, room, roomId);
+    // calculateArrivalResults(io, team, room, roomId); // REMOVED: Calculation is now deferred to the end of the phase.
 }
 
 function rerollFinalRPS(io, socket, data, room, roomId) {
