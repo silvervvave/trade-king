@@ -116,8 +116,23 @@ class SocketHandler {
 
         this.socket.on('game_state_update', (newState) => {
             // [FIX] Replace the entire game state with the authoritative state from the server.
-            // A shallow merge was causing stale data to persist on the client after reconnecting.
             this.game.gameState = newState;
+
+            // [FIX] Ensure essential objects exist to prevent downstream errors.
+            if (!this.game.gameState.player) {
+                this.game.gameState.player = { name: '', country: null };
+            }
+            if (!this.game.gameState.team) {
+                // Initialize with minimal structure based on constructor defaults
+                this.game.gameState.team = {
+                    totalPA: 0, silk: 0, pepper: 0, productPACount: 0, maxProduct: 0,
+                    rpsRerolls: 0, mercantilismTokens: 0, investmentsMade: [],
+                    clickCount: 0, batchCount: 0, eventDrawnThisRound: false,
+                    finalRpsPlayedThisRound: false, eventText: '', eventResultClass: '',
+                    finalRpsResult: '', rpsResult: null, eventResult: null, finalRpsResultData: null
+                };
+            }
+
             this.game.ui.updateGameState(this.game.gameState);
         });
 

@@ -267,6 +267,12 @@ class GameClient {
     }
 
     updatePlayerStatsFromServer(teamData) {
+        // [FIX] Add a guard to prevent error if gameState.team is not yet initialized
+        if (!this.gameState.team) {
+            console.warn('updatePlayerStatsFromServer called before gameState.team is initialized. Initializing now.');
+            this.gameState.team = {}; // Initialize as an empty object to prevent further errors
+        }
+
         // Preserve the individual, client-side click progress
         const localClickCount = this.gameState.team.clickCount || 0;
 

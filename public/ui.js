@@ -223,7 +223,10 @@ class UIManager {
     }
 
     updatePlayerStats() {
-        if (!this.game.gameState.player.country) return;
+        // [FIX] More robust guard for player and country
+        if (!this.game.gameState || !this.game.gameState.player || !this.game.gameState.player.country) {
+            return;
+        }
 
         const teamState = this.game.gameState.team;
         const config = this.game.countryConfig[this.game.gameState.player.country];
@@ -784,19 +787,23 @@ class UIManager {
 
     updateAllTeamsStatus(teams) {
         const container = document.getElementById('allTeamsStatusContainer');
-        if (!container) return;
+        if (!container || !teams) return; // Also check for teams object
 
         container.innerHTML = '';
 
-        const teamArray = Object.values(teams);
+        const teamArray = Object.values(teams).filter(Boolean); // Filter out any falsy values
+        if (teamArray.length === 0) return; // Nothing to display
+
         // Duplicate the teamArray to create a seamless loop effect for manual scrolling
         const duplicatedTeamArray = [...teamArray, ...teamArray, ...teamArray]; // Duplicate twice for smoother loop
+
+        const playerCountry = this.game.gameState.player ? this.game.gameState.player.country : null;
 
         duplicatedTeamArray.forEach(team => {
             const card = document.createElement('div');
             card.className = 'team-status-card';
 
-            const isMyTeam = team.country === this.game.gameState.player.country;
+            const isMyTeam = team.country === playerCountry;
             if (isMyTeam) {
                 card.classList.add('my-team-card');
             }
@@ -822,14 +829,15 @@ class UIManager {
 
         // Add manual infinite scroll logic
         container.addEventListener('scroll', () => {
+            // Check if container has been cleared
+            if (container.children.length === 0) return;
+            
             if (container.scrollLeft >= totalOriginalWidth * 2) {
                 container.scrollLeft -= totalOriginalWidth;
             } else if (container.scrollLeft <= 0) {
                 container.scrollLeft += totalOriginalWidth;
             }
         });
-
-
     }
 
     updateMyTeamStatus(teams) {
