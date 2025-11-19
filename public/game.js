@@ -283,6 +283,7 @@ class GameClient {
         
         this.ui.updatePlayerStats();
         this.ui.updateTokenDisplay();
+        this.ui.updateRerollButtons(); // [FIX] Reroll 버튼 상태 갱신 추가
         this.ui.updateTradeSelectionDisplay();
         this.ui.renderProductionResults();
         this.ui.renderArrivalResults();
@@ -473,7 +474,8 @@ class GameClient {
         console.log("Clearing session and resetting UI...");
         // Clear local storage
         localStorage.removeItem('playerRoomId');
-        localStorage.removeItem('localStudentId'); // Clear localStudentId from localStorage
+        localStorage.removeItem('localStudentId');
+        localStorage.removeItem('localPlayerName');
 
         // Reload the page to ensure a completely clean state
         window.location.reload();

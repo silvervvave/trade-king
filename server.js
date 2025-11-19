@@ -120,13 +120,36 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('join_or_reconnect_room', async (data) => {
+  socket.on('join_or_reconnect_room', (data) => {
     const validationResult = validate('join_or_reconnect_room', data);
     if (!validationResult.success) {
-        socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
+      socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
+      return;
+    }
+
+    const { roomId } = data;
+    if (!roomId) {
+        socket.emit('error', { message: '요청에 방 ID가 포함되지 않았습니다.' });
         return;
     }
-    await joinOrReconnectRoom(io, socket, data, redisClient, supabase);
+
+    if (!roomQueues[roomId]) {
+        roomQueues[roomId] = { queue: [], isProcessing: false };
+    }
+
+    const task = async () => {
+        try {
+            await joinOrReconnectRoom(io, socket, data, redisClient, supabase);
+        } catch (error) {
+            console.error(`[오류] joinOrReconnectRoom 처리 중 오류 (roomId: ${roomId}):`, error);
+            socket.emit('error', { message: '방에 다시 참가하는 중 서버 오류가 발생했습니다.' });
+        }
+    };
+
+    roomQueues[roomId].queue.push(task);
+    if (!roomQueues[roomId].isProcessing) {
+        processQueue(roomId);
+    }
   });
 
   // Super Admin Key for authorization (for socket events)
@@ -310,34 +333,50 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('reclaim_admin', async (data) => {
+  socket.on('reclaim_admin', (data) => {
     const { roomId } = data;
-    try {
-        const gameStateJSON = await redisClient.get(`room:${roomId}`);
-        if (!gameStateJSON) {
-            socket.emit('admin_reclaimed', { success: false, message: '방이 존재하지 않습니다.' });
-            return;
+    if (!roomId) {
+        socket.emit('admin_reclaimed', { success: false, message: '방 ID가 제공되지 않았습니다.' });
+        return;
+    }
+
+    if (!roomQueues[roomId]) {
+        roomQueues[roomId] = { queue: [], isProcessing: false };
+    }
+
+    const task = async () => {
+        try {
+            const gameStateJSON = await redisClient.get(`room:${roomId}`);
+            if (!gameStateJSON) {
+                socket.emit('admin_reclaimed', { success: false, message: '방이 존재하지 않습니다.' });
+                return;
+            }
+            let gameState = JSON.parse(gameStateJSON);
+
+            if (gameState.adminSocketId === null || !io.sockets.sockets.get(gameState.adminSocketId)) {
+                gameState.adminSocketId = socket.id;
+
+                await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));
+                await supabase.from('rooms').update({ admin_socket_id: socket.id }).eq('room_id', roomId);
+
+                socket.join(roomId);
+                socket.roomId = roomId;
+                console.log(`[관리자 재확보] 방 ${roomId} (새 관리자: ${socket.id})`);
+                socket.emit('admin_reclaimed', { success: true, roomId: roomId });
+                socket.emit('game_state_update', gameState);
+                io.to(roomId).emit('teams_update', { teams: gameState.teams });
+            } else {
+                socket.emit('admin_reclaimed', { success: false, message: '이미 다른 관리자가 이 방을 관리 중입니다.' });
+            }
+        } catch (error) {
+            console.error(`관리자 재확보 중 오류 (roomId: ${roomId}):`, error);
+            socket.emit('admin_reclaimed', { success: false, message: '오류가 발생했습니다.' });
         }
-        let gameState = JSON.parse(gameStateJSON);
+    };
 
-        if (gameState.adminSocketId === null || !io.sockets.sockets.get(gameState.adminSocketId)) {
-            gameState.adminSocketId = socket.id;
-
-            await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));
-            await supabase.from('rooms').update({ admin_socket_id: socket.id }).eq('room_id', roomId);
-
-            socket.join(roomId);
-            socket.roomId = roomId;
-            console.log(`[관리자 재확보] 방 ${roomId} (새 관리자: ${socket.id})`);
-            socket.emit('admin_reclaimed', { success: true, roomId: roomId });
-            socket.emit('game_state_update', gameState);
-            io.to(roomId).emit('teams_update', { teams: gameState.teams });
-        } else {
-            socket.emit('admin_reclaimed', { success: false, message: '이미 다른 관리자가 이 방을 관리 중입니다.' });
-        }
-    } catch (error) {
-        console.error(`관리자 재확보 중 오류 (roomId: ${roomId}):`, error);
-        socket.emit('admin_reclaimed', { success: false, message: '오류가 발생했습니다.' });
+    roomQueues[roomId].queue.push(task);
+    if (!roomQueues[roomId].isProcessing) {
+        processQueue(roomId);
     }
   });
   

@@ -44,7 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const bannerLeft = document.getElementById('bannerLeft');
     if (bannerLeft) {
         bannerLeft.addEventListener('click', () => {
-            window.location.reload();
+            if (adminRoomId && confirm('현재 방을 삭제하고 초기화면으로 돌아가시겠습니까?')) {
+                socket.emit('force_close_room', { roomId: adminRoomId });
+            } else if (!adminRoomId) {
+                window.location.reload();
+            }
         });
     }
 
@@ -127,6 +131,18 @@ socket.on('admin_reclaimed', (data) => {
         document.getElementById('roomCreationSection').classList.remove('hidden');
         document.getElementById('roomReentrySection').classList.remove('hidden');
         document.getElementById('mainDashboard').classList.add('hidden');
+    }
+});
+
+socket.on('room_closed_success', (data) => {
+    if (data.roomId === adminRoomId) {
+        showNotification(`방 ${adminRoomId}이(가) 삭제되었습니다. 초기 화면으로 돌아갑니다.`);
+        localStorage.removeItem('adminRoomId');
+        adminRoomId = null;
+        // A small delay to allow the user to read the notification
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
     }
 });
 
