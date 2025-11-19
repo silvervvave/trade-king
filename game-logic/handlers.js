@@ -64,8 +64,9 @@ function distributeInvestmentReturns(io, team, room, roomId, goodsMultiplier, rp
                         }
                     }
                     
-                    if (investorTeam.country === COUNTRIES.FRANCE && goodsMultiplier > 0) {
+                    if (investorTeam.country === COUNTRIES.FRANCE && goodsMultiplier > 0 && investorTeam.mercantilismUses < 10) {
                         investorTeam.totalPA += FRANCE_MERCANTILISM_BONUS_PA;
+                        investorTeam.mercantilismUses++;
                     }
                     updateTeamMembers(io, investorTeam, room, roomId);
                 }
@@ -112,8 +113,9 @@ function calculateArrivalResults(io, team, room, roomId) {
         
         team.totalPA += (baseAmount * paMultiplier);
 
-        if (team.country === COUNTRIES.FRANCE && goodsMultiplier > 0) {
+        if (team.country === COUNTRIES.FRANCE && goodsMultiplier > 0 && team.mercantilismUses < 10) {
             team.totalPA += FRANCE_MERCANTILISM_BONUS_PA;
+            team.mercantilismUses++;
         }
 
         io.to(roomId).emit('arrival_summary', {
@@ -216,6 +218,7 @@ function initializeNewRound(room) {
         t.eventResultClass = '';
         t.eventResult = null;
         t.rpsResult = null; // 생산 단계 RPS 결과 초기화
+        t.rpsPlayedThisRound = false; // 생산 단계 RPS 실행 여부 초기화
         t.finalRpsResultData = null; // 도착 단계 RPS 결과 초기화
         t.arrivalCalculationDone = false; // 보상 계산 플래그 초기화
         if (t.country === COUNTRIES.ENGLAND) {
@@ -227,7 +230,6 @@ function initializeNewRound(room) {
 function resetProductionPhase(room) {
     Object.values(room.teams).forEach(t => { 
         // Reset production phase state
-        t.rpsPlayedThisRound = false; 
         t.rerollUsedThisRound = false;
         t.rpsPaChange = 0;
         t.rpsResult = null;
@@ -521,11 +523,11 @@ function _handleReroll(io, socket, room, roomId, phase) {
     }
 
     if (team.country !== COUNTRIES.ENGLAND || team.rpsRerolls <= 0) {
-      return socket.emit('error', { message: '리롤 토큰이 없거나 사용할 수 없습니다.' });
+      return socket.emit('error', { message: '리롤 토큰을 사용할 수 없습니다.' });
     }
 
     if (team.rerollUsedThisRound) {
-        return socket.emit('error', { message: '이번 라운드에 이미 리롤 토큰을 사용했습니다.' });
+        return socket.emit('error', { message: '이번 라운드에 리롤 토큰을 사용했습니다.' });
     }
 
     team.rerollUsedThisRound = true;

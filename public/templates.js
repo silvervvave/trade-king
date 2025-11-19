@@ -5,7 +5,7 @@ const templates = {
         statsHtml += `<li>효율: ${config.paPerClick} PA/클릭</li>`;
     }
     if (config.resetTokens > 0) {
-        statsHtml += `<li>절대왕정 권력</li>`;
+        statsHtml += `<li>절대권력</li>`;
     }
     if (config.mercantilismTokens > 0) {
         statsHtml += `<li>중상주의</li>`;

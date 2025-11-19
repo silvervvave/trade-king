@@ -337,6 +337,7 @@ class UIManager {
         }
         this.updatePlayerStats();
         this.updateTokenDisplay();
+        this.updateRerollButtons();
         this.updateAllTeamsStatus(this.game.teams);
         this.updateMyTeamStatus(this.game.teams);
         this.setupPhaseScreen(gameState.currentPhase);
@@ -369,7 +370,7 @@ class UIManager {
                 rerollInfo.innerHTML = `
                     <div class="token-info">
                                 <span class="token-icon"></span>
-                                <span class="token-text">절대왕정 권력: ${this.game.gameState.team.rpsRerolls}개</span>
+                                <span class="token-text">절대권력: ${this.game.gameState.team.rpsRerolls}개</span>
                     </div>
                 `;
             } else {
@@ -379,7 +380,48 @@ class UIManager {
         
         const mercantilismInfo = document.getElementById('mercantilismTokenInfo');
         if (mercantilismInfo) {
-            mercantilismInfo.style.display = 'none';
+            if (this.game.gameState && this.game.gameState.player && this.game.gameState.player.country === 'france') {
+                mercantilismInfo.style.display = 'block';
+                const remainingUses = 10 - (this.game.gameState.team.mercantilismUses || 0);
+                mercantilismInfo.innerHTML = `
+                    <div class="token-info">
+                        <span class="token-icon"></span>
+                        <span class="token-text">중상주의: ${remainingUses}회</span>
+                    </div>
+                `;
+            } else {
+                mercantilismInfo.style.display = 'none';
+            }
+        }
+    }
+
+    updateRerollButtons() {
+        if (!this.game.gameState || !this.game.gameState.team || !this.game.gameState.player) {
+            return;
+        }
+
+        const team = this.game.gameState.team;
+        const player = this.game.gameState.player;
+
+        const isEngland = player.country === 'england';
+        const hasTokens = team.rpsRerolls > 0;
+        const alreadyUsed = team.rerollUsedThisRound;
+        const canReroll = isEngland && hasTokens && !alreadyUsed;
+
+        // Production Reroll Button
+        const rerollBtn = document.getElementById('rerollRPSBtn');
+        if (rerollBtn) {
+            // Show the button only if the player can reroll AND the initial RPS has been played.
+            const show = canReroll && team.rpsPlayedThisRound;
+            rerollBtn.classList.toggle('hidden', !show);
+        }
+
+        // Final Reroll Button
+        const finalRerollBtn = document.getElementById('rerollFinalRPSBtn');
+        if (finalRerollBtn) {
+            // Show the button only if the player can reroll AND the final RPS has been played.
+            const show = canReroll && team.finalRpsPlayedThisRound;
+            finalRerollBtn.classList.toggle('hidden', !show);
         }
     }
 

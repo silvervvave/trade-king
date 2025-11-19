@@ -63,6 +63,7 @@ function createInitialTeamState(country, config) {
     camusariHappened: false,
     rpsRerolls: config.resetTokens, 
     mercantilismTokens: config.mercantilismTokens, 
+    mercantilismUses: 0,
     investmentsMade: [], 
     investmentsReceived: [], 
     eventMultipliers: { paMultiplier: 1, goodsMultiplier: 1 }, 
