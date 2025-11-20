@@ -131,20 +131,34 @@ class SocketHandler {
             // Check if this is a full state update (e.g., on reconnect) which will contain the 'teams' object.
             if (newState.teams) {
                 // Full state replacement for reconnection
-                this.game.gameState = newState;
-                this.game.teams = newState.teams;
-                this.game.playerRegistered = true; // A player receiving a full state is always registered
+                const clientPlayerState = this.game.gameState.player || { name: '', country: null };
+                this.game.gameState = newState; // Overwrite with server state
+                this.game.gameState.player = clientPlayerState; // Restore the client-side player object shell
 
-                const myCountry = this.game.gameState.player.country;
-                if (myCountry && newState.teams[myCountry]) {
-                    this.game.updatePlayerStatsFromServer(newState.teams[myCountry]);
+                // Re-populate the player object with authoritative data from the new state
+                this.game.gameState.player.name = this.game.localPlayerName;
+                let playerCountry = null;
+                if (this.game.localStudentId && this.game.gameState.players) {
+                    for (const p of Object.values(this.game.gameState.players)) {
+                        if (p.studentId === this.game.localStudentId) {
+                            playerCountry = p.team;
+                            break;
+                        }
+                    }
+                }
+                this.game.gameState.player.country = playerCountry;
+
+                this.game.teams = newState.teams;
+                this.game.playerRegistered = true;
+                if (playerCountry && newState.teams[playerCountry]) {
+                    this.game.updatePlayerStatsFromServer(newState.teams[playerCountry]);
                 }
                 
-                this.game.ui.showScreen('gameScreen'); // Go to game screen
+                this.game.ui.showScreen('gameScreen');
                 this.game.ui.updateAllTeamsStatus(newState.teams);
+
             } else {
                 // Partial state update (e.g., phase change, game start)
-                // Merge the new properties into the existing gameState
                 this.game.gameState = { ...this.game.gameState, ...newState };
             }
 
@@ -201,23 +215,23 @@ class SocketHandler {
         });
 
         this.socket.on('rps_result', (data) => {
-            this.game.gameState.team.rpsResult = data;
-            this.game.gameState.team.rpsPlayedThisRound = true; // Optimistic update
+            this.game.team.rpsResult = data;
+            this.game.team.rpsPlayedThisRound = true; // Optimistic update
             this.game.ui.renderProductionResults();
             this.game.ui.updateRerollButtons();
         });
 
         this.socket.on('final_rps_result', (data) => {
-            this.game.gameState.team.finalRpsResultData = data;
-            this.game.gameState.team.finalRpsPlayedThisRound = true; // Optimistic update
+            this.game.team.finalRpsResultData = data;
+            this.game.team.finalRpsPlayedThisRound = true; // Optimistic update
             this.game.ui.setupArrivalScreen();
             this.game.ui.updateRerollButtons();
         });
 
         this.socket.on('event_result', (data) => {
-            this.game.gameState.team.eventDrawnThisRound = true;
-            this.game.gameState.team.eventText = data.text;
-            this.game.gameState.team.eventResultClass = data.resultClass;
+            this.game.team.eventDrawnThisRound = true;
+            this.game.team.eventText = data.text;
+            this.game.team.eventResultClass = data.resultClass;
             this.game.ui.renderArrivalResults();
         });
 

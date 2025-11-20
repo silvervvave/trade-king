@@ -1,30 +1,30 @@
 class GameClient {
     constructor() {
+        this.player = {
+            name: '',
+            country: null
+        };
+        this.team = {
+            totalPA: 0,
+            silk: 0,
+            pepper: 0,
+            productPACount: 0,
+            maxProduct: 0, // Initialize maxProduct
+            rpsRerolls: 0,
+            mercantilismTokens: 0,
+            investmentsMade: [],
+            clickCount: 0, // Tracks clicks within a batch
+            batchCount: 0,
+            eventDrawnThisRound: false,
+            finalRpsPlayedThisRound: false,
+            eventText: '',
+            eventResultClass: '',
+            finalRpsResult: '',
+            rpsResult: null,
+            eventResult: null,
+            finalRpsResultData: null
+        };
         this.gameState = {
-            player: {
-                name: '',
-                country: null
-            },
-            team: {
-                totalPA: 0,
-                silk: 0,
-                pepper: 0,
-                productPACount: 0,
-                maxProduct: 0, // Initialize maxProduct
-                rpsRerolls: 0,
-                mercantilismTokens: 0,
-                investmentsMade: [],
-                clickCount: 0, // Tracks clicks within a batch
-                batchCount: 0,
-                eventDrawnThisRound: false,
-                finalRpsPlayedThisRound: false,
-                eventText: '',
-                eventResultClass: '',
-                finalRpsResult: '',
-                rpsResult: null,
-                eventResult: null,
-                finalRpsResultData: null
-            },
             currentRound: 0,
             currentPhase: 'waiting',
             gameStarted: false
@@ -222,17 +222,19 @@ class GameClient {
     }
 
     handleCountrySelect() {
+        this.ui.showNotification('handleCountrySelect called');
         this.selectCountry(this.selectedCountry);
         this.ui.hideCountryDescription();
     }
 
     selectCountry(country) {
+        this.ui.showNotification('selectCountry called for ' + country);
         if (!this.countryConfig[country]) {
             return alert('유효하지 않은 국가입니다.');
         }
 
-        this.gameState.player.country = country;
-        this.gameState.player.name = this.localPlayerName;
+        this.player.country = country;
+        this.player.name = this.localPlayerName;
         
         if (!this.playerRoomId) {
             return alert('방 코드가 설정되지 않았습니다. 다시 시도해주세요.');
@@ -242,10 +244,11 @@ class GameClient {
     }
 
     registerPlayer() {
-        if (!this.gameState.player.country) {
+        this.ui.showNotification('registerPlayer called');
+        if (!this.player.country) {
             return alert('국가를 선택해주세요.');
         }
-        if (!this.gameState.player.name || !this.localPlayerName) {
+        if (!this.player.name || !this.localPlayerName) {
             return alert('플레이어 이름이 설정되지 않았습니다.');
         }
         if (!this.playerRoomId) {
@@ -253,8 +256,8 @@ class GameClient {
         }
 
         this.socket.emit('register_player', {
-            country: this.gameState.player.country,
-            name: this.gameState.player.name,
+            country: this.player.country,
+            name: this.player.name,
             studentId: this.localStudentId, // Add studentId here
             roomId: this.playerRoomId
         });
@@ -263,20 +266,20 @@ class GameClient {
 
         this.ui.showScreen('waitingScreen');
 
-        this.ui.showNotification(`${this.countryConfig[this.gameState.player.country].name} 팀에 참가했습니다!`);
+        this.ui.showNotification(`${this.countryConfig[this.player.country].name} 팀에 참가했습니다!`);
     }
 
     updatePlayerStatsFromServer(teamData) {
         // [FIX] Add a guard to prevent error if gameState.team is not yet initialized
-        if (!this.gameState.team) {
+        if (!this.team) {
             console.warn('updatePlayerStatsFromServer called before gameState.team is not yet initialized. Initializing now.');
-            this.gameState.team = {}; // Initialize as an empty object to prevent further errors
+            this.team = {}; // Initialize as an empty object to prevent further errors
         }
 
         // Preserve the individual, client-side click progress
-        const localClickCount = this.gameState.team.clickCount || 0;
+        const localClickCount = this.team.clickCount || 0;
 
-        this.gameState.team = {
+        this.team = {
             ...teamData,
             clickCount: localClickCount, // Restore local click progress
         };
@@ -290,46 +293,46 @@ class GameClient {
 
         const resetTradeBtn = document.getElementById('resetTradeBtn');
         if (resetTradeBtn) {
-            const tradeSelection = this.gameState.team.tradeSelection;
+            const tradeSelection = this.team.tradeSelection;
             resetTradeBtn.classList.toggle('hidden', !tradeSelection);
         }
 
         const resetInvestmentsBtn = document.getElementById('resetInvestmentsBtn');
         if (resetInvestmentsBtn) {
-            const investmentsMade = this.gameState.team.investmentsMade || [];
+            const investmentsMade = this.team.investmentsMade || [];
             resetInvestmentsBtn.classList.toggle('hidden', investmentsMade.length === 0);
         }
     }
 
     produce() {
-        if (!this.gameState.player.country || !this.playerRoomId) {
+        if (!this.player.country || !this.playerRoomId) {
             return this.ui.showNotification('게임에 참가하지 않았습니다.');
         }
 
-        const config = this.countryConfig[this.gameState.player.country];
+        const config = this.countryConfig[this.player.country];
         if (!config) {
             return this.ui.showNotification('국가 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
         }
         
         // Check against maxBatchCount
-        if (this.gameState.team.batchCount >= config.maxBatchCount) {
+        if (this.team.batchCount >= config.maxBatchCount) {
             // Ensure the UI is visually maxed out, even if state is slightly off
             this.ui.updateProductionClickProgress();
             return this.ui.showNotification('최대 생산 횟수에 도달했습니다!');
         }
         
         // Increment local click count
-        this.gameState.team.clickCount++;
+        this.team.clickCount++;
 
         // Update UI immediately for responsiveness using the lightweight function
         this.ui.updateProductionClickProgress();
 
         // Check if a batch is completed
-        if (this.gameState.team.clickCount >= config.clicksPerBatch) {
+        if (this.team.clickCount >= config.clicksPerBatch) {
             // Send a single event for the completed batch
             this.emitSocket('complete_production_batch', {});
             // Reset local click counter
-            this.gameState.team.clickCount = 0;
+            this.team.clickCount = 0;
             // Immediately update the UI to reset the progress bar
             this.ui.updateProductionClickProgress();
         }
@@ -338,10 +341,10 @@ class GameClient {
     playRPS(choice) {
         if (this.emitSocket('play_rps', { choice })) {
             // Store player's choice immediately
-            if (!this.gameState.team.rpsResult) {
-                this.gameState.team.rpsResult = {};
+            if (!this.team.rpsResult) {
+                this.team.rpsResult = {};
             }
-            this.gameState.team.rpsResult.playerChoice = choice;
+            this.team.rpsResult.playerChoice = choice;
 
             this.ui.showNotification(`${this.ui.getRPSEmoji(choice)} 선택 완료!`);
             
@@ -358,17 +361,17 @@ class GameClient {
     }
 
     reroll(type) {
-        if (!this.gameState.player.country) return;
+        if (!this.player.country) return;
 
-        if (this.gameState.player.country !== 'england') {
+        if (this.player.country !== 'england') {
             return this.ui.showNotification('영국만 리롤 토큰을 사용할 수 있습니다!');
         }
 
-        if (this.gameState.team.rpsRerolls <= 0) {
+        if (this.team.rpsRerolls <= 0) {
             return this.ui.showNotification('리롤 토큰이 없습니다!');
         }
 
-        if (confirm(`리롤 토큰을 사용하시겠습니까?\n\n남은 토큰: ${this.gameState.team.rpsRerolls}개`)) {
+        if (confirm(`리롤 토큰을 사용하시겠습니까?\n\n남은 토큰: ${this.team.rpsRerolls}개`)) {
             const eventName = type === 'final' ? 'reroll_final_rps' : 'reroll_rps';
             if (this.emitSocket(eventName)) {
                 this.ui.showNotification('리롤 토큰을 사용했습니다!');
@@ -385,8 +388,8 @@ class GameClient {
         let amount = 0;
 
         if (tradeType !== 'none') {
-            const previousAmount = this.gameState.team.tradeSelection ? this.gameState.team.tradeSelection.amount : 0;
-            const availablePA = this.gameState.team.totalPA + previousAmount;
+            const previousAmount = this.team.tradeSelection ? this.team.tradeSelection.amount : 0;
+            const availablePA = this.team.totalPA + previousAmount;
             amount = parseInt(document.getElementById('tradeAmountValue').textContent, 10);
 
             if (isNaN(amount) || amount < 20 || amount % 10 !== 0) { // Changed from 200, 100
@@ -414,7 +417,7 @@ class GameClient {
             return this.ui.showNotification('유효하지 않은 투자 금액입니다. (10 PA 이상)'); // Updated message
         }
 
-        if (amount > this.gameState.team.totalPA) {
+        if (amount > this.team.totalPA) {
             return this.ui.showNotification('보유한 PA가 부족합니다.');
         }
 
@@ -428,7 +431,7 @@ class GameClient {
 
     resetTrade() {
         if (this.emitSocket('reset_trade')) {
-            if (this.gameState.team.tradeSelection) {
+            if (this.team.tradeSelection) {
                 this.ui.updateTradeSelectionDisplay();
                 this.ui.updatePlayerStats();
             }
@@ -437,9 +440,9 @@ class GameClient {
 
     resetInvestments() {
         if (this.emitSocket('reset_investments')) {
-            if (this.gameState.team.investmentsMade && this.gameState.team.investmentsMade.length > 0) {
+            if (this.team.investmentsMade && this.team.investmentsMade.length > 0) {
                 let totalRefund = 0;
-                this.gameState.team.investmentsMade.forEach(investment => {
+                this.team.investmentsMade.forEach(investment => {
                     totalRefund += investment.amount;
                 });
 

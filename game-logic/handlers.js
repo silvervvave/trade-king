@@ -538,6 +538,7 @@ function _handleReroll(io, socket, room, roomId, phase) {
         team.totalPA = Math.max(0, team.totalPA - (team.rpsPaChange || 0));
         team.rpsPaChange = 0;
         team.rpsPlayedThisRound = false;
+        team.rpsResult = null; // 이전 RPS 결과 초기화
     } else { // arrival
         team.finalRpsPlayedThisRound = false;
         team.rpsGoodsChange = 0;

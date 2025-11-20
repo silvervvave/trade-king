@@ -224,18 +224,18 @@ class UIManager {
 
     updatePlayerStats() {
         // [FIX] More robust guard for player and country
-        if (!this.game.gameState || !this.game.gameState.player || !this.game.gameState.player.country) {
+        if (!this.game.gameState || !this.game.player || !this.game.player.country) {
             return;
         }
 
-        const teamState = this.game.gameState.team;
+        const teamState = this.game.team;
         // [FIX] Add a guard for teamState itself, as it might be null during state transitions.
         if (!teamState) {
             // If there's no team state, we can't update stats, so we should clear them or return.
             // Returning is safer to avoid clearing stats during a temporary state update.
             return;
         }
-        const config = this.game.countryConfig[this.game.gameState.player.country];
+        const config = this.game.countryConfig[this.game.player.country];
 
         // Helper to update text content safely
         const updateText = (id, text) => {
@@ -258,7 +258,7 @@ class UIManager {
         const tradeSelectionDiv = document.getElementById('tradeSelection');
         if (!tradeSelectionDiv) return;
 
-        const tradeSelection = this.game.gameState.team.tradeSelection;
+        const tradeSelection = this.game.team.tradeSelection;
         if (tradeSelection) {
             const destinationText = tradeSelection.type === 'china' ? '중국' : '인도';
             tradeSelectionDiv.innerHTML = `
@@ -272,7 +272,7 @@ class UIManager {
 
     showGameInfoModal() {
         document.getElementById('modalRoomCode').textContent = this.game.playerRoomId || '-';
-        document.getElementById('modalTeamName').textContent = this.game.gameState.player.country ? this.game.countryConfig[this.game.gameState.player.country].name : '-';
+        document.getElementById('modalTeamName').textContent = this.game.player.country ? this.game.countryConfig[this.game.player.country].name : '-';
         document.getElementById('modalPlayerName').textContent = this.game.localPlayerName || '-';
         document.getElementById('gameInfoModal').classList.remove('hidden');
     }
@@ -336,12 +336,12 @@ class UIManager {
     updateTokenDisplay() {
         const rerollInfo = document.getElementById('rerollTokenInfo');
         if (rerollInfo) {
-            if (this.game.gameState && this.game.gameState.player && this.game.gameState.player.country === 'england') {
+            if (this.game.gameState && this.game.player && this.game.player.country === 'england') {
                 rerollInfo.style.display = 'block';
                 rerollInfo.innerHTML = `
                     <div class="token-info">
                                 <span class="token-icon"></span>
-                                <span class="token-text">절대권력: ${this.game.gameState.team.rpsRerolls}개</span>
+                                <span class="token-text">절대권력: ${this.game.team.rpsRerolls}개</span>
                     </div>
                 `;
             } else {
@@ -351,9 +351,9 @@ class UIManager {
         
         const mercantilismInfo = document.getElementById('mercantilismTokenInfo');
         if (mercantilismInfo) {
-            if (this.game.gameState && this.game.gameState.player && this.game.gameState.player.country === 'france') {
+            if (this.game.gameState && this.game.player && this.game.player.country === 'france') {
                 mercantilismInfo.style.display = 'block';
-                const remainingUses = 10 - (this.game.gameState.team.mercantilismUses || 0);
+                const remainingUses = 10 - (this.game.team.mercantilismUses || 0);
                 mercantilismInfo.innerHTML = `
                     <div class="token-info">
                         <span class="token-icon"></span>
@@ -367,12 +367,12 @@ class UIManager {
     }
 
     updateRerollButtons() {
-        if (!this.game.gameState || !this.game.gameState.team || !this.game.gameState.player) {
+        if (!this.game.gameState || !this.game.team || !this.game.player) {
             return;
         }
 
-        const team = this.game.gameState.team;
-        const player = this.game.gameState.player;
+        const team = this.game.team;
+        const player = this.game.player;
 
         const isEngland = player.country === 'england';
         const hasTokens = team.rpsRerolls > 0;
@@ -502,7 +502,7 @@ class UIManager {
     }
 
     renderProductionResults() {
-        const rpsResultData = this.game.gameState.team.rpsResult;
+        const rpsResultData = this.game.team.rpsResult;
         const rpsResultDiv = document.getElementById('rpsResult');
         const rpsButtons = document.querySelectorAll('.rps-btn');
 
@@ -525,7 +525,7 @@ class UIManager {
     }
 
     renderArrivalResults() {
-        const team = this.game.gameState.team;
+        const team = this.game.team;
         const eventResultDiv = document.getElementById('eventResult');
         const finalRpsResultDiv = document.getElementById('finalRpsResult');
 
@@ -590,7 +590,7 @@ class UIManager {
 
         container.innerHTML = '';
 
-        const validVoyages = voyages ? voyages.filter(v => v.country !== this.game.gameState.player.country) : [];
+        const validVoyages = voyages ? voyages.filter(v => v.country !== this.game.player.country) : [];
 
         if (validVoyages.length === 0) {
             container.innerHTML = '<p class="info-text" style="text-align: center;">현재 투자 가능한 항해가 없습니다.</p>';
@@ -644,7 +644,7 @@ class UIManager {
     }
 
     setupArrivalScreen() {
-        const team = this.game.gameState.team;
+        const team = this.game.team;
 
         const drawEventBtn = document.querySelector('.event-section button');
         if(drawEventBtn) {
@@ -678,7 +678,7 @@ class UIManager {
         const container = document.getElementById('myArrivalResult');
         if (!container) return;
 
-        const teamState = this.game.gameState.team;
+        const teamState = this.game.team;
         const tradeSelection = teamState.tradeSelection;
         if (!tradeSelection) {
             container.innerHTML = '<h3>우리 팀 입항 결과</h3><p>이번 라운드에 출항하지 않았습니다.</p>';
@@ -736,7 +736,7 @@ class UIManager {
         const container = document.getElementById('investmentReturnResult');
         if (!container) return;
 
-        const myInvestments = this.game.gameState.team.investmentsMade || [];
+        const myInvestments = this.game.team.investmentsMade || [];
         if (myInvestments.length === 0) {
             container.innerHTML = '<h3>투자 수익</h3><p>이번 라운드에 투자하지 않았습니다.</p>';
             return;
@@ -807,7 +807,7 @@ class UIManager {
         // Duplicate the teamArray to create a seamless loop effect for manual scrolling
         const duplicatedTeamArray = [...teamArray, ...teamArray, ...teamArray]; // Duplicate twice for smoother loop
 
-        const playerCountry = this.game.gameState.player ? this.game.gameState.player.country : null;
+        const playerCountry = this.game.player ? this.game.player.country : null;
 
         duplicatedTeamArray.forEach(team => {
             const card = document.createElement('div');
@@ -851,7 +851,7 @@ class UIManager {
     }
 
     updateMyTeamStatus(teams) {
-        const myTeam = teams[this.game.gameState.player.country];
+        const myTeam = teams[this.game.player.country];
         const container = document.getElementById('myTeamStatus');
         if (!myTeam || !container) return;
 
@@ -869,11 +869,11 @@ class UIManager {
     }
 
     updateProductionClickProgress() {
-        if (!this.game.gameState || !this.game.gameState.player || !this.game.gameState.player.country || !this.game.gameState.team) {
+        if (!this.game.gameState || !this.game.player || !this.game.player.country || !this.game.team) {
             return;
         }
-        const teamState = this.game.gameState.team;
-        const config = this.game.countryConfig[this.game.gameState.player.country];
+        const teamState = this.game.team;
+        const config = this.game.countryConfig[this.game.player.country];
         if (!config) return; // Config might not be ready yet
 
         const productionClickArea = document.getElementById('produceBtn');
