@@ -915,7 +915,7 @@ class UIManager {
         const resultsPanel = resultsArea.querySelector('.results-panel');
         if (!resultsPanel) return;
 
-        resultsPanel.innerHTML = templates.finalResults(data.rankings);
+        resultsPanel.innerHTML = templates.finalResults(data);
     }
     
     getRPSResultKorean(result) {

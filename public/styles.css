@@ -1755,3 +1755,87 @@ body {
     left: 50%;
     transform: translateX(45px); /* 2배 커진 버튼에 맞춰 조정 */
 }
+
+/* ============================================
+   결과 표시 스타일 (추가)
+   ============================================ */
+.results-panel {
+    text-align: left;
+    width: 100%;
+    overflow-x: auto; /* 작은 화면에서 가로 스크롤을 허용 */
+}
+
+.results-panel h2 {
+    text-align: center;
+}
+
+.winner-card {
+    background: var(--color-primary);
+    color: var(--color-gardenia);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-lg);
+}
+
+.winner-card h3 {
+    margin-bottom: var(--spacing-sm);
+    font-size: 1.8em;
+}
+
+.winner-card p {
+    font-size: 1.2em;
+}
+
+.premium-info-card {
+    background: var(--color-gardenia);
+    border: 2px dashed var(--color-border);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.premium-info-card h4 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.premium-info-card p {
+    font-size: 0.9em;
+    color: var(--color-text);
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.results-table th,
+.results-table td {
+    padding: var(--spacing-md);
+    text-align: center;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.results-table th {
+    background-color: var(--color-secondary);
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.results-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.results-table tbody tr:hover {
+    background-color: var(--color-secondary);
+}
+
+.results-table .winner-row {
+    background-color: var(--color-warning); /* Use a distinct but fitting color for the winner */
+    font-weight: bold;
+}
+

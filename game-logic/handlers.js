@@ -280,16 +280,21 @@ function startPhase(io, socket, data, room, roomId) {
     if (!room.gameStarted) {
         room.gameStarted = true;
         room.currentRound = 1;
-    } else if (phase === PHASES.TRADE && room.currentPhase === PHASES.ARRIVAL) {
-        // 입항 단계가 종료되고 다음 라운드의 출항 단계가 시작되기 전,
-        // 모든 팀의 최종 결과를 계산하고 정산합니다.
+    }
+
+    // [MODIFIED LOGIC]
+    // If we are leaving the ARRIVAL phase, we must calculate the results first.
+    if (room.currentPhase === PHASES.ARRIVAL) {
         Object.values(room.teams).forEach(team => {
             calculateArrivalResults(io, team, room, roomId);
         });
         // 모든 계산이 끝난 후, 한 번에 모든 클라이언트에 업데이트된 정보를 브로드캐스트합니다.
         broadcastTeamsUpdate(io, room, roomId);
 
-        initializeNewRound(room);
+        // If the *next* phase is TRADE, it means a new round is starting.
+        if (phase === PHASES.TRADE) {
+            initializeNewRound(room);
+        }
     }
 
     room.currentPhase = phase;
@@ -492,25 +497,31 @@ function playRPS(io, socket, data, room, roomId) {
       return socket.emit('error', { message: error });
     }
 
-        if (team.rpsPlayedThisRound) {
-          return;
-        }
-    
-        const computerChoice = ['✌️', '✊', '✋'][Math.floor(Math.random() * 3)];
-        const result = determineRPSResult(data.choice, computerChoice);
-        const paChange = result === 'win' ? RPS_WIN_PA_CHANGE : result === 'lose' ? RPS_LOSE_PA_CHANGE : 0;
-    
-        team.totalPA = Math.max(0, team.totalPA + paChange);
-        team.rpsPaChange = paChange;
-        team.rpsPlayedThisRound = true;
-    
-        team.rpsResult = {
-            playerChoice: data.choice,
-            opponentChoice: computerChoice,
-            result: result,
-            playerName: player.name
-        };
-    
+    if (team.rpsPlayedThisRound) {
+      return;
+    }
+
+    const computerChoice = ['✌️', '✊', '✋'][Math.floor(Math.random() * 3)];
+    let result = determineRPSResult(data.choice, computerChoice);
+
+    // England's special ability: no loss in RPS
+    if (team.country === COUNTRIES.ENGLAND && result === 'lose') {
+        result = 'draw';
+    }
+
+    const paChange = result === 'win' ? RPS_WIN_PA_CHANGE : result === 'lose' ? RPS_LOSE_PA_CHANGE : 0;
+
+    team.totalPA = Math.max(0, team.totalPA + paChange);
+    team.rpsPaChange = paChange;
+    team.rpsPlayedThisRound = true;
+
+    team.rpsResult = {
+        playerChoice: data.choice,
+        opponentChoice: computerChoice,
+        result: result,
+        playerName: player.name
+    };
+
     socket.emit('rps_result', team.rpsResult);
     updateTeamMembers(io, team, room, roomId);
     broadcastTeamsUpdate(io, room, roomId);
@@ -593,7 +604,13 @@ function playFinalRPS(io, socket, data, room, roomId) {
     if (team.finalRpsPlayedThisRound || !team.tradeSelection || team.camusariHappened) return;
 
     const computerChoice = ['✌️', '✊', '✋'][Math.floor(Math.random() * 3)];
-    const result = determineRPSResult(data.choice, computerChoice);
+    let result = determineRPSResult(data.choice, computerChoice);
+
+    // England's special ability: no loss in RPS
+    if (team.country === COUNTRIES.ENGLAND && result === 'lose') {
+        result = 'draw';
+    }
+    
     const goodsChange = result === 'win' ? FINAL_RPS_WIN_GOODS_CHANGE : result === 'lose' ? FINAL_RPS_LOSE_GOODS_CHANGE : 0;
 
     team.rpsGoodsChange = goodsChange;
@@ -696,6 +713,16 @@ async function disconnect(io, socket, room, roomId, supabase) {
 
 function endGame(io, socket, data, room, roomId) {
     if (socket.id !== room.adminSocketId) return;
+
+    // [MODIFIED] If ending during ARRIVAL, calculate results first.
+    if (room.currentPhase === PHASES.ARRIVAL) {
+        logger.info(`[게임 종료] ${roomId} 방: ARRIVAL 단계에서 종료. 최종 결과 정산 중...`);
+        Object.values(room.teams).forEach(team => {
+            calculateArrivalResults(io, team, room, roomId);
+        });
+        // Broadcast the final state of teams after calculation
+        broadcastTeamsUpdate(io, room, roomId);
+    }
 
     const finalResults = calculateRankings(room);
     room.currentPhase = PHASES.ENDED;
