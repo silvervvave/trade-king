@@ -252,35 +252,6 @@ class UIManager {
 
         // Update click reward info text
         updateText('click-reward-info', `${config.clicksPerBatch}클릭 보상: ${config.paPerBatch} PA`);
-
-        // Handle Production Click Area UI
-        const productionClickArea = document.getElementById('produceBtn');
-        if (!productionClickArea) return;
-
-        const productionFill = productionClickArea.querySelector('.production-fill');
-        const productionClickText = productionClickArea.querySelector('.production-click-text');
-
-        // Handle fill effect based on click count
-        if (productionFill) {
-            const clickCount = teamState.clickCount;
-            const maxClicks = config.clicksPerBatch;
-            const progress = clickCount / maxClicks;
-            productionFill.style.height = `${progress * 100}%`;
-
-            if (productionClickText) {
-                // This will move the background gradient up
-                productionClickText.style.backgroundPosition = `0% ${progress * 100}%`;
-            }
-        }
-        
-        // Handle UI state when max production is reached
-        if (teamState.batchCount >= config.maxBatchCount) { // Changed condition
-            productionClickArea.classList.add('production-box-filled');
-            if (productionClickText) productionClickText.textContent = '생산 종료'; // Changed message
-        } else {
-            productionClickArea.classList.remove('production-box-filled');
-            if (productionClickText) productionClickText.textContent = 'CLICK';
-        }
     }
 
     updateTradeSelectionDisplay() {
@@ -895,6 +866,44 @@ class UIManager {
             `;
             container.appendChild(memberDiv);
         });
+    }
+
+    updateProductionClickProgress() {
+        if (!this.game.gameState || !this.game.gameState.player || !this.game.gameState.player.country || !this.game.gameState.team) {
+            return;
+        }
+        const teamState = this.game.gameState.team;
+        const config = this.game.countryConfig[this.game.gameState.player.country];
+        if (!config) return; // Config might not be ready yet
+
+        const productionClickArea = document.getElementById('produceBtn');
+        if (!productionClickArea) return;
+
+        const productionFill = productionClickArea.querySelector('.production-fill');
+        const productionClickText = productionClickArea.querySelector('.production-click-text');
+
+        // Handle UI state when max production is reached
+        if (teamState.batchCount >= config.maxBatchCount) {
+            productionClickArea.classList.add('production-box-filled');
+            if (productionClickText) productionClickText.textContent = '생산 종료';
+            if (productionFill) productionFill.style.height = '100%';
+            return;
+        } else {
+            productionClickArea.classList.remove('production-box-filled');
+            if (productionClickText) productionClickText.textContent = 'CLICK';
+        }
+        
+        // Handle fill effect based on click count
+        if (productionFill) {
+            const clickCount = teamState.clickCount;
+            const maxClicks = config.clicksPerBatch;
+            const progress = Math.min(clickCount / maxClicks, 1);
+            productionFill.style.height = `${progress * 100}%`;
+
+            if (productionClickText) {
+                productionClickText.style.backgroundPosition = `0% ${progress * 100}%`;
+            }
+        }
     }
 
     displayFinalResults(data) {

@@ -269,7 +269,7 @@ class GameClient {
     updatePlayerStatsFromServer(teamData) {
         // [FIX] Add a guard to prevent error if gameState.team is not yet initialized
         if (!this.gameState.team) {
-            console.warn('updatePlayerStatsFromServer called before gameState.team is initialized. Initializing now.');
+            console.warn('updatePlayerStatsFromServer called before gameState.team is not yet initialized. Initializing now.');
             this.gameState.team = {}; // Initialize as an empty object to prevent further errors
         }
 
@@ -313,14 +313,16 @@ class GameClient {
         
         // Check against maxBatchCount
         if (this.gameState.team.batchCount >= config.maxBatchCount) {
+            // Ensure the UI is visually maxed out, even if state is slightly off
+            this.ui.updateProductionClickProgress();
             return this.ui.showNotification('최대 생산 횟수에 도달했습니다!');
         }
         
         // Increment local click count
         this.gameState.team.clickCount++;
 
-        // Update UI immediately for responsiveness
-        this.ui.updatePlayerStats();
+        // Update UI immediately for responsiveness using the lightweight function
+        this.ui.updateProductionClickProgress();
 
         // Check if a batch is completed
         if (this.gameState.team.clickCount >= config.clicksPerBatch) {
@@ -328,6 +330,8 @@ class GameClient {
             this.emitSocket('complete_production_batch', {});
             // Reset local click counter
             this.gameState.team.clickCount = 0;
+            // Immediately update the UI to reset the progress bar
+            this.ui.updateProductionClickProgress();
         }
     }
 
