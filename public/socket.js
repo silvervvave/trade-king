@@ -128,25 +128,20 @@ class SocketHandler {
                 return;
             }
 
-            // [REVISED FIX] Perform a targeted, deep-enough merge to prevent state loss from partial updates.
-            const mergedState = {
-                ...this.game.gameState, // Start with the old state
-                ...newState, // Apply the new state (shallowly)
-                
-                // Crucially, if the new state has a 'player' or 'team' object,
-                // we need to merge it with the old one to prevent losing nested properties.
-                player: {
-                    ...(this.game.gameState.player || {}),
-                    ...(newState.player || {}),
-                },
-                team: {
-                    ...(this.game.gameState.team || {}),
-                    ...(newState.team || {}),
-                }
-            };
+            // 재연결 시 서버에서 받은 전체 상태로 gameState를 완전히 교체합니다.
+            this.game.gameState = newState;
+            this.game.teams = newState.teams; // 전체 팀 정보도 업데이트
+            this.game.playerRegistered = true; // 재접속 플레이어는 항상 등록된 상태입니다.
 
-            this.game.gameState = mergedState;
-            this.game.ui.updateGameState(this.game.gameState);
+            // 플레이어의 국가 정보를 기반으로 팀 정보를 찾아 UI를 업데이트합니다.
+            const myCountry = this.game.gameState.player.country;
+            if (myCountry && newState.teams[myCountry]) {
+                this.game.updatePlayerStatsFromServer(newState.teams[myCountry]);
+            }
+            
+            this.game.ui.showScreen('gameScreen'); // 메인 게임 화면으로 전환
+            this.game.ui.updateAllTeamsStatus(newState.teams); // 전체 팀 사이드바 업데이트
+            this.game.ui.updateGameState(this.game.gameState); // 나머지 전체 UI 업데이트
         });
 
         this.socket.on('team_update', (teamData) => {
@@ -200,11 +195,13 @@ class SocketHandler {
         this.socket.on('rps_result', (data) => {
             this.game.gameState.team.rpsResult = data;
             this.game.ui.renderProductionResults();
+            this.game.ui.updateRerollButtons();
         });
 
         this.socket.on('final_rps_result', (data) => {
             this.game.gameState.team.finalRpsResultData = data;
             this.game.ui.setupArrivalScreen();
+            this.game.ui.updateRerollButtons();
         });
 
         this.socket.on('event_result', (data) => {
