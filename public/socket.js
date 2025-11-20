@@ -128,20 +128,28 @@ class SocketHandler {
                 return;
             }
 
-            // 재연결 시 서버에서 받은 전체 상태로 gameState를 완전히 교체합니다.
-            this.game.gameState = newState;
-            this.game.teams = newState.teams; // 전체 팀 정보도 업데이트
-            this.game.playerRegistered = true; // 재접속 플레이어는 항상 등록된 상태입니다.
+            // Check if this is a full state update (e.g., on reconnect) which will contain the 'teams' object.
+            if (newState.teams) {
+                // Full state replacement for reconnection
+                this.game.gameState = newState;
+                this.game.teams = newState.teams;
+                this.game.playerRegistered = true; // A player receiving a full state is always registered
 
-            // 플레이어의 국가 정보를 기반으로 팀 정보를 찾아 UI를 업데이트합니다.
-            const myCountry = this.game.gameState.player.country;
-            if (myCountry && newState.teams[myCountry]) {
-                this.game.updatePlayerStatsFromServer(newState.teams[myCountry]);
+                const myCountry = this.game.gameState.player.country;
+                if (myCountry && newState.teams[myCountry]) {
+                    this.game.updatePlayerStatsFromServer(newState.teams[myCountry]);
+                }
+                
+                this.game.ui.showScreen('gameScreen'); // Go to game screen
+                this.game.ui.updateAllTeamsStatus(newState.teams);
+            } else {
+                // Partial state update (e.g., phase change, game start)
+                // Merge the new properties into the existing gameState
+                this.game.gameState = { ...this.game.gameState, ...newState };
             }
-            
-            this.game.ui.showScreen('gameScreen'); // 메인 게임 화면으로 전환
-            this.game.ui.updateAllTeamsStatus(newState.teams); // 전체 팀 사이드바 업데이트
-            this.game.ui.updateGameState(this.game.gameState); // 나머지 전체 UI 업데이트
+
+            // Always update the main UI components with the new (or merged) state
+            this.game.ui.updateGameState(this.game.gameState);
         });
 
         this.socket.on('team_update', (teamData) => {
