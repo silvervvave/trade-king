@@ -27,12 +27,12 @@ const {
     resetTrade,
     resetInvestments,
     resetProduction,
-    reconnectPlayer,
     loginOrRegister,
     getUsers,
     deleteUser,
     deleteMultipleUsers,
-    joinOrReconnectRoom
+    joinGame,
+    getRoomInfo
 } = require('./game-logic/handlers');
 
 const { validate } = require('./game-logic/validation');
@@ -120,8 +120,18 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('join_or_reconnect_room', (data) => {
-    const validationResult = validate('join_or_reconnect_room', data);
+  socket.on('get_room_info', (data) => {
+    const validationResult = validate('get_room_info', data);
+    if (!validationResult.success) {
+      socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
+      return;
+    }
+    // This is a read-only operation, so it doesn't need to be queued.
+    getRoomInfo(io, socket, data, redisClient);
+  });
+
+  socket.on('join_game', (data) => {
+    const validationResult = validate('join_game', data);
     if (!validationResult.success) {
       socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
       return;
@@ -139,10 +149,10 @@ io.on('connection', (socket) => {
 
     const task = async () => {
         try {
-            await joinOrReconnectRoom(io, socket, data, redisClient, supabase);
+            await joinGame(io, socket, data, redisClient, supabase);
         } catch (error) {
-            console.error(`[오류] joinOrReconnectRoom 처리 중 오류 (roomId: ${roomId}):`, error);
-            socket.emit('error', { message: '방에 다시 참가하는 중 서버 오류가 발생했습니다.' });
+            console.error(`[오류] joinGame 처리 중 오류 (roomId: ${roomId}):`, error);
+            socket.emit('error', { message: '게임에 참가하는 중 서버 오류가 발생했습니다.' });
         }
     };
 

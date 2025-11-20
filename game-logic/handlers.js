@@ -752,6 +752,113 @@ function resetProduction(io, socket, data, room, roomId) {
     logger.info(`[관리자] ${roomId} 방의 생산 상태 초기화 (RPS 및 PA 초기화 제외)`);
 }
 
+async function joinGame(io, socket, data, redisClient, supabase) {
+    const { roomId, studentId, name, country } = data;
+
+    if (!country) {
+        socket.emit('error', { message: '국가를 선택해야 합니다.' });
+        return;
+    }
+
+    try {
+        const gameStateJSON = await redisClient.get(`room:${roomId}`);
+        if (!gameStateJSON) {
+            socket.emit('room_not_found');
+            logger.warn(`[Join Game] ${name} (${studentId}) tried to join non-existent room ${roomId}.`);
+            return;
+        }
+
+        let gameState = JSON.parse(gameStateJSON);
+        let foundPlayer = null;
+        let playerTeam = null;
+        let oldSocketId = null;
+
+        // Check if player with studentId already exists in any team for reconnection
+        for (const team of Object.values(gameState.teams)) {
+            const member = team.members.find(m => m.studentId === studentId);
+            if (member) {
+                foundPlayer = member;
+                playerTeam = team;
+                oldSocketId = member.id;
+                break;
+            }
+        }
+
+        if (foundPlayer && playerTeam) {
+            // --- RECONNECTION LOGIC ---
+            logger.info(`[재접속 - joinGame] ${name} (${studentId})님이 ${roomId} 방에 다시 연결합니다. (팀: ${playerTeam.country})`);
+
+            if (oldSocketId && gameState.players[oldSocketId]) {
+                delete gameState.players[oldSocketId];
+            }
+
+            foundPlayer.id = socket.id;
+            foundPlayer.connected = true;
+            foundPlayer.name = name; // Update name in case it changed
+            gameState.players[socket.id] = { studentId: foundPlayer.studentId, name: foundPlayer.name, team: playerTeam.country };
+
+            socket.join(roomId);
+            socket.roomId = roomId;
+
+            socket.emit('game_state_update', gameState);
+            broadcastTeamsUpdate(io, gameState, roomId);
+        } else {
+            // --- NEW PLAYER JOIN LOGIC ---
+            logger.info(`[신규 참가 - joinGame] ${name}(${studentId})님이 ${roomId} 방의 ${country} 팀에 참가합니다.`);
+            
+            if (!countryConfig[country]) {
+                socket.emit('error', { message: '유효하지 않은 국가입니다.' });
+                return;
+            }
+
+            if (!gameState.teams[country]) {
+                const config = countryConfig[country];
+                gameState.teams[country] = createInitialTeamState(country, config);
+            }
+            
+            const team = gameState.teams[country];
+            const existingMember = team.members.find(m => m.studentId === studentId);
+
+            if (existingMember) {
+                // This case should not happen if the reconnection logic above is correct,
+                // but as a safeguard, we handle it. It's more of a team change scenario.
+                logger.warn(`[신규 참가 경고] ${name}(${studentId})가 이미 ${country} 팀에 존재합니다. 정보를 업데이트합니다.`);
+                if (gameState.players[existingMember.id]) {
+                    delete gameState.players[existingMember.id];
+                }
+                existingMember.id = socket.id;
+                existingMember.connected = true;
+                existingMember.name = name;
+            } else {
+                team.members.push({ id: socket.id, studentId, name, connected: true });
+            }
+
+            gameState.players[socket.id] = { studentId, name, team: country };
+            socket.join(roomId);
+            socket.roomId = roomId;
+
+            const safeRoomState = {
+                gameStarted: gameState.gameStarted,
+                currentRound: gameState.currentRound,
+                currentPhase: gameState.currentPhase,
+                players: gameState.players,
+                teams: gameState.teams,
+                countryConfig: countryConfig
+            };
+            socket.emit('game_state_update', safeRoomState);
+            socket.emit('team_update', team);
+            broadcastTeamsUpdate(io, gameState, roomId);
+        }
+
+        // Persist the updated state back to Redis
+        await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));
+
+    } catch (error) {
+        logger.error(`[Join Game 오류] Room: ${roomId}, User: ${name}`, error);
+        socket.emit('error', { message: '게임에 참가하는 중 오류가 발생했습니다.' });
+    }
+}
+
 function reconnectPlayer(io, socket, data, gameState, roomId) {
     // The studentId and name are now expected to be in the data object directly
     const { studentId, name } = data;
@@ -802,67 +909,34 @@ function reconnectPlayer(io, socket, data, gameState, roomId) {
     }
 }
 
-async function joinOrReconnectRoom(io, socket, data, redisClient, supabase) {
-    const { roomId, studentId, name } = data;
+async function getRoomInfo(io, socket, data, redisClient) {
+    const { roomId, studentId, name } = data; // studentId and name are for logging
 
     try {
         const gameStateJSON = await redisClient.get(`room:${roomId}`);
         if (!gameStateJSON) {
             socket.emit('room_not_found');
-            logger.warn(`[접속 시도] ${name} (${studentId})님이 존재하지 않는 방 ${roomId}에 접속 시도.`);
+            logger.warn(`[Get Room Info] ${name} (${studentId}) requested info for non-existent room ${roomId}.`);
             return;
         }
 
-        let gameState = JSON.parse(gameStateJSON);
-        let foundPlayer = null;
-        let playerTeam = null;
-        let oldSocketId = null;
+        const gameState = JSON.parse(gameStateJSON);
+        
+        // This is a read-only request. We just provide the necessary info for team selection.
+        logger.info(`[Get Room Info] ${name} (${studentId}) is checking room ${roomId}.`);
+        
+        const teams = gameState.teams || {};
+        socket.emit('room_info', { 
+            exists: true, 
+            roomId, 
+            playerName: name, 
+            countryConfig, 
+            teams 
+        });
 
-        // Check if player with studentId already exists in any team
-        for (const team of Object.values(gameState.teams)) {
-            const member = team.members.find(m => m.studentId === studentId);
-            if (member) {
-                foundPlayer = member;
-                playerTeam = team;
-                oldSocketId = member.id;
-                break;
-            }
-        }
-
-        if (foundPlayer && playerTeam) {
-            // --- RECONNECTION PATH ---
-            logger.info(`[재접속] ${name} (${studentId})님이 ${roomId} 방에 다시 연결합니다.`);
-
-            if (oldSocketId && gameState.players[oldSocketId]) {
-                delete gameState.players[oldSocketId];
-            }
-
-            foundPlayer.id = socket.id;
-            foundPlayer.connected = true;
-            gameState.players[socket.id] = { studentId: foundPlayer.studentId, name: foundPlayer.name, team: playerTeam.country };
-
-            socket.join(roomId);
-            socket.roomId = roomId;
-
-            // Send full game state to restore client
-            socket.emit('game_state_update', gameState);
-            
-            // Notify all other players of the team update
-            broadcastTeamsUpdate(io, gameState, roomId);
-
-            // Persist the updated state back to Redis
-            await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));
-
-        } else {
-            // --- NEW JOIN PATH ---
-            logger.info(`[신규 접속] ${name} (${studentId})님이 ${roomId} 방에 새로 접속합니다.`);
-            
-            const teams = gameState.teams || {};
-            socket.emit('room_check_result', { exists: true, roomId, playerName: name, countryConfig, teams });
-        }
     } catch (error) {
-        logger.error(`[접속 처리 오류] Room: ${roomId}, User: ${name}`, error);
-        socket.emit('error', { message: '방에 접속하는 중 오류가 발생했습니다.' });
+        logger.error(`[Get Room Info 오류] Room: ${roomId}, User: ${name}`, error);
+        socket.emit('error', { message: '방 정보를 가져오는 중 오류가 발생했습니다.' });
     }
 }
 
@@ -993,7 +1067,8 @@ async function deleteMultipleUsers(socket, data, supabase) {
 }
 
 module.exports = {
-    joinOrReconnectRoom, // Export new function
+    joinGame,
+    getRoomInfo,
     loginOrRegister,
     getUsers, // Export new function
     deleteUser, // Export new function
@@ -1014,5 +1089,4 @@ module.exports = {
     resetTrade,
     resetInvestments,
     resetProduction,
-    reconnectPlayer
 };

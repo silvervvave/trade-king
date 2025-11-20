@@ -51,10 +51,13 @@ class GameClient {
                 studentId: this.localStudentId,
                 name: this.localPlayerName
             });
-            this.socket.emit('join_or_reconnect_room', {
+            // The country is unknown at this point, but the server's joinGame handler
+            // will identify the player by studentId and reconnect them to their existing team.
+            this.socket.emit('join_game', {
                 roomId: this.playerRoomId,
                 studentId: this.localStudentId,
-                name: this.localPlayerName
+                name: this.localPlayerName,
+                country: null 
             });
         }
     }
@@ -205,7 +208,7 @@ class GameClient {
         const joinButton = document.getElementById('submitRoomCodeBtn');
         joinButton.disabled = true;
         joinButton.textContent = '확인 중...';
-        this.socket.emit('join_or_reconnect_room', {
+        this.socket.emit('get_room_info', {
             roomId: roomId,
             studentId: this.localStudentId,
             name: this.localPlayerName
@@ -221,13 +224,11 @@ class GameClient {
     }
 
     handleCountrySelect() {
-        this.ui.showNotification('handleCountrySelect called');
         this.selectCountry(this.selectedCountry);
         this.ui.hideCountryDescription();
     }
 
     selectCountry(country) {
-        this.ui.showNotification('selectCountry called for ' + country);
         if (!this.countryConfig[country]) {
             return alert('유효하지 않은 국가입니다.');
         }
@@ -239,11 +240,10 @@ class GameClient {
             return alert('방 코드가 설정되지 않았습니다. 다시 시도해주세요.');
         }
 
-        this.registerPlayer();
+        this.joinGame();
     }
 
-    registerPlayer() {
-        this.ui.showNotification('registerPlayer called');
+    joinGame() {
         if (!this.player.country) {
             return alert('국가를 선택해주세요.');
         }
@@ -254,10 +254,10 @@ class GameClient {
             return alert('방 코드가 설정되지 않았습니다.');
         }
 
-        this.socket.emit('register_player', {
+        this.socket.emit('join_game', {
             country: this.player.country,
             name: this.player.name,
-            studentId: this.localStudentId, // Add studentId here
+            studentId: this.localStudentId,
             roomId: this.playerRoomId
         });
 

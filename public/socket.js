@@ -89,7 +89,7 @@ class SocketHandler {
             }
         });
 
-        this.socket.on('room_check_result', (data) => {
+        this.socket.on('room_info', (data) => {
             if (data.exists) {
                 this.game.playerRoomId = data.roomId;
                 this.game.countryConfig = data.countryConfig;
