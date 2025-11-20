@@ -492,8 +492,8 @@ function updateTeamsDisplay(teams) {
                 </div>
                 <p>PA: <strong>${Math.floor(team.totalPA)}</strong> | 비단: <strong>${team.silk}</strong> | 후추: <strong>${team.pepper}</strong></p>
                 <p>PA 생산: ${team.batchCount} / ${team.maxBatchCount}</p>
-                ${team.resetTokens > 0 ? `<p>리롤 토큰: ${team.resetTokens}개</p>` : ''}
-                ${team.mercantilismTokens > 0 ? `<p>중상주의 토큰: ${team.mercantilismTokens}개</p>` : ''}
+                ${team.country === 'england' && team.rpsRerolls > 0 ? `<p>절대권력: ${team.rpsRerolls}개</p>` : ''}
+                ${team.country === 'france' ? `<p>중상주의: ${10 - (team.mercantilismUses || 0)}회 남음</p>` : ''}
             </div>
         `;
 
