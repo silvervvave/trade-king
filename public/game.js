@@ -87,7 +87,6 @@ class GameClient {
         // Top Banner
         addClick('gameInfoBtn', () => this.ui.showGameInfoModal());
         addClick('teamSidebarToggle', () => document.getElementById('teamSidebar').classList.toggle('open'));
-        addClick('bannerLeft', () => location.reload());
 
         // Game Navigation
         addClick('navProduction', () => this.ui.showArea('productionArea'));

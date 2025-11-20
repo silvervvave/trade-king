@@ -9,6 +9,7 @@ class SocketHandler {
         this.socket.on('connect', () => {
             console.log('서버에 연결되었습니다.');
             this.game.ui.updateConnectionStatus(true);
+            this.game.handleReconnect();
         });
 
         this.socket.on('disconnect', () => {
