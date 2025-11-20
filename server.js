@@ -106,6 +106,7 @@ io.on('connection', (socket) => {
   socket.on('get_room_info', (data) => {
     const validationResult = validate('get_room_info', data);
     if (!validationResult.success) {
+      logger.warn(`[Validation Error] get_room_info: ${JSON.stringify(validationResult.error)}`);
       socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
       return;
     }
@@ -116,6 +117,7 @@ io.on('connection', (socket) => {
   socket.on('join_game', (data) => {
     const validationResult = validate('join_game', data);
     if (!validationResult.success) {
+      logger.warn(`[Validation Error] join_game: ${JSON.stringify(validationResult.error)}`);
       socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
       return;
     }
@@ -162,6 +164,7 @@ io.on('connection', (socket) => {
     }
     const validationResult = validate('get_users', data);
     if (!validationResult.success) {
+      logger.warn(`[Validation Error] get_users: ${JSON.stringify(validationResult.error)}`);
       socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
       return;
     }
@@ -177,6 +180,7 @@ io.on('connection', (socket) => {
     }
     const validationResult = validate('delete_user', data);
     if (!validationResult.success) {
+      logger.warn(`[Validation Error] delete_user: ${JSON.stringify(validationResult.error)}`);
       socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
       return;
     }
@@ -193,6 +197,7 @@ io.on('connection', (socket) => {
     }
     const validationResult = validate('delete_multiple_users', data);
     if (!validationResult.success) {
+      logger.warn(`[Validation Error] delete_multiple_users: ${JSON.stringify(validationResult.error)}`);
       socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
       return;
     }
@@ -209,6 +214,7 @@ io.on('connection', (socket) => {
 
     const validationResult = validate(eventName, data);
     if (!validationResult.success) {
+      logger.warn(`[Validation Error] ${eventName}: ${JSON.stringify(validationResult.error)}`);
       socket.emit('error', { message: 'Invalid data', errors: validationResult.error });
       return;
     }

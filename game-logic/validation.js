@@ -93,6 +93,12 @@ const schemas = {
     studentIds: z.array(z.string().min(1).max(20)),
     superAdminKey: z.string(),
   }),
+  get_room_info: z.object({
+    roomId: z.string().length(4),
+  }),
+  join_game: z.object({
+    roomId: z.string().length(4),
+  }),
 };
 
 function validate(eventName, data) {
