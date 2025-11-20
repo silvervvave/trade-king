@@ -197,7 +197,7 @@ function registerPlayer(io, socket, data, room, roomId) {
         countryConfig: countryConfig
     };
     socket.emit('game_state_update', safeRoomState);
-    socket.emit('team_state_update', team);
+    socket.emit('team_update', team);
     broadcastTeamsUpdate(io, room, roomId);
 }
 

@@ -202,12 +202,14 @@ class SocketHandler {
 
         this.socket.on('rps_result', (data) => {
             this.game.gameState.team.rpsResult = data;
+            this.game.gameState.team.rpsPlayedThisRound = true; // Optimistic update
             this.game.ui.renderProductionResults();
             this.game.ui.updateRerollButtons();
         });
 
         this.socket.on('final_rps_result', (data) => {
             this.game.gameState.team.finalRpsResultData = data;
+            this.game.gameState.team.finalRpsPlayedThisRound = true; // Optimistic update
             this.game.ui.setupArrivalScreen();
             this.game.ui.updateRerollButtons();
         });
