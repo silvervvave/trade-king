@@ -171,11 +171,20 @@ socket.on('room_closed_success', (data) => {
         showNotification(`방 ${adminRoomId}이(가) 삭제되었습니다. 초기 화면으로 돌아갑니다.`);
         localStorage.removeItem('adminRoomId');
         adminRoomId = null;
-        // A small delay to allow the user to read the notification
         setTimeout(() => {
             window.location.reload();
         }, 1500);
-    });
+    }
+});
+
+socket.on('disconnect', () => {
+    alert('연결이 끊어졌어요. 새로고침 해주세요');
+});
+
+socket.on('error', (data) => {
+    console.error('서버 오류 수신:', data);
+    showNotification(`오류: ${data.message || '알 수 없는 오류가 발생했습니다.'}`);
+});
 
 socket.on('game_state_update', (state) => {
     console.log('게임 상태 업데이트:', state);
