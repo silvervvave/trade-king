@@ -1,61 +1,63 @@
 function calculateRankings(room) {
-    const teams = Object.values(room.teams);
-    if (teams.length === 0) return { rankings: [], premiumInfo: {} };
+  const teams = Object.values(room.teams);
+  if (teams.length === 0) return { rankings: [], premiumInfo: {} };
 
-    const totalSilk = teams.reduce((sum, team) => sum + team.silk, 0);
-    const totalPepper = teams.reduce((sum, team) => sum + team.pepper, 0);
+  const totalSilk = teams.reduce((sum, team) => sum + team.silk, 0);
+  const totalPepper = teams.reduce((sum, team) => sum + team.pepper, 0);
 
-    let silkValue = 10;
-    let pepperValue = 10;
-    let scarceGood = null;
+  let silkValue = 10;
+  let pepperValue = 10;
+  let scarceGood = null;
 
-    if (totalSilk > 0 && totalSilk < totalPepper) {
-        silkValue *= 1.1;
-        scarceGood = '비단';
-    } else if (totalPepper > 0 && totalPepper < totalSilk) {
-        pepperValue *= 1.1;
-        scarceGood = '후추';
+  // Changed: scarce goods get 20% premium (was 10%)
+  if (totalSilk > 0 && totalSilk < totalPepper) {
+    silkValue *= 1.2;
+    scarceGood = '비단';
+  } else if (totalPepper > 0 && totalPepper < totalSilk) {
+    pepperValue *= 1.2;
+    scarceGood = '후추';
+  }
+
+  teams.forEach(team => {
+    team.premiums = [];
+    let totalAssets = team.totalPA;
+    totalAssets += team.silk * silkValue;
+    totalAssets += team.pepper * pepperValue;
+
+    // Changed: monopoly bonus is now 20 PA (was 15)
+    if (totalSilk > 0 && (team.silk / totalSilk) > 0.5) {
+      totalAssets += 20;
+      team.premiums.push('비단 독점');
+    }
+    if (totalPepper > 0 && (team.pepper / totalPepper) > 0.5) {
+      totalAssets += 20;
+      team.premiums.push('후추 독점');
     }
 
-    teams.forEach(team => {
-        team.premiums = [];
-        let totalAssets = team.totalPA;
-        totalAssets += team.silk * silkValue;
-        totalAssets += team.pepper * pepperValue;
+    team.totalAssets = Math.round(totalAssets);
+  });
 
-        if (totalSilk > 0 && (team.silk / totalSilk) > 0.5) {
-            totalAssets += 15;
-            team.premiums.push('비단 독점');
-        }
-        if (totalPepper > 0 && (team.pepper / totalPepper) > 0.5) {
-            totalAssets += 15;
-            team.premiums.push('후추 독점');
-        }
-        
-        team.totalAssets = Math.round(totalAssets);
-    });
+  teams.sort((a, b) => b.totalAssets - a.totalAssets);
 
-    teams.sort((a, b) => b.totalAssets - a.totalAssets);
+  const rankings = teams.map((team, index) => ({
+    rank: index + 1,
+    name: `${team.name}`,
+    country: team.country,
+    totalPA: Math.floor(team.totalPA),
+    silk: team.silk,
+    pepper: team.pepper,
+    totalAssets: Math.floor(team.totalAssets),
+    premiums: team.premiums
+  }));
 
-    const rankings = teams.map((team, index) => ({
-        rank: index + 1,
-        name: `${team.name}`,
-        country: team.country,
-        totalPA: Math.floor(team.totalPA),
-        silk: team.silk,
-        pepper: team.pepper,
-        totalAssets: Math.floor(team.totalAssets),
-        premiums: team.premiums
-    }));
-
-    return {
-        rankings,
-        premiumInfo: {
-            scarceGood: scarceGood,
-            silkValue: Math.round(silkValue),
-            pepperValue: Math.round(pepperValue)
-        }
-    };
+  return {
+    rankings,
+    premiumInfo: {
+      scarceGood: scarceGood,
+      silkValue: Math.round(silkValue),
+      pepperValue: Math.round(pepperValue)
+    }
+  };
 }
 
 function determineRPSResult(player, computer) {
@@ -83,8 +85,8 @@ function determineRPSResult(player, computer) {
 
   // Define winning relationships: ✌️ beats ✋, ✊ beats ✌️, ✋ beats ✊
   if ((p === '✌️' && c === '✋') ||
-      (p === '✊' && c === '✌️') ||
-      (p === '✋' && c === '✊')) {
+    (p === '✊' && c === '✌️') ||
+    (p === '✋' && c === '✊')) {
     return 'win';
   }
 
@@ -108,14 +110,12 @@ function determineEvent(EVENT_CONFIG) {
 }
 
 function isValidAmount(amount) {
-    return typeof amount === 'number' && amount > 0;
+  return typeof amount === 'number' && amount > 0;
 }
 
-
-
 module.exports = {
-    isValidAmount,
-    calculateRankings,
-    determineRPSResult,
-    determineEvent
+  isValidAmount,
+  calculateRankings,
+  determineRPSResult,
+  determineEvent
 };

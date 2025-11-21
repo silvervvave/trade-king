@@ -277,7 +277,7 @@ async function loginOrRegister(socket, data, supabase) {
         // 1. Check if user exists
         const { data: existingUser, error: selectError } = await supabase
             .from('users')
-            .select('id, student_id, name')
+            .select('id, student_id, name, country_stats')
             .eq('student_id', studentId)
             .single();
 
@@ -298,7 +298,7 @@ async function loginOrRegister(socket, data, supabase) {
             const { data: newUser, error: insertError } = await supabase
                 .from('users')
                 .insert({ student_id: studentId, name: name })
-                .select('id, student_id, name')
+                .select('id, student_id, name, country_stats')
                 .single();
 
             if (insertError) {
@@ -314,7 +314,11 @@ async function loginOrRegister(socket, data, supabase) {
         }
 
         // 4. Emit success to client without token
-        socket.emit('login_success', { studentId: user.student_id, name: user.name });
+        socket.emit('login_success', {
+            studentId: user.student_id,
+            name: user.name,
+            countryStats: user.country_stats || {}
+        });
         logger.info(`[로그인 성공] 학번: ${studentId}, 이름: ${name}`);
         return { newUserCreated };
 

@@ -22,23 +22,28 @@ class SocketHandler {
             console.log('Login successful', data);
             this.game.localPlayerName = data.name;
             this.game.localStudentId = data.studentId;
-        
+            this.game.countryStats = data.countryStats || {};
+
             localStorage.setItem('localStudentId', data.studentId);
             localStorage.setItem('localPlayerName', data.name);
-        
+            localStorage.setItem('countryStats', JSON.stringify(data.countryStats || {}));
+
             this.game.ui.showScreen('roomCodeInputScreen');
-            
+
             const submitBtn = document.getElementById('submitNameBtn');
-            if(submitBtn) {
+            if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.textContent = '입력 완료';
             }
+
+            // Display statistics
+            this.game.ui.displayPlayerStatistics();
         });
-        
+
         this.socket.on('login_failure', (data) => {
             this.game.ui.showNotification(`로그인 실패: ${data.message}`);
             const submitBtn = document.getElementById('submitNameBtn');
-            if(submitBtn) {
+            if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.textContent = '입력 완료';
             }
@@ -115,7 +120,7 @@ class SocketHandler {
                 }
             }
         });
-        
+
         this.socket.on('invalid_session', (data) => {
             console.error('Invalid session:', data.message);
             if (confirm(data.message + '\n\n처음 화면으로 돌아가시겠습니까?')) {
@@ -154,7 +159,7 @@ class SocketHandler {
                 if (playerCountry && newState.teams[playerCountry]) {
                     this.game.updatePlayerStatsFromServer(newState.teams[playerCountry]);
                 }
-                
+
                 this.game.ui.showScreen('gameScreen');
                 this.game.ui.updateAllTeamsStatus(newState.teams);
 

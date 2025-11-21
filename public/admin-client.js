@@ -87,8 +87,21 @@ document.addEventListener('DOMContentLoaded', () => {
 socket.on('connect', () => {
     console.log('관리자 클라이언트 연결됨. adminRoomId:', adminRoomId);
     if (adminRoomId) {
-        console.log(`[클라이언트] 'reclaim_admin' 이벤트 전송 시도: roomId=${adminRoomId}`);
-        socket.emit('reclaim_admin', { roomId: adminRoomId });
+        // 먼저 방 존재 여부 확인
+        socket.emit('check_room_exists', { roomId: adminRoomId }, (response) => {
+            if (response.exists) {
+                // 방이 존재하면 재접속 확인 모달 표시
+                showAdminReconnectionPrompt(adminRoomId);
+            } else {
+                // 방이 없으면 localStorage 정리
+                localStorage.removeItem('adminRoomId');
+                adminRoomId = null;
+                showNotification('이전 방이 삭제되었습니다.');
+                document.getElementById('roomCreationSection').classList.remove('hidden');
+                document.getElementById('roomReentrySection').classList.remove('hidden');
+                document.getElementById('mainDashboard').classList.add('hidden');
+            }
+        });
     } else {
         console.log('[클라이언트] 저장된 adminRoomId 없음. \'reclaim_admin\' 이벤트 전송 안 함.');
         document.getElementById('roomCreationSection').classList.remove('hidden');
@@ -97,17 +110,36 @@ socket.on('connect', () => {
     }
 });
 
+function showAdminReconnectionPrompt(roomId) {
+    const confirmReconnect = confirm(
+        `이전에 생성한 방이 있습니다.\n\n방 코드: ${roomId}\n\n이 방으로 돌아가시겠습니까?`
+    );
+
+    if (confirmReconnect) {
+        console.log(`[클라이언트] 'reclaim_admin' 이벤트 전송 시도: roomId=${roomId}`);
+        socket.emit('reclaim_admin', { roomId: roomId });
+    } else {
+        // 사용자가 거부하면 localStorage 정리
+        localStorage.removeItem('adminRoomId');
+        adminRoomId = null;
+        document.getElementById('roomCreationSection').classList.remove('hidden');
+        document.getElementById('roomReentrySection').classList.remove('hidden');
+        document.getElementById('mainDashboard').classList.add('hidden');
+        showNotification('새 방을 생성하거나 기존 방에 재입장하세요.');
+    }
+}
+
 // 방 생성 완료 이벤트
 socket.on('room_created', (data) => {
     adminRoomId = data.roomId;
     localStorage.setItem('adminRoomId', adminRoomId);
     console.log(`[클라이언트] 방 ${adminRoomId} 생성 완료 및 localStorage 저장.`);
-    
+
     document.getElementById('bannerRoomCode').textContent = adminRoomId;
     document.getElementById('roomCreationSection').classList.add('hidden');
     document.getElementById('roomReentrySection').classList.add('hidden'); // Hide reentry section
     document.getElementById('mainDashboard').classList.remove('hidden');
-    
+
     showNotification(`방 ${adminRoomId} 생성 완료! 학생들에게 코드를 공유하세요.`);
 });
 
@@ -143,19 +175,7 @@ socket.on('room_closed_success', (data) => {
         setTimeout(() => {
             window.location.reload();
         }, 1500);
-    }
-});
-
-
-
-socket.on('disconnect', () => {
-    alert('서버와의 연결이 끊어졌습니다. 페이지를 새로고침 해주세요.');
-});
-
-socket.on('error', (data) => {
-    console.error('서버 오류 수신:', data);
-    showNotification(`오류: ${data.message || '알 수 없는 오류가 발생했습니다.'}`);
-});
+    });
 
 socket.on('game_state_update', (state) => {
     console.log('게임 상태 업데이트:', state);
@@ -190,7 +210,7 @@ function addTradeLog(data) {
 function withRoomId(func) {
     return (...args) => {
         if (!adminRoomId) {
-            return alert('방이 생성되지 않았습니다.');
+            return alert('방을 먼저 만들어주세요');
         }
         func(adminRoomId, ...args);
     };
@@ -207,14 +227,14 @@ function withRoomId(func) {
  * @param {Function|null} dataBuilder - 추가 데이터 생성 함수 (선택)
  */
 function createRoomAction(eventName, confirmMessage = null, dataBuilder = null) {
-  return withRoomId((roomId) => {
-    // 확인 메시지가 있으면 먼저 물어봄
-    if (confirmMessage && !confirm(confirmMessage)) {
-      return;
-    }
+    return withRoomId((roomId) => {
+        // 확인 메시지가 있으면 먼저 물어봄
+        if (confirmMessage && !confirm(confirmMessage)) {
+            return;
+        }
 
-    // 기본 데이터
-    const data = { roomId };
+        // 기본 데이터
+        const data = { roomId };
 
         // 추가 데이터가 필요한 경우
         if (dataBuilder) {
@@ -226,27 +246,27 @@ function createRoomAction(eventName, confirmMessage = null, dataBuilder = null) 
             }
         }
 
-    // 이벤트 발생
-    socket.emit(eventName, data);
+        // 이벤트 발생
+        socket.emit(eventName, data);
 
-    // 성공 알림
-    const actionName = eventName.replace(/_/g, ' ');
-    showNotification(`${actionName} 완료`);
-  });
+        // 성공 알림
+        const actionName = eventName.replace(/_/g, ' ');
+        showNotification(`${actionName} 완료`);
+    });
 }
 
 
 // 게임 시작 함수 - withRoomId 없이 직접 정의
 function startPhase(phase) {
     if (!adminRoomId) {
-        return alert('방이 생성되지 않았습니다.');
+        return alert('방을 먼저 만들어주세요');
     }
     socket.emit('start_phase', { phase: phase, roomId: adminRoomId });
 }
 
 const endGame = createRoomAction(
-  'end_game',
-  '정말로 게임을 종료하시겠습니까?'
+    'end_game',
+    '정말로 게임을 종료하시겠습니까?'
 );
 
 const startTimer = withRoomId((roomId) => {
@@ -259,8 +279,8 @@ const startTimer = withRoomId((roomId) => {
 const stopTimer = createRoomAction('stop_timer');
 
 const resetGame = createRoomAction(
-  'reset_game',
-  '게임을 리셋하시겠습니까? 모든 데이터가 초기화됩니다.'
+    'reset_game',
+    '게임을 리셋하시겠습니까? 모든 데이터가 초기화됩니다.'
 );
 
 const resetTimer = withRoomId((roomId) => {
@@ -272,7 +292,7 @@ const resetTimer = withRoomId((roomId) => {
 const resetProduction = withRoomId((roomId) => {
     if (confirm('모든 팀의 생산 및 가위바위보 상태를 초기화하시겠습니까?')) {
         socket.emit('reset_production', { roomId: roomId });
-    showNotification('생산 상태가 초기화되었습니다.');
+        showNotification('생산 상태가 초기화되었습니다.');
     }
 });
 
@@ -392,6 +412,10 @@ function displayFinalResults(data) {
                     ${tableBodyHtml}
                 </tbody>
             </table>
+            <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                <button class="admin-btn" id="closeResultsBtn">계속 보기</button>
+                <button class="admin-btn delete-room-btn" id="deleteRoomBtn" style="background-color: var(--color-danger);">방 완전 삭제</button>
+            </div>
         </div>
     `;
 
@@ -407,16 +431,32 @@ function displayFinalResults(data) {
             modal.classList.add('hidden');
         }
     });
+
+    // "계속 보기" 버튼
+    document.getElementById('closeResultsBtn').addEventListener('click', () => {
+        modal.classList.add('hidden');
+    });
+
+    // "방 완전 삭제" 버튼
+    document.getElementById('deleteRoomBtn').addEventListener('click', () => {
+        if (confirm('방을 완전히 삭제하시겠습니까?\n모든 플레이어 연결이 끊어지고 방 데이터가 삭제됩니다.')) {
+            const roomId = localStorage.getItem('adminRoomId');
+            if (roomId) {
+                socket.emit('force_close_room', { roomId });
+                // 서버가 소켓 연결을 끊으면 자동으로 초기화면으로 이동
+            }
+        }
+    });
 }
 
 // 관리자 대시보드 업데이트
 function updateAdminDashboard(state) {
     document.getElementById('currentRound').textContent = state.currentRound > 0 ? `${state.currentRound}` : '대기중';
     document.getElementById('currentPhase').textContent = getPhaseKorean(state.currentPhase);
-    
+
     const gameStartSection = document.getElementById('gameStartSection');
     const tradeControlSection = document.getElementById('tradeControlSection');
-    
+
     if (state.gameStarted) {
         gameStartSection.classList.add('hidden');
         tradeControlSection.classList.remove('hidden');
@@ -442,10 +482,10 @@ function updateTeamsDisplay(teams) {
 
     const allTeamsContainer = document.getElementById('allTeamsStatusContainer');
     if (teamArray.length === 0) {
-        if(allTeamsContainer) allTeamsContainer.classList.add('hidden');
+        if (allTeamsContainer) allTeamsContainer.classList.add('hidden');
         return;
     } else {
-        if(allTeamsContainer) allTeamsContainer.classList.remove('hidden');
+        if (allTeamsContainer) allTeamsContainer.classList.remove('hidden');
     }
 
     teamArray.forEach(team => {

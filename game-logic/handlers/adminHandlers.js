@@ -179,6 +179,87 @@ function endGame(io, socket, data, room, roomId) {
     });
 
     io.to(roomId).emit('game_ended', finalResults);
+
+    // Update player statistics in Supabase
+    updatePlayerStatistics(finalResults, room);
+}
+
+async function updatePlayerStatistics(finalResults, room) {
+    const supabase = require('../../supabaseClient');
+
+    // Determine winning team (rank 1)
+    const winningTeam = finalResults.rankings[0];
+    const winningCountry = winningTeam.country;
+
+    // Collect all players with their countries and final PA
+    const playerUpdates = [];
+
+    for (const player of Object.values(room.players)) {
+        const country = player.team;
+        if (!country) continue;
+
+        const team = room.teams[country];
+        if (!team) continue;
+
+        const finalPa = Math.floor(team.totalPA);
+        const didWin = country === winningCountry;
+
+        playerUpdates.push({
+            studentId: player.studentId,
+            country: country,
+            finalPa: finalPa,
+            didWin: didWin
+        });
+    }
+
+    // Update each player's country_stats
+    for (const update of playerUpdates) {
+        try {
+            // Fetch current country_stats
+            const { data: user, error: fetchError } = await supabase
+                .from('users')
+                .select('country_stats')
+                .eq('student_id', update.studentId)
+                .single();
+
+            if (fetchError) {
+                logger.error(`[통계 업데이트 실패] ${update.studentId}: ${fetchError.message}`);
+                continue;
+            }
+
+            // Initialize country_stats if null
+            let countryStats = user.country_stats || {};
+
+            // Initialize country if not exists
+            if (!countryStats[update.country]) {
+                countryStats[update.country] = { wins: 0, maxPa: 0 };
+            }
+
+            // Update wins if player won
+            if (update.didWin) {
+                countryStats[update.country].wins++;
+            }
+
+            // Update maxPa if current PA is higher
+            if (update.finalPa > countryStats[update.country].maxPa) {
+                countryStats[update.country].maxPa = update.finalPa;
+            }
+
+            // Save back to database
+            const { error: updateError } = await supabase
+                .from('users')
+                .update({ country_stats: countryStats })
+                .eq('student_id', update.studentId);
+
+            if (updateError) {
+                logger.error(`[통계 저장 실패] ${update.studentId}: ${updateError.message}`);
+            } else {
+                logger.info(`[통계 업데이트] ${update.studentId} (${update.country}): wins=${countryStats[update.country].wins}, maxPa=${countryStats[update.country].maxPa}`);
+            }
+        } catch (err) {
+            logger.error(`[통계 업데이트 예외] ${update.studentId}: ${err.message}`);
+        }
+    }
 }
 
 function resetProduction(io, socket, data, room, roomId) {

@@ -34,6 +34,7 @@ class GameClient {
         this.playerRoomId = localStorage.getItem('playerRoomId');
         this.localPlayerName = localStorage.getItem('localPlayerName'); // Load from localStorage
         this.localStudentId = localStorage.getItem('localStudentId');   // Load from localStorage
+        this.countryStats = JSON.parse(localStorage.getItem('countryStats') || '{}'); // Load statistics
         this.selectedTradeDestination = null;
         this.teams = {};
 
@@ -46,20 +47,73 @@ class GameClient {
 
     handleReconnect() {
         if (this.playerRoomId && this.localStudentId && this.localPlayerName) {
-            console.log('재연결 시도:', {
+            console.log('저장된 세션 발견:', {
                 roomId: this.playerRoomId,
                 studentId: this.localStudentId,
                 name: this.localPlayerName
             });
-            // The country is unknown at this point, but the server's joinGame handler
-            // will identify the player by studentId and reconnect them to their existing team.
-            this.socket.emit('join_game', {
-                roomId: this.playerRoomId,
-                studentId: this.localStudentId,
-                name: this.localPlayerName,
-                country: null 
+
+            // 먼저 방이 존재하는지 확인
+            this.socket.emit('check_room_exists', { roomId: this.playerRoomId }, (response) => {
+                if (response.exists) {
+                    // 방이 존재하면 재접속 확인 모달 표시
+                    this.showReconnectionPrompt();
+                } else {
+                    // 방이 없으면 localStorage 정리
+                    this.clearSessionData();
+                    this.ui.showNotification('이전 게임이 종료되었습니다.');
+                }
             });
         }
+    }
+
+    showReconnectionPrompt() {
+        // 모달 HTML 생성
+        const modal = document.createElement('div');
+        modal.id = 'reconnectionModal';
+        modal.className = 'modal-overlay';
+        modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+
+        modal.innerHTML = `
+            <div class="modal-content reconnection-modal" style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; text-align: center;">
+                <h2 style="margin-bottom: 20px; color: var(--color-primary);">이전 게임 세션 발견</h2>
+                <p style="margin: 10px 0; font-size: 16px;">방 코드: <strong>${this.playerRoomId}</strong></p>
+                <p style="margin: 10px 0; font-size: 16px;">플레이어: <strong>${this.localPlayerName}</strong></p>
+                <p style="margin: 20px 0; font-size: 16px;">이전 게임에 다시 참가하시겠습니까?</p>
+                <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                    <button class="btn-secondary" id="reconnectNoBtn" style="padding: 10px 20px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; background-color: #ccc; color: #333;">새 게임 시작</button>
+                    <button class="btn-primary" id="reconnectYesBtn" style="padding: 10px 20px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; background-color: var(--color-primary); color: white;">재참가</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // 이벤트 리스너
+        document.getElementById('reconnectYesBtn').addEventListener('click', () => {
+            this.confirmReconnect();
+            modal.remove();
+        });
+
+        document.getElementById('reconnectNoBtn').addEventListener('click', () => {
+            this.clearSessionData();
+            this.ui.showScreen('nameInputScreen');
+            modal.remove();
+        });
+    }
+
+    confirmReconnect() {
+        this.socket.emit('join_game', {
+            roomId: this.playerRoomId,
+            studentId: this.localStudentId,
+            name: this.localPlayerName,
+            country: null  // 서버가 기존 country 복원
+        });
+    }
+
+    clearSessionData() {
+        localStorage.removeItem('playerRoomId');
+        this.playerRoomId = null;
     }
 
     emitSocket(eventName, payload) {
@@ -162,7 +216,7 @@ class GameClient {
     handleNameSubmit() {
         const studentIdInput = document.getElementById('studentIdInput');
         const nameInput = document.getElementById('playerNameInput');
-        
+
         const studentId = studentIdInput.value.trim();
         const name = nameInput.value.trim();
 
@@ -217,7 +271,7 @@ class GameClient {
 
     handleCountryClick(country) {
         if (!this.countryConfig[country]) {
-            return alert('유효하지 않은 국가입니다.');
+            return alert('국가를 다시 선택해주세요');
         }
         this.selectedCountry = country;
         this.ui.showCountryDescription(country);
@@ -230,14 +284,14 @@ class GameClient {
 
     selectCountry(country) {
         if (!this.countryConfig[country]) {
-            return alert('유효하지 않은 국가입니다.');
+            return alert('국가를 다시 선택해주세요');
         }
 
         this.player.country = country;
         this.player.name = this.localPlayerName;
-        
+
         if (!this.playerRoomId) {
-            return alert('방 코드가 설정되지 않았습니다. 다시 시도해주세요.');
+            return alert('방 코드를 다시 입력해주세요');
         }
 
         this.joinGame();
@@ -245,13 +299,13 @@ class GameClient {
 
     joinGame() {
         if (!this.player.country) {
-            return alert('국가를 선택해주세요.');
+            return alert('국가를 선택하세요');
         }
         if (!this.player.name || !this.localPlayerName) {
-            return alert('플레이어 이름이 설정되지 않았습니다.');
+            return alert('이름을 입력해주세요');
         }
         if (!this.playerRoomId) {
-            return alert('방 코드가 설정되지 않았습니다.');
+            return alert('방 코드를 입력해주세요');
         }
 
         this.socket.emit('join_game', {
@@ -282,7 +336,7 @@ class GameClient {
             ...teamData,
             clickCount: localClickCount, // Restore local click progress
         };
-        
+
         this.ui.updatePlayerStats();
         this.ui.updateTokenDisplay();
         this.ui.updateRerollButtons(); // [FIX] Reroll 버튼 상태 갱신 추가
@@ -312,14 +366,14 @@ class GameClient {
         if (!config) {
             return this.ui.showNotification('국가 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
         }
-        
+
         // Check against maxBatchCount
         if (this.team.batchCount >= config.maxBatchCount) {
             // Ensure the UI is visually maxed out, even if state is slightly off
             this.ui.updateProductionClickProgress();
             return this.ui.showNotification('최대 생산 횟수에 도달했습니다!');
         }
-        
+
         // Increment local click count
         this.team.clickCount++;
 
@@ -346,7 +400,7 @@ class GameClient {
             this.team.rpsResult.playerChoice = choice;
 
             this.ui.showNotification(`${this.ui.getRPSEmoji(choice)} 선택 완료!`);
-            
+
             const rpsButtons = document.querySelectorAll('.rps-btn');
             rpsButtons.forEach(btn => {
                 btn.disabled = true;
@@ -459,7 +513,7 @@ class GameClient {
     playFinalRPS(choice) {
         if (this.emitSocket('play_final_rps', { choice })) {
             this.ui.showNotification(`${this.ui.getRPSEmoji(choice)} 선택 완료!`);
-            
+
             const finalRpsButtons = document.querySelectorAll('.final-rps-btn');
             finalRpsButtons.forEach(btn => {
                 btn.disabled = true;
@@ -490,10 +544,10 @@ class GameClient {
 
 document.addEventListener('DOMContentLoaded', () => {
     const game = new GameClient();
-    window.game = game; 
+    window.game = game;
 
     // Prevent double-tap zoom on mobile devices
-    document.addEventListener('dblclick', function(e) {
+    document.addEventListener('dblclick', function (e) {
         e.preventDefault();
     }, { passive: false });
 

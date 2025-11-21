@@ -19,17 +19,28 @@ class TimerManager {
             seconds: initialSeconds,
         };
 
-        const intervalId = setInterval(async () => {
+        // Emit initial timer state immediately
+        this.io.to(roomId).emit('timer_update', {
+            minutes: initialMinutes,
+            seconds: initialSeconds
+        });
+
+        const intervalId = setInterval(() => {
+            // Decrease first
+            totalSeconds--;
+
+            // Then check if timer ended
             if (totalSeconds <= 0) {
                 this.stop(roomId, gameState);
                 this.io.to(roomId).emit('timer_ended');
                 return;
             }
 
-            totalSeconds--;
+            // Update state
             gameState.timer.minutes = Math.floor(totalSeconds / 60);
             gameState.timer.seconds = totalSeconds % 60;
 
+            // Emit update
             this.io.to(roomId).emit('timer_update', {
                 minutes: gameState.timer.minutes,
                 seconds: gameState.timer.seconds
@@ -38,7 +49,7 @@ class TimerManager {
         }, 1000);
 
         this.activeTimers[roomId] = intervalId;
-        console.log(`[TimerManager] 방 ${roomId} 타이머 시작.`);
+        console.log(`[TimerManager] 방 ${roomId} 타이머 시작: ${initialMinutes}분 ${initialSeconds}초`);
     }
 
     stop(roomId, gameState) {
@@ -52,7 +63,7 @@ class TimerManager {
         if (gameState && gameState.timer) {
             gameState.timer.running = false;
         }
-        
+
         this.io.to(roomId).emit('timer_stopped');
     }
 }

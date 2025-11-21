@@ -42,9 +42,9 @@ function playFinalRPS(io, socket, data, room, roomId) {
     const computerChoice = ['✌️', '✊', '✋'][Math.floor(Math.random() * 3)];
     let result = determineRPSResult(data.choice, computerChoice);
 
-    // England's special ability: no loss in RPS
-    if (team.country === COUNTRIES.ENGLAND && result === 'lose') {
-        result = 'draw';
+    // England's special ability: always wins in RPS (절대왕정)
+    if (team.country === COUNTRIES.ENGLAND) {
+        result = 'win';
     }
 
     const goodsChange = result === 'win' ? FINAL_RPS_WIN_GOODS_CHANGE : result === 'lose' ? FINAL_RPS_LOSE_GOODS_CHANGE : 0;

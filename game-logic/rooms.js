@@ -1,6 +1,4 @@
-
-
-const { redisClient } = require('../redisClient');
+const { redisClient } = require('./redisClient');
 
 async function generateRoomId(length = 4) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -12,7 +10,7 @@ async function generateRoomId(length = 4) {
     for (let i = 0; i < length; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    
+
     try {
       // Redis에서 'room:{ID}' 키가 존재하는지 확인
       const exists = await redisClient.exists(`room:${result}`);
@@ -23,10 +21,10 @@ async function generateRoomId(length = 4) {
       console.error('Error checking room ID in Redis:', error);
       // Redis 에러 발생 시, 루프를 계속하여 다른 ID 시도
     }
-    
+
     tries++;
   }
-  
+
   throw new Error('Failed to generate a unique room ID after multiple attempts.');
 }
 
@@ -48,36 +46,36 @@ function createNewGameState() {
 }
 
 function createInitialTeamState(country, config) {
-  return { 
-    ...config, 
-    country, 
-    totalPA: 0, 
-    silk: 0, 
-    pepper: 0, 
+  return {
+    ...config,
+    country,
+    totalPA: 0,
+    silk: 0,
+    pepper: 0,
     batchCount: 0,
-    tradeSelection: null, 
-    rpsPlayedThisRound: false, 
-    eventDrawnThisRound: false, 
-    finalRpsPlayedThisRound: false, 
+    tradeSelection: null,
+    rpsPlayedThisRound: false,
+    eventDrawnThisRound: false,
+    finalRpsPlayedThisRound: false,
     rerollUsedThisRound: false,
     camusariHappened: false,
-    rpsRerolls: config.resetTokens, 
-    mercantilismTokens: config.mercantilismTokens, 
+    rpsRerolls: config.resetTokens,
+    mercantilismTokens: config.mercantilismTokens,
     mercantilismUses: 0,
-    investmentsMade: [], 
-    investmentsReceived: [], 
-    eventMultipliers: { paMultiplier: 1, goodsMultiplier: 1 }, 
-    rpsGoodsChange: 0, 
-    rpsPaChange: 0, 
+    investmentsMade: [],
+    investmentsReceived: [],
+    eventMultipliers: { paMultiplier: 1, goodsMultiplier: 1 },
+    rpsGoodsChange: 0,
+    rpsPaChange: 0,
     eventText: '',
     finalRpsResult: '',
     eventResultClass: '',
-    members: [] 
+    members: []
   };
 }
 
 module.exports = {
-    generateRoomId,
-    createNewGameState,
-    createInitialTeamState
+  generateRoomId,
+  createNewGameState,
+  createInitialTeamState
 };
