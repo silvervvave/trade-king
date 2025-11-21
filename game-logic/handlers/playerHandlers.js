@@ -304,7 +304,7 @@ async function loginOrRegister(socket, data, supabase) {
             if (insertError) {
                 // Handle potential race condition where user was created between select and insert
                 if (insertError.code === '23505') { // Unique violation
-                    socket.emit('login_failure', { message: '이미 등록된 학번입니다. 이름이 정확한지 확인 후 다시 시도해주세요.' });
+                    socket.emit('login_failure', { message: '이미 등록된 학번입니다. 이름을 정확히 입력하세요.' });
                     return { newUserCreated: false };
                 }
                 throw new Error(`Supabase insert error: ${insertError.message}`);
@@ -343,7 +343,7 @@ async function getUsers(socket, supabase) {
         socket.emit('users_list_update', users);
     } catch (error) {
         logger.error('Failed to get users list', error);
-        socket.emit('error', { message: '사용자 목록을 가져오는 데 실패했습니다.' });
+        socket.emit('error', { message: '사용자 목록을 획득 실패' });
     }
 }
 

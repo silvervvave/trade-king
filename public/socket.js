@@ -18,7 +18,7 @@ class SocketHandler {
             this.game.ui.showNotification('서버 연결이 끊겼습니다. 재연결 중...');
         });
 
-        this.socket.on('login_success', (data) => {
+        this.socket.on('login_success', async (data) => {
             console.log('Login successful', data);
             this.game.localPlayerName = data.name;
             this.game.localStudentId = data.studentId;
@@ -28,6 +28,16 @@ class SocketHandler {
             localStorage.setItem('localPlayerName', data.name);
             localStorage.setItem('countryStats', JSON.stringify(data.countryStats || {}));
 
+            // Fetch config from the new API endpoint
+            try {
+                const response = await fetch('/api/config');
+                this.game.countryConfig = await response.json();
+            } catch (error) {
+                console.error('Failed to fetch country config:', error);
+                this.game.ui.showNotification('게임 설정을 불러오는 데 실패했습니다.');
+                return; // Stop if config fails
+            }
+
             this.game.ui.showScreen('roomCodeInputScreen');
 
             const submitBtn = document.getElementById('submitNameBtn');
@@ -36,8 +46,8 @@ class SocketHandler {
                 submitBtn.textContent = '입력 완료';
             }
 
-            // Display statistics
-            this.game.ui.displayPlayerStatistics();
+            // Display statistics now that config is available
+            this.game.ui.displayPlayerStats(data.countryStats);
         });
 
         this.socket.on('login_failure', (data) => {
@@ -160,7 +170,6 @@ class SocketHandler {
                     this.game.updatePlayerStatsFromServer(newState.teams[playerCountry]);
                 }
 
-                this.game.ui.showScreen('gameScreen');
                 this.game.ui.updateAllTeamsStatus(newState.teams);
 
             } else {

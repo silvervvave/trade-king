@@ -5,13 +5,10 @@ const { Server } = require('socket.io');
 const path = require('path');
 const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
 const basicAuth = require('express-basic-auth');
-
 const logger = require('./game-logic/utils/logger');
-const { countryConfig } = require('./config');
+const { countryConfig } = require('./config'); // may be used elsewhere
 const { generateRoomId, createNewGameState } = require('./game-logic/rooms');
 const { redisClient } = require('./game-logic/redisClient');
-
-// Import Handlers
 const playerHandlers = require('./game-logic/handlers/playerHandlers');
 const tradeHandlers = require('./game-logic/handlers/tradeHandlers');
 const productionHandlers = require('./game-logic/handlers/productionHandlers');
@@ -20,13 +17,33 @@ const adminHandlers = require('./game-logic/handlers/adminHandlers');
 const rankingHandlers = require('./game-logic/handlers/rankingHandlers');
 const { withGameState } = require('./game-logic/utils/gameStateUtil');
 
+// Global error handling for unhandled promise rejections and uncaught exceptions
+process.on('unhandledRejection', (reason) => {
+  logger.error('Unhandled Rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception:', err);
+  process.exit(1);
+});
+
+// Validate required environment variables (REDIS_URL optional)
+function validateEnv() {
+  const required = ['SUPABASE_URL', 'SUPABASE_KEY'];
+  const missing = required.filter((key) => !process.env[key]);
+  if (missing.length) {
+    logger.error('Missing required environment variables:', missing.join(', '));
+    process.exit(1);
+  }
+}
+validateEnv();
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-// Supabase Client Setup
+// Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
@@ -35,7 +52,7 @@ const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Admin Authentication
+// Admin authentication
 app.use('/super-admin', basicAuth({
   users: { 'admin': 'superadmin' },
   challenge: true,
@@ -46,10 +63,16 @@ app.get('/super-admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'super-admin.html'));
 });
 
+// API endpoint to get the country configuration
+app.get('/api/config', (req, res) => {
+  res.json(countryConfig);
+});
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Helper to safely invoke handlers
 const safeHandler = (io, socket, handler, ...args) => {
   try {
     handler(io, socket, ...args);
@@ -94,7 +117,6 @@ io.on('connection', (socket) => {
   socket.on('register_player', async (data) => {
     const { roomId } = socket;
     if (!roomId) return;
-
     await withGameState(roomId, (gameState) => {
       playerHandlers.registerPlayer(io, socket, data, gameState, roomId);
     });
@@ -106,22 +128,20 @@ io.on('connection', (socket) => {
       const roomId = await generateRoomId();
       const gameState = createNewGameState();
       gameState.adminSocketId = socket.id;
-
       await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));
-
-      const { error } = await supabase.from('rooms').insert([{ room_id: roomId }]);
-      if (error) logger.error('DB Insert Error:', error);
-
+      const { error } = await supabase.from('rooms').insert([{ room_id: roomId, game_state: gameState }]);
+      if (error) {
+        logger.error('DB Insert Error:', error);
+        throw new Error('Supabase insert failed');
+      }
       socket.join(roomId);
       socket.roomId = roomId;
-
-      if (callback) callback({ success: true, roomId });
+      if (typeof callback === 'function') callback({ success: true, roomId });
       else socket.emit('room_created', { roomId });
-
       logger.info(`[Room Created] ${roomId}`);
     } catch (error) {
       logger.error('Error creating room:', error);
-      if (callback) callback({ success: false, message: 'Failed to create room' });
+      if (typeof callback === 'function') callback({ success: false, message: error.message || 'Failed to create room' });
     }
   });
 
@@ -133,7 +153,6 @@ io.on('connection', (socket) => {
         gameState.gameStarted = true;
         gameState.currentRound = 1;
         gameState.currentPhase = 'production';
-
         adminHandlers.startPhase(io, socket, { phase: 'production' }, gameState, roomId);
         io.to(roomId).emit('game_started');
       }
@@ -269,7 +288,6 @@ io.on('connection', (socket) => {
         if (gameStateJSON) {
           const gameState = JSON.parse(gameStateJSON);
           const shouldDelete = await playerHandlers.disconnect(io, socket, gameState, roomId, supabase);
-
           if (shouldDelete) {
             await redisClient.del(`room:${roomId}`);
           } else {
@@ -285,8 +303,12 @@ io.on('connection', (socket) => {
 });
 
 async function startServer() {
-  await redisClient.connect();
-
+  try {
+    await redisClient.connect();
+  } catch (err) {
+    logger.error('Failed to connect to Redis (continuing without Redis):', err);
+    // Continue without exiting; Redis-dependent features will fail gracefully.
+  }
   server.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`);
   });

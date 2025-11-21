@@ -1839,3 +1839,103 @@ body {
     font-weight: bold;
 }
 
+/* ============================================
+   Player Stats Display Styles
+   ============================================ */
+#playerStatsContainer {
+    max-width: 600px;
+    margin: 0 auto var(--spacing-xl) auto;
+}
+
+#playerStatsContainer h2 {
+    text-align: center;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.player-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.stat-card {
+    background: var(--color-gardenia);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.2s ease-in-out;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.stat-card-header .country-icon {
+    font-size: 2.2em; /* Smaller icon for stats card */
+    margin-bottom: 0;
+}
+
+.stat-card-header h3 {
+    color: var(--color-primary);
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.stat-card-body {
+    width: 100%;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-xs) 0;
+    border-bottom: 1px dashed var(--color-border);
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    font-weight: 600;
+    color: var(--color-text-light);
+    font-size: 0.9em;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: var(--color-primary);
+    font-size: 1em;
+}
+
+@media (max-width: 768px) {
+    .player-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    .stat-card {
+        padding: var(--spacing-sm);
+    }
+    .stat-card-header .country-icon {
+        font-size: 1.8em;
+    }
+    .stat-card-header h3 {
+        font-size: 1em;
+    }
+    .stat-label, .stat-value {
+        font-size: 0.8em;
+    }
+}

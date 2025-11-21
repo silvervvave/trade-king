@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -63,29 +63,36 @@
     <div class="admin-container">
         <header>
             <h1>Super Admin Dashboard</h1>
-            <p>紐⑤뱺 ?쒖꽦 寃뚯엫 猷?紐⑤땲?곕쭅</p>
+            <p>모든 활성 게임 룸 모니터링</p>
         </header>
 
         <div class="control-panel">
-            <h2>?쒖꽦 猷?紐⑸줉 (<span id="roomCount">0</span>)</h2>
+            <h2>활성 룸 목록 (<span id="roomCount">0</span>)</h2>
             <div id="roomListContainer">
-                <!-- 諛?紐⑸줉???ш린???숈쟻?쇰줈 異붽??⑸땲?? -->
+                <!-- 방 목록이 여기에 동적으로 추가됩니다 -->
             </div>
         </div>
 
         <div class="control-panel">
-            <h2>?ъ슜??愿由?/h2>
+            <h2>사용자 관리</h2>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <div style="display: flex; align-items: center;">
                     <input type="checkbox" id="selectAllCheckbox" style="margin-right: 8px;">
-                    <label for="selectAllCheckbox">?꾩껜 ?좏깮</label>
+                    <label for="selectAllCheckbox">전체 선택</label>
                 </div>
                 <div>
-                    <button class="admin-btn close-btn" id="deleteSelectedUsersBtn">?좏깮 ??ぉ ??젣</button>
+                    <button class="admin-btn close-btn" id="deleteSelectedUsersBtn">선택 항목 삭제</button>
                 </div>
             </div>
             <div id="userListContainer">
-                <!-- ?ъ슜??紐⑸줉???ш린???숈쟻?쇰줈 異붽??⑸땲?? -->
+                <!-- 사용자 목록이 여기에 동적으로 추가됩니다 -->
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <h2>랭킹</h2>
+            <div id="rankingsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                <!-- 랭킹 정보가 여기에 동적으로 추가됩니다 -->
             </div>
         </div>
     </div>

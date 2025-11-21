@@ -5,7 +5,7 @@ async function getRankings(socket, supabase) {
     try {
         const { data: users, error } = await supabase
             .from('users')
-            .select('name, country, country_stats');
+            .select('name, country_stats');
 
         if (error) throw error;
 
@@ -13,13 +13,19 @@ async function getRankings(socket, supabase) {
         Object.keys(countryConfig).forEach(c => rankings[c] = []);
 
         users.forEach(user => {
-            if (user.country && user.country_stats && user.country_stats[user.country]) {
-                const stats = user.country_stats[user.country];
-                rankings[user.country].push({
-                    name: user.name,
-                    wins: stats.wins || 0,
-                    maxPa: stats.maxPa || 0
-                });
+            if (user.country_stats) {
+                // Iterate over each country's stats within the user's country_stats object
+                for (const countryCode in user.country_stats) {
+                    // Ensure the country from the stats is valid and exists in the rankings object
+                    if (rankings[countryCode] && user.country_stats[countryCode]) {
+                        const stats = user.country_stats[countryCode];
+                        rankings[countryCode].push({
+                            name: user.name,
+                            wins: stats.wins || 0,
+                            maxPa: stats.maxPa || 0
+                        });
+                    }
+                }
             }
         });
 

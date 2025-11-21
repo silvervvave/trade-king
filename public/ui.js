@@ -938,10 +938,98 @@ class UIManager {
         }, 3000); // 3초 후 제거
     }
 
-    getRPSEmoji(choice) {
-        return choice;
+        getRPSEmoji(choice) {
+
+            return choice;
+
+        }
+
+    
+
+        // Player Stats Display
+
+        displayPlayerStats(stats) {
+
+            const container = document.getElementById('playerStatsContainer');
+
+            if (!container) return;
+
+    
+
+            const countries = this.game.countryConfig || {};
+
+            const statsEntries = Object.entries(stats);
+
+    
+
+            let html = '<h2>개인 전적</h2>';
+
+    
+
+            if (statsEntries.length === 0) {
+
+                html += '<p class="info-text">아직 플레이 기록이 없습니다.</p>';
+
+            } else {
+
+                html += '<div class="player-stats-grid">';
+
+                for (const countryKey in countries) {
+
+                    const country = countries[countryKey];
+
+                    const stat = stats[countryKey] || { wins: 0, maxPa: 0 }; // Default stats if not present
+
+    
+
+                    html += `
+
+                        <div class="stat-card">
+
+                            <div class="stat-card-header">
+
+                                <span class="country-icon">${country.icon}</span>
+
+                                <h3>${country.name}</h3>
+
+                            </div>
+
+                            <div class="stat-card-body">
+
+                                <div class="stat-item">
+
+                                    <span class="stat-label">승리</span>
+
+                                    <span class="stat-value">${stat.wins}</span>
+
+                                </div>
+
+                                <div class="stat-item">
+
+                                    <span class="stat-label">최대 PA</span>
+
+                                    <span class="stat-value">${stat.maxPa}</span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+
+                html += '</div>';
+
+            }
+
+    
+
+            container.innerHTML = html;
+
+            container.classList.remove('hidden');
+
+        }
+
     }
-
-
-
-}
