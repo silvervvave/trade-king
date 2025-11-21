@@ -1,20 +1,30 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content, user-scalable=no">
     <title>나는 무역왕이 될거야!</title>
     <link rel="stylesheet" href="styles.css?v=1.1">
 </head>
+
 <body>
     <div id="topBanner">
         <div id="bannerLeft">TRADE-KING</div>
-            <div id="bannerCenter">
-                <div id="gameInfoBtn" class="infoBox clickable">게임 정보</div>
-            </div>        <div id="bannerRight">
+        <div id="bannerCenter">
+            <div id="gameInfoBtn" class="infoBox clickable">게임 정보</div>
+        </div>
+        <div id="bannerRight">
             <div id="connectionStatus"></div>
             <button id="teamSidebarToggle" class="team-sidebar-toggle">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
             </button>
         </div>
     </div>
@@ -35,10 +45,10 @@
     <div id="nameInputScreen" class="screen hidden">
         <div class="join-container">
             <h1>나는 무역왕이 될거야!</h1>
-            <p class="subtitle">학번과 이름을 입력하세요.</p>
+            <p class="subtitle">학번과 이름 입력</p>
             <div class="input-group">
-                <input type="text" id="studentIdInput" placeholder="학번 입력" maxlength="20">
-                <input type="text" id="playerNameInput" placeholder="이름 입력" maxlength="20">
+                <input type="text" id="studentIdInput" placeholder="학번" maxlength="20">
+                <input type="text" id="playerNameInput" placeholder="이름" maxlength="20">
             </div>
             <button class="game-btn btn-primary" id="submitNameBtn">입력 완료</button>
         </div>
@@ -48,9 +58,9 @@
     <div id="roomCodeInputScreen" class="screen hidden">
         <div class="join-container">
             <h1>나는 무역왕이 될거야!</h1>
-            <p class="subtitle">방 번호를 입력하세요.</p>
+            <p class="subtitle">방 코드 입력</p>
             <div class="input-group">
-                <input type="text" id="roomCodeInput" placeholder="방 코드 입력" maxlength="4">
+                <input type="text" id="roomCodeInput" placeholder="방 코드 (4자리)" maxlength="4">
             </div>
             <button class="game-btn btn-primary" id="submitRoomCodeBtn">준비 완료</button>
         </div>
@@ -73,7 +83,7 @@
             <div id="modalCountryDescription"></div>
             <div class="modal-buttons">
                 <button class="game-btn btn-secondary" id="modalCloseBtn">&#x2190;</button>
-                <button class="game-btn btn-primary" id="modalSelectBtn">선택 완료</button>
+                <button class="game-btn btn-primary" id="modalSelectBtn">이 국가로 플레이</button>
             </div>
         </div>
     </div>
@@ -82,11 +92,11 @@
     <div id="waitingScreen" class="screen hidden">
         <div class="waiting-container">
             <h2>게임 대기중...</h2>
-            <p class="info-text">관리자가 게임을 시작할 때까지 기다려주세요</p>
+            <p class="info-text">관리자가 게임을 시작하면 자동으로 시작돼요</p>
             <div class="loading-spinner"></div>
         </div>
     </div>
-    
+
     <!-- 게임 화면 -->
     <div id="gameScreen" class="screen hidden">
         <div class="game-content-wrapper">
@@ -127,16 +137,16 @@
             <!-- 생산 영역 -->
             <div id="productionArea" class="game-area hidden">
                 <h2>생산 단계</h2>
-                
+
                 <!-- 토큰 정보 표시 영역 (추가됨) -->
                 <div id="rerollTokenInfo" style="display: none; margin-top: 10px;">
                     <!-- JavaScript로 동적으로 채워짐 -->
                 </div>
-                
+
                 <div id="mercantilismTokenInfo" style="display: none; margin-top: 10px;">
                     <!-- JavaScript로 동적으로 채워짐 -->
                 </div>
-                
+
                 <div class="production-panel carousel-container">
                     <div class="carousel-slide">
                         <div class="click-section">
@@ -176,18 +186,18 @@
             <!-- 무역 영역 -->
             <div id="tradeArea" class="game-area hidden">
                 <h2>출항 단계</h2>
-                
+
                 <div class="trade-panel">
                     <h3>항해지 선택</h3>
-                    <p class="info-info">중국과 인도 중 한 곳을 선택하여 무역품을 획득하세요. 혹은 이번 라운드를 쉴 수 있습니다.</p>
-                    
+                    <p class="info-info">중국이나 인도를 선택해 무역품을 얻거나, 쉴 수 있어요</p>
+
                     <div class="destination-grid">
                         <div class="destination-card destination-btn" data-destination="china">
                             <div class="destination-icon"></div>
                             <h4>중국</h4>
                             <p class="destination-trait">비단 획득 기회</p>
                         </div>
-                        
+
                         <div class="destination-card destination-btn" data-destination="india">
                             <div class="destination-icon"></div>
                             <h4>인도</h4>
@@ -206,7 +216,7 @@
                             </div>
                         </div>
                         <button class="game-btn btn-primary" id="confirmTradeBtn">
-                            이 금액으로 출항하기
+                            출항
                         </button>
                         <button class="game-btn btn-secondary" id="cancelTradeBtn">
                             취소
@@ -214,44 +224,46 @@
                     </div>
 
                     <button class="game-btn btn-secondary" style="margin-top: 20px;" id="skipTradeBtn">
-                        이번 라운드는 출항하지 않음
+                        이번 라운드 쉬기
                     </button>
-                    
+
                     <div id="tradeSelection" class="selection-display">
                         <p>선택 대기중...</p>
                     </div>
-                    <button class="game-btn btn-secondary hidden" id="resetTradeBtn" style="margin-top: 10px;">선택 초기화</button>
+                    <button class="game-btn btn-secondary hidden" id="resetTradeBtn" style="margin-top: 10px;">다시
+                        선택</button>
                 </div>
             </div>
 
             <!-- 투자 영역 -->
             <div id="investmentArea" class="game-area hidden">
                 <h2>투자 단계</h2>
-                
+
                 <div class="investment-panel carousel-container">
                     <h3>다른 팀에 투자하기</h3>
-                    <p class="info-info">다른 팀의 출항에 투자하여 수익을 나눠 가질 수 있습니다. 출항하지 않은 팀은 표시되지 않습니다.</p>
-                    
+                    <p class="info-info">다른 팀에 투자해서 수익을 나눠 가져요</p>
+
                     <div id="investmentOptions" class="investment-slides-container">
                         <!-- JavaScript로 동적 생성 -->
                     </div>
                     <button class="carousel-prev">◀</button>
                     <button class="carousel-next">▶</button>
-                    <button class="game-btn btn-secondary hidden" id="resetInvestmentsBtn" style="margin-top: 20px;">모든 투자 초기화</button>
+                    <button class="game-btn btn-secondary hidden" id="resetInvestmentsBtn" style="margin-top: 20px;">투자
+                        초기화</button>
                 </div>
             </div>
 
             <!-- 입항 영역 -->
             <div id="arrivalArea" class="game-area hidden">
                 <h2>입항 단계</h2>
-                
+
                 <div class="arrival-panel carousel-container">
                     <div class="carousel-slide">
                         <div class="event-section">
                             <h3>이벤트 카드 뽑기</h3>
-                            <p class="info-info">무작위 이벤트가 발생합니다!</p>
+                            <p class="info-info">랜덤 이벤트 발생!</p>
                             <button class="game-btn btn-primary" id="drawEventBtn">
-                                이벤트 카드 뽑기
+                                카드 뽑기
                             </button>
                             <div id="eventResult" class="result-display"></div>
                         </div>
@@ -296,56 +308,61 @@
             <div id="resultsArea" class="game-area hidden">
                 <h2>게임 종료</h2>
                 <div class="results-panel">
-                    <p class="info-info">관리자가 다음 단계를 시작할 때까지 기다려주세요</p>
+                    <p class="info-info">다음 단계 대기중</p>
                 </div>
             </div>
         </div>
 
-    <!-- 전체 팀 현황 토글 버튼 -->
-    <button id="allTeamsStatusToggle" class="all-teams-status-toggle-bottom">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M1 10.5a11 11 0 0 1 22 0c0 6.07-4.93 11-11 11S1 16.57 1 10.5z"></path>
-            <path d="M12 2.5v16"></path>
-            <path d="M2.68 7.5h18.64"></path>
-            <path d="M2.68 13.5h18.64"></path>
-        </svg>
-    </button>
+        <!-- 전체 팀 현황 토글 버튼 -->
+        <button id="allTeamsStatusToggle" class="all-teams-status-toggle-bottom">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 10.5a11 11 0 0 1 22 0c0 6.07-4.93 11-11 11S1 16.57 1 10.5z"></path>
+                <path d="M12 2.5v16"></path>
+                <path d="M2.68 7.5h18.64"></path>
+                <path d="M2.68 13.5h18.64"></path>
+            </svg>
+        </button>
 
-    <!-- 전체 팀 현황 -->
-    <div id="allTeamsStatusContainer" class="all-teams-status-container"></div>
+        <!-- 전체 팀 현황 -->
+        <div id="allTeamsStatusContainer" class="all-teams-status-container"></div>
 
-    <!-- 게임 정보 모달 -->
-    <div id="gameInfoModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <span class="modal-close-btn">&times;</span>
-            <h2>게임 정보</h2>
-            <div class="info-grid">
-                <p>방 코드:</p><p id="modalRoomCode">-</p>
-                <p>팀 국가:</p><p id="modalTeamName">-</p>
-                <p>플레이어:</p><p id="modalPlayerName">-</p>
+        <!-- 게임 정보 모달 -->
+        <div id="gameInfoModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <span class="modal-close-btn">&times;</span>
+                <h2>게임 정보</h2>
+                <div class="info-grid">
+                    <p>방 코드:</p>
+                    <p id="modalRoomCode">-</p>
+                    <p>팀 국가:</p>
+                    <p id="modalTeamName">-</p>
+                    <p>플레이어:</p>
+                    <p id="modalPlayerName">-</p>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- 결과 모달 -->
-    <div id="resultModal" class="modal-overlay hidden"></div>
+        <!-- 결과 모달 -->
+        <div id="resultModal" class="modal-overlay hidden"></div>
 
-    <!-- Socket.IO 클라이언트 -->
-    <script src="/socket.io/socket.io.js"></script>
-    
-    <!-- 공통 유틸리티 -->
-    <script src="utils.js"></script>
+        <!-- Socket.IO 클라이언트 -->
+        <script src="/socket.io/socket.io.js"></script>
 
-    <!-- 템플릿 -->
-    <script src="templates.js"></script>
+        <!-- 공통 유틸리티 -->
+        <script src="utils.js"></script>
 
-    <!-- UI 관리 -->
-    <script src="ui.js"></script>
+        <!-- 템플릿 -->
+        <script src="templates.js"></script>
 
-    <!-- 소켓 핸들러 -->
-    <script src="socket.js"></script>
-    
-    <!-- 게임 로직 -->
-    <script src="game.js"></script>
+        <!-- UI 관리 -->
+        <script src="ui.js"></script>
+
+        <!-- 소켓 핸들러 -->
+        <script src="socket.js"></script>
+
+        <!-- 게임 로직 -->
+        <script src="game.js"></script>
 </body>
+
 </html>
