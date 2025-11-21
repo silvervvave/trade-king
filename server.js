@@ -178,8 +178,8 @@ io.on('connection', (socket) => {
   socket.on('end_game', async (data) => {
     const { roomId } = socket;
     if (!roomId) return;
-    await withGameState(roomId, (gameState) => {
-      adminHandlers.endGame(io, socket, data, gameState, roomId);
+    await withGameState(roomId, async (gameState) => {
+      await adminHandlers.endGame(io, socket, data, gameState, roomId, redisClient, supabase);
     });
   });
 
@@ -288,9 +288,13 @@ io.on('connection', (socket) => {
         if (gameStateJSON) {
           const gameState = JSON.parse(gameStateJSON);
           const shouldDelete = await playerHandlers.disconnect(io, socket, gameState, roomId, supabase);
+
+          // Only delete from Redis if explicitly told to (not when grace period is active)
           if (shouldDelete) {
             await redisClient.del(`room:${roomId}`);
+            logger.info(`[즉시 삭제] ${roomId} 방이 Redis에서 삭제되었습니다.`);
           } else {
+            // Update Redis state (grace period timer might be running)
             await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));
           }
         }

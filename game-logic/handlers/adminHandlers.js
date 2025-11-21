@@ -154,8 +154,16 @@ function resetGame(io, socket, data, room, roomId) {
     io.to(roomId).emit('game_state_update', safeRoomState);
 }
 
-function endGame(io, socket, data, room, roomId) {
+async function endGame(io, socket, data, room, roomId, redisClient, supabase) {
     if (socket.id !== room.adminSocketId) return;
+
+    // Cancel grace period timer if it exists
+    if (room.gracePeriodTimeout) {
+        clearTimeout(room.gracePeriodTimeout);
+        room.gracePeriodTimeout = null;
+        room.gracePeriodStartedAt = null;
+        logger.info(`[게임 종료] ${roomId} 방의 유예 기간 타이머가 취소되었습니다.`);
+    }
 
     // [MODIFIED] If ending during ARRIVAL, calculate results first.
     if (room.currentPhase === PHASES.ARRIVAL) {
@@ -181,7 +189,27 @@ function endGame(io, socket, data, room, roomId) {
     io.to(roomId).emit('game_ended', finalResults);
 
     // Update player statistics in Supabase
-    updatePlayerStatistics(finalResults, room);
+    await updatePlayerStatistics(finalResults, room);
+
+    // Immediately delete room after game ends (admin-initiated termination)
+    try {
+        // Delete from Supabase
+        const { error: dbError } = await supabase.from('rooms').delete().eq('room_id', roomId);
+        if (dbError) {
+            logger.error(`[게임 종료 - DB 삭제 실패] ${roomId}`, dbError);
+        } else {
+            logger.info(`[게임 종료 - 방 삭제] ${roomId} 방이 게임 종료로 데이터베이스에서 삭제되었습니다.`);
+        }
+
+        // Delete from Redis
+        await redisClient.del(`room:${roomId}`);
+        logger.info(`[게임 종료 - 방 삭제] ${roomId} 방이 Redis에서 삭제되었습니다.`);
+
+        // Notify all clients that the room has been deleted
+        io.to(roomId).emit('room_deleted', { message: '게임이 종료되어 방이 삭제되었습니다.' });
+    } catch (error) {
+        logger.error(`[게임 종료 - 방 삭제 중 오류] ${roomId}`, error);
+    }
 }
 
 async function updatePlayerStatistics(finalResults, room) {

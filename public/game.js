@@ -140,6 +140,7 @@ class GameClient {
         addClick('submitRoomCodeBtn', () => this.joinRoom());
         addClick('modalCloseBtn', () => this.ui.hideCountryDescription());
         addClick('modalSelectBtn', () => this.handleCountrySelect());
+        addClick('backToRoomCodeBtn', () => this.ui.showScreen('roomCodeInputScreen'));
 
         // Top Banner
         addClick('gameInfoBtn', () => this.ui.showGameInfoModal());

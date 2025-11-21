@@ -42,6 +42,8 @@ function createNewGameState() {
       minutes: 0,
       seconds: 0
     },
+    gracePeriodTimeout: null,
+    gracePeriodStartedAt: null,
   };
 }
 

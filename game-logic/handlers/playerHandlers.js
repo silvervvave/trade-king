@@ -95,6 +95,14 @@ async function joinGame(io, socket, data, redisClient, supabase) {
         let playerTeam = null;
         let oldSocketId = null;
 
+        // Cancel grace period if active
+        if (gameState.gracePeriodTimeout) {
+            clearTimeout(gameState.gracePeriodTimeout);
+            gameState.gracePeriodTimeout = null;
+            gameState.gracePeriodStartedAt = null;
+            logger.info(`[유예 기간 취소] 방 ${roomId}에 플레이어가 재접속하여 삭제가 취소되었습니다.`);
+        }
+
         // Check if player with studentId already exists in any team for reconnection
         for (const team of Object.values(gameState.teams)) {
             const member = team.members.find(m => m.studentId === studentId);
@@ -184,6 +192,14 @@ async function joinGame(io, socket, data, redisClient, supabase) {
 function reconnectPlayer(io, socket, data, gameState, roomId) {
     // The studentId and name are now expected to be in the data object directly
     const { studentId, name } = data;
+
+    // Cancel grace period if active
+    if (gameState.gracePeriodTimeout) {
+        clearTimeout(gameState.gracePeriodTimeout);
+        gameState.gracePeriodTimeout = null;
+        gameState.gracePeriodStartedAt = null;
+        logger.info(`[유예 기간 취소] 방 ${roomId}에 플레이어가 재접속하여 삭제가 취소되었습니다.`);
+    }
 
     let foundPlayer = null;
     let playerTeam = null;
@@ -425,17 +441,34 @@ async function disconnect(io, socket, room, roomId, supabase) {
         }
 
         if (connectedPlayersInRoom === 0 && !room.adminSocketId) {
-            try {
-                const { error } = await supabase.from('rooms').delete().eq('room_id', roomId);
-                if (error) {
-                    logger.error(`[DB 삭제 실패] ${roomId}`, error);
-                } else {
-                    logger.info(`[DB 삭제] ${roomId} 방이 비어서 데이터베이스에서 삭제됨`);
-                }
-            } catch (dbError) {
-                logger.error(`[DB 삭제 중 예외 발생] ${roomId}`, dbError);
+            // Start grace period timer if not already started
+            if (!room.gracePeriodTimeout) {
+                const GRACE_PERIOD_MS = (process.env.ROOM_GRACE_PERIOD_SECONDS || 60) * 1000;
+                room.gracePeriodStartedAt = new Date().toISOString();
+
+                logger.info(`[유예 기간 시작] 방 ${roomId}이(가) 모든 플레이어가 나간 후 ${GRACE_PERIOD_MS / 1000}초 후 삭제됩니다.`);
+
+                room.gracePeriodTimeout = setTimeout(async () => {
+                    try {
+                        // Delete from Supabase
+                        const { error } = await supabase.from('rooms').delete().eq('room_id', roomId);
+                        if (error) {
+                            logger.error(`[유예 기간 만료 - DB 삭제 실패] ${roomId}`, error);
+                        } else {
+                            logger.info(`[유예 기간 만료 삭제] 방 ${roomId}이(가) 유예 기간 경과로 데이터베이스에서 삭제됩니다.`);
+                        }
+
+                        // Delete from Redis
+                        const { redisClient } = require('../redisClient');
+                        await redisClient.del(`room:${roomId}`);
+                        logger.info(`[유예 기간 만료 삭제] 방 ${roomId}이(가) Redis에서 삭제되었습니다.`);
+                    } catch (dbError) {
+                        logger.error(`[유예 기간 만료 - 삭제 중 예외 발생] ${roomId}`, dbError);
+                    }
+                }, GRACE_PERIOD_MS);
             }
-            return true; // Always signal for memory cleanup if room is empty
+
+            return false; // Don't delete immediately, timer will handle it
         }
 
         return false; // Signal that the room state should be updated, not deleted
