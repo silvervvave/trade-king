@@ -15,6 +15,7 @@ const productionHandlers = require('./game-logic/handlers/productionHandlers');
 const eventHandlers = require('./game-logic/handlers/eventHandlers');
 const adminHandlers = require('./game-logic/handlers/adminHandlers');
 const rankingHandlers = require('./game-logic/handlers/rankingHandlers');
+const TimerManager = require('./game-logic/timer');
 const { withGameState } = require('./game-logic/utils/gameStateUtil');
 
 // Global error handling for unhandled promise rejections and uncaught exceptions
@@ -52,6 +53,9 @@ const PORT = process.env.PORT || 3000;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
+
+// Timer manager
+const timerManager = new TimerManager(io);
 
 // Middleware
 app.use(express.json());
@@ -245,6 +249,54 @@ io.on('connection', (socket) => {
       logger.error('Error in force_close_room:', error);
       socket.emit('error', { message: 'Failed to close room' });
     }
+  });
+
+  socket.on('reclaim_admin', async (data) => {
+    try {
+      const { roomId } = data;
+      if (!roomId) {
+        socket.emit('admin_reclaimed', { success: false, message: 'Room ID is required' });
+        return;
+      }
+
+      const gameStateJSON = await redisClient.get(`room:${roomId}`);
+      if (!gameStateJSON) {
+        socket.emit('admin_reclaimed', { success: false, message: 'Room not found' });
+        return;
+      }
+
+      const gameState = JSON.parse(gameStateJSON);
+      gameState.adminSocketId = socket.id;
+      await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));
+
+      socket.join(roomId);
+      socket.roomId = roomId;
+
+      socket.emit('admin_reclaimed', { success: true, roomId });
+      socket.emit('game_state_update', gameState);
+      socket.emit('teams_update', { teams: gameState.teams });
+
+      logger.info(`[Admin Reclaimed] ${roomId} by socket ${socket.id}`);
+    } catch (error) {
+      logger.error('Error in reclaim_admin:', error);
+      socket.emit('admin_reclaimed', { success: false, message: 'Server error' });
+    }
+  });
+
+  socket.on('start_timer', async (data) => {
+    const { roomId, minutes, seconds } = data;
+    if (!roomId) return;
+    await withGameState(roomId, (gameState) => {
+      timerManager.start(roomId, gameState, minutes, seconds);
+    });
+  });
+
+  socket.on('stop_timer', async (data) => {
+    const { roomId } = data;
+    if (!roomId) return;
+    await withGameState(roomId, (gameState) => {
+      timerManager.stop(roomId, gameState);
+    });
   });
 
   // --- Trade Handlers ---
