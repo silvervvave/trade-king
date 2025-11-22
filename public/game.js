@@ -324,10 +324,15 @@ class GameClient {
     }
 
     updatePlayerStatsFromServer(teamData) {
-        // [FIX] Add a guard to prevent error if gameState.team is not yet initialized
+        // [FIX] Robust guard clause for teamData and gameState.team initialization
+        if (!teamData) {
+            console.warn('updatePlayerStatsFromServer received null or undefined teamData.');
+            return;
+        }
+
         if (!this.team) {
-            console.warn('updatePlayerStatsFromServer called before gameState.team is not yet initialized. Initializing now.');
-            this.team = {}; // Initialize as an empty object to prevent further errors
+            console.warn('updatePlayerStatsFromServer called before gameState.team is initialized. Initializing with default empty object.');
+            this.team = {};
         }
 
         // Preserve the individual, client-side click progress
@@ -338,23 +343,27 @@ class GameClient {
             clickCount: localClickCount, // Restore local click progress
         };
 
-        this.ui.updatePlayerStats();
-        this.ui.updateTokenDisplay();
-        this.ui.updateRerollButtons(); // [FIX] Reroll 버튼 상태 갱신 추가
-        this.ui.updateTradeSelectionDisplay();
-        this.ui.renderProductionResults();
-        this.ui.renderArrivalResults();
+        try {
+            this.ui.updatePlayerStats();
+            this.ui.updateTokenDisplay();
+            this.ui.updateRerollButtons();
+            this.ui.updateTradeSelectionDisplay();
+            this.ui.renderProductionResults();
+            this.ui.renderArrivalResults();
 
-        const resetTradeBtn = document.getElementById('resetTradeBtn');
-        if (resetTradeBtn) {
-            const tradeSelection = this.team.tradeSelection;
-            resetTradeBtn.classList.toggle('hidden', !tradeSelection);
-        }
+            const resetTradeBtn = document.getElementById('resetTradeBtn');
+            if (resetTradeBtn) {
+                const tradeSelection = this.team.tradeSelection;
+                resetTradeBtn.classList.toggle('hidden', !tradeSelection);
+            }
 
-        const resetInvestmentsBtn = document.getElementById('resetInvestmentsBtn');
-        if (resetInvestmentsBtn) {
-            const investmentsMade = this.team.investmentsMade || [];
-            resetInvestmentsBtn.classList.toggle('hidden', investmentsMade.length === 0);
+            const resetInvestmentsBtn = document.getElementById('resetInvestmentsBtn');
+            if (resetInvestmentsBtn) {
+                const investmentsMade = this.team.investmentsMade || [];
+                resetInvestmentsBtn.classList.toggle('hidden', investmentsMade.length === 0);
+            }
+        } catch (error) {
+            console.error('Error updating UI from server stats:', error);
         }
     }
 

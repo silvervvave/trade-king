@@ -54,13 +54,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Admin authentication
 app.use('/super-admin', basicAuth({
-  users: { 'admin': 'superadmin' },
+  users: { 'superadmin': 'superadmin' },
   challenge: true,
   realm: 'Imb4T3st4pp',
 }));
 
 app.get('/super-admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'super-admin.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // API endpoint to get the country configuration
@@ -100,11 +104,22 @@ io.on('connection', (socket) => {
     try {
       const { roomId } = data;
       const exists = await redisClient.exists(`room:${roomId}`);
-      if (callback) callback({ exists: !!exists });
-      else socket.emit('room_check_result', { exists: !!exists, roomId });
+      const response = { exists: !!exists, roomId };
+
+      if (typeof callback === 'function') {
+        callback(response);
+      } else {
+        socket.emit('room_check_result', response);
+      }
     } catch (error) {
       logger.error('Error in check_room_exists:', error);
-      if (callback) callback({ exists: false, error: 'Server error' });
+      const errorResponse = { exists: false, error: 'Server error checking room' };
+
+      if (typeof callback === 'function') {
+        callback(errorResponse);
+      } else {
+        socket.emit('room_check_result', errorResponse);
+      }
     }
   });
 

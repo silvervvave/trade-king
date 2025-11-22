@@ -7,9 +7,22 @@ const memoryStore = {};
 
 logger.info('Initializing Redis Client...');
 
+// Construct Redis URL if not explicitly defined
+let redisUrl = process.env.REDIS_URL;
+if (!redisUrl && process.env.REDIS_HOST) {
+    const user = process.env.REDIS_USER || '';
+    const password = process.env.REDIS_PASSWORD || '';
+    const host = process.env.REDIS_HOST;
+    const port = process.env.REDIS_PORT || 6379;
+
+    const auth = password ? `${user}:${password}@` : '';
+    redisUrl = `redis://${auth}${host}:${port}`;
+    logger.info(`Constructed Redis URL from env vars: redis://${auth ? '****@' : ''}${host}:${port}`);
+}
+
 // Create client but don't connect yet
 client = createClient({
-    url: process.env.REDIS_URL,
+    url: redisUrl,
     socket: {
         connectTimeout: 5000, // 5 seconds timeout
         reconnectStrategy: false // Disable auto-reconnect for now to fail fast

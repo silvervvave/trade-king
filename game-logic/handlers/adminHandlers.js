@@ -240,8 +240,8 @@ async function updatePlayerStatistics(finalResults, room) {
         });
     }
 
-    // Update each player's country_stats
-    for (const update of playerUpdates) {
+    // Update each player's country_stats in parallel
+    await Promise.all(playerUpdates.map(async (update) => {
         try {
             // Fetch current country_stats
             const { data: user, error: fetchError } = await supabase
@@ -252,7 +252,7 @@ async function updatePlayerStatistics(finalResults, room) {
 
             if (fetchError) {
                 logger.error(`[통계 업데이트 실패] ${update.studentId}: ${fetchError.message}`);
-                continue;
+                return;
             }
 
             // Initialize country_stats if null
@@ -287,7 +287,7 @@ async function updatePlayerStatistics(finalResults, room) {
         } catch (err) {
             logger.error(`[통계 업데이트 예외] ${update.studentId}: ${err.message}`);
         }
-    }
+    }));
 }
 
 function resetProduction(io, socket, data, room, roomId) {

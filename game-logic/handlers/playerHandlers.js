@@ -3,6 +3,16 @@ const { countryConfig } = require('../../config');
 const logger = require('../utils/logger');
 const { _getPlayerAndTeam, broadcastTeamsUpdate } = require('./common');
 
+/**
+ * Registers a player to a specific team in a room.
+ * Handles team creation, member addition, and team switching logic.
+ * 
+ * @param {Object} io - Socket.io server instance
+ * @param {Object} socket - Socket.io socket instance
+ * @param {Object} data - Data containing country, studentId, and name
+ * @param {Object} room - Current room state object
+ * @param {string} roomId - ID of the room
+ */
 function registerPlayer(io, socket, data, room, roomId) {
     const { country, studentId, name } = data;
 
@@ -74,6 +84,16 @@ function registerPlayer(io, socket, data, room, roomId) {
     broadcastTeamsUpdate(io, room, roomId);
 }
 
+/**
+ * Handles a player joining a game room.
+ * Manages both new player entry and reconnection logic.
+ * 
+ * @param {Object} io - Socket.io server instance
+ * @param {Object} socket - Socket.io socket instance
+ * @param {Object} data - Data containing roomId, studentId, name, and country
+ * @param {Object} redisClient - Redis client for state management
+ * @param {Object} supabase - Supabase client for database operations
+ */
 async function joinGame(io, socket, data, redisClient, supabase) {
     const { roomId, studentId, name, country } = data;
 
@@ -185,7 +205,7 @@ async function joinGame(io, socket, data, redisClient, supabase) {
 
     } catch (error) {
         logger.error(`[Join Game 오류] Room: ${roomId}, User: ${name}`, error);
-        socket.emit('error', { message: '게임에 참가하는 중 오류가 발생했습니다.' });
+        socket.emit('error', { message: '게임에 참가하는 중 서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' });
     }
 }
 
@@ -278,6 +298,15 @@ async function getRoomInfo(io, socket, data, redisClient) {
     }
 }
 
+/**
+ * Handles user login or registration.
+ * Verifies student ID and name against the database.
+ * 
+ * @param {Object} socket - Socket.io socket instance
+ * @param {Object} data - Data containing studentId and name
+ * @param {Object} supabase - Supabase client
+ * @returns {Promise<Object>} Object indicating if a new user was created
+ */
 async function loginOrRegister(socket, data, supabase) {
     const { studentId, name } = data;
     let newUserCreated = false;
@@ -340,7 +369,7 @@ async function loginOrRegister(socket, data, supabase) {
 
     } catch (error) {
         logger.error('Login or registration failed', error);
-        socket.emit('login_failure', { message: '서버 오류가 발생했습니다. 다시 시도해주세요.' });
+        socket.emit('login_failure', { message: '로그인 처리 중 서버 오류가 발생했습니다. 관리자에게 문의해주세요.' });
         return { newUserCreated: false };
     }
 }
@@ -448,7 +477,7 @@ async function disconnect(io, socket, room, roomId, supabase) {
 
                 logger.info(`[유예 기간 시작] 방 ${roomId}이(가) 모든 플레이어가 나간 후 ${GRACE_PERIOD_MS / 1000}초 후 삭제됩니다.`);
 
-                room.gracePeriodTimeout = setTimeout(async () => {
+                const timeoutId = setTimeout(async () => {
                     try {
                         // Delete from Supabase
                         const { error } = await supabase.from('rooms').delete().eq('room_id', roomId);
@@ -466,6 +495,14 @@ async function disconnect(io, socket, room, roomId, supabase) {
                         logger.error(`[유예 기간 만료 - 삭제 중 예외 발생] ${roomId}`, dbError);
                     }
                 }, GRACE_PERIOD_MS);
+
+                // Make timeout non-enumerable to avoid circular reference in JSON.stringify
+                Object.defineProperty(room, 'gracePeriodTimeout', {
+                    value: timeoutId,
+                    enumerable: false,
+                    configurable: true,
+                    writable: true
+                });
             }
 
             return false; // Don't delete immediately, timer will handle it

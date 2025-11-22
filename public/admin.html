@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trade-king admin</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div id="topBanner">
         <div id="bannerLeft">TRADE-KING</div>
@@ -15,133 +17,186 @@
         <div id="bannerRight">
             <div id="connectionStatus"></div>
             <button id="adminSidebarToggle" class="team-sidebar-toggle">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </button>
-        </div>
-    </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <!DOCTYPE html>
+                    <html lang="ko">
 
-    <div class="admin-container">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Trade-king admin</title>
+                        <link rel="stylesheet" href="styles.css">
+                    </head>
 
-        <!-- 방 생성 섹션 -->
-        <div id="roomCreationSection" class="control-panel">
-            <button id="createRoomBtn" class="admin-btn btn-production" style="width: 100%;">
-                + 새로운 게임 방 만들기
-            </button>
-        </div>
-
-        <!-- 방 재입장 섹션 -->
-        <div id="roomReentrySection" class="control-panel" style="text-align: center;">
-            <h2>기존 방 재입장</h2>
-            <p class="info-text" style="text-align: center; margin-bottom: 20px;">접속이 끊긴 방에 다시 접속합니다.</p>
-            <div class="input-group" style="margin-bottom: 15px;">
-                <label style="text-align: center;" for="reentryRoomCodeInput">방 코드 (4자리)</label>
-                <input type="text" id="reentryRoomCodeInput" placeholder="방 코드 입력" maxlength="4" style="text-align: center; text-transform: uppercase;">
-            </div>
-            <button id="reenterRoomBtn" class="admin-btn btn-secondary" style="width: 100%;">
-                재입장
-            </button>
-        </div>
-
-        <!-- 메인 대시보드 (초기에는 숨김) -->
-        <div id="mainDashboard" class="hidden">
-            <div class="current-status">
-                <div class="status-grid">
-                    <div class="status-card">
-                        <div class="status-label">라운드</div>
-                        <div class="status-value" id="currentRound">대기중</div>
-                    </div>
-                    <div class="status-card">
-                        <div class="status-label">턴</div>
-                        <div class="status-value" id="currentPhase">-</div>
-                    </div>
-                    <div class="status-card">
-                        <div class="status-label">타이머</div>
-                        <div class="status-value" id="timerDisplay">00:00</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-panel">
-                <div class="control-grid">
-                    <div id="gameStartSection" class="control-section">
-                        <h2>게임 시작</h2>
-                        <div class="button-group">
-                            <button id="startGameBtn" class="admin-btn btn-production" onclick="startPhase('production')">
-                                게임 시작 (생산)
-                            </button>
+                    <body>
+                        <div id="topBanner">
+                            <div id="bannerLeft">TRADE-KING</div>
+                            <div id="bannerCenter">
+                                <div id="roomCodeInfoBox" class="infoBox">RM: <span id="bannerRoomCode">-</span></div>
+                            </div>
+                            <div id="bannerRight">
+                                <div id="connectionStatus"></div>
+                                <button id="adminSidebarToggle" class="team-sidebar-toggle">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                        <circle cx="9" cy="7" r="4" />
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    <div id="tradeControlSection" class="control-section hidden">
-                        <h2>출항 진행</h2>
-                        <div class="button-group">
-                            <button class="admin-btn btn-trade" onclick="startPhase('trade')">출항 단계</button>
-                            <button class="admin-btn btn-timer" onclick="startPhase('investment')">투자 단계</button>
-                            <button class="admin-btn btn-arrival" onclick="startPhase('arrival')">입항 단계</button>
+                        <div class="admin-container">
+
+                            <!-- 방 생성 섹션 -->
+                            <div id="roomCreationSection" class="control-panel">
+                                <button id="createRoomBtn" class="admin-btn btn-production" style="width: 100%;">
+                                    + 새로운 게임 방 만들기
+                                </button>
+                            </div>
+
+                            <!-- 방 재입장 섹션 -->
+                            <div id="roomReentrySection" class="control-panel" style="text-align: center;">
+                                <h2>기존 방 재입장</h2>
+                                <p class="info-text" style="text-align: center; margin-bottom: 20px;">접속이 끊긴 방에 다시
+                                    접속합니다.</p>
+                                <div class="input-group" style="margin-bottom: 15px;">
+                                    <label style="text-align: center;" for="reentryRoomCodeInput">방 코드 (4자리)</label>
+                                    <input type="text" id="reentryRoomCodeInput" placeholder="방 코드 입력" maxlength="4"
+                                        style="text-align: center; text-transform: uppercase;">
+                                </div>
+                                <button id="reenterRoomBtn" class="admin-btn btn-secondary" style="width: 100%;">
+                                    재입장
+                                </button>
+                            </div>
+
+                            <!-- 실시간 랭킹 섹션 (초기 화면에 표시) -->
+                            <div id="rankingsSection" class="control-panel">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <h2 style="margin-bottom: 0; border-bottom: none;">실시간 랭킹</h2>
+                                    <button class="admin-btn" onclick="socket.emit('get_rankings')"
+                                        style="min-width: auto; padding: 0.5rem 1rem; font-size: 0.9rem;">
+                                        🔄 새로고침
+                                    </button>
+                                </div>
+                                <div id="rankingsContainer" class="rankings-grid">
+                                    <div
+                                        style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--color-text-light);">
+                                        랭킹 데이터를 불러오는 중입니다...
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 메인 대시보드 (초기에는 숨김) -->
+                            <div id="mainDashboard" class="hidden">
+                                <div class="current-status">
+                                    <div class="status-grid">
+                                        <div class="status-card">
+                                            <div class="status-label">라운드</div>
+                                            <div class="status-value" id="currentRound">대기중</div>
+                                        </div>
+                                        <div class="status-card">
+                                            <div class="status-label">턴</div>
+                                            <div class="status-value" id="currentPhase">-</div>
+                                        </div>
+                                        <div class="status-card">
+                                            <div class="status-label">타이머</div>
+                                            <div class="status-value" id="timerDisplay">00:00</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="control-panel">
+                                    <div class="control-grid">
+                                        <div id="gameStartSection" class="control-section">
+                                            <h2>게임 시작</h2>
+                                            <div class="button-group">
+                                                <button id="startGameBtn" class="admin-btn btn-production"
+                                                    onclick="startPhase('production')">
+                                                    게임 시작 (생산)
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div id="tradeControlSection" class="control-section hidden">
+                                            <h2>출항 진행</h2>
+                                            <div class="button-group">
+                                                <button class="admin-btn btn-trade" onclick="startPhase('trade')">출항
+                                                    단계</button>
+                                                <button class="admin-btn btn-timer"
+                                                    onclick="startPhase('investment')">투자 단계</button>
+                                                <button class="admin-btn btn-arrival" onclick="startPhase('arrival')">입항
+                                                    단계</button>
+                                            </div>
+                                            <div class="button-group" style="margin-top: 20px;">
+                                                <button class="admin-btn btn-end" onclick="endGame()">게임 종료</button>
+                                            </div>
+                                        </div>
+
+                                        <div class="control-section">
+                                            <h2>타이머 제어</h2>
+                                            <div class="timer-controls">
+                                                <input type="number" id="timerMinutes" placeholder="분" min="0" max="60"
+                                                    value="3">
+                                                <input type="number" id="timerSeconds" placeholder="초" min="0" max="59"
+                                                    value="0">
+                                                <button class="admin-btn btn-timer" onclick="startTimer()">시작</button>
+                                                <button class="admin-btn btn-end" onclick="stopTimer()">정지</button>
+                                                <button class="admin-btn" onclick="resetTimer()">리셋</button>
+                                            </div>
+                                        </div>
+
+                                        <div class="control-section">
+                                            <h2>기타 기능</h2>
+                                            <div class="button-group">
+                                                <button class="admin-btn btn-end" onclick="resetGame()">게임 전체
+                                                    리셋</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="allTeamsStatusContainer" class="control-panel hidden">
+                                    <h2>팀 현황</h2>
+                                    <div class="teams-grid-container">
+                                        <!-- Team status cards will be dynamically generated here -->
+                                    </div>
+                                </div>
+
+                                <div id="gameLogContainer" class="control-panel hidden">
+                                    <h2>게임 로그</h2>
+                                    <div class="log-container"></div>
+                                </div>
+                            </div>
+
                         </div>
-                        <div class="button-group" style="margin-top: 20px;">
-                            <button class="admin-btn btn-end" onclick="endGame()">게임 종료</button>
+
+                        <!-- Room Code Modal -->
+                        <div id="roomCodeModal" class="hidden">
+                            <div class="modal-content-room-code">
+                                <div id="modalRoomCodeDisplay" style="text-align: center;">-</div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="control-section">
-                        <h2>타이머 제어</h2>
-                        <div class="timer-controls">
-                            <input type="number" id="timerMinutes" placeholder="분" min="0" max="60" value="3">
-                            <input type="number" id="timerSeconds" placeholder="초" min="0" max="59" value="0">
-                            <button class="admin-btn btn-timer" onclick="startTimer()">시작</button>
-                            <button class="admin-btn btn-end" onclick="stopTimer()">정지</button>
-                            <button class="admin-btn" onclick="resetTimer()">리셋</button>
-                        </div>
-                    </div>
+                        <!-- Socket.IO 클라이언트 라이브러리 -->
+                        <script src="/socket.io/socket.io.js"></script>
 
-                    <div class="control-section">
-                        <h2>기타 기능</h2>
-                        <div class="button-group">
-                            <button class="admin-btn" onclick="resetProduction()">생산 리셋</button>
-                            <button class="admin-btn btn-end" onclick="resetGame()">게임 전체 리셋</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        <!-- 공통 유틸리티 -->
+                        <script src="utils.js"></script>
 
-        <div id="allTeamsStatusContainer" class="control-panel hidden">
-            <h2>팀 현황</h2>
-            <div class="teams-grid-container">
-                <!-- Team status cards will be dynamically generated here -->
-            </div>
-        </div>
+                        <!-- admin-client.js -->
+                        <script src="admin-client.js"></script>
 
-        <div id="gameLogContainer" class="control-panel hidden">
-            <h2>게임 로그</h2>
-            <div class="log-container"></div>
-        </div>
-    </div>
+                        <!-- 최종 결과 모달 -->
+                        <div id="finalResultsModal" class="modal-overlay hidden"></div>
+                    </body>
 
-    <div id="adminSidebar" class="team-sidebar">
-        <h3>참가자 목록</h3>
-        <div id="sidebarTeamsContainer">
-            <!-- Participant team status will be rendered here -->
-        </div>
-    </div>
-
-    <!-- Room Code Modal -->
-    <div id="roomCodeModal" class="hidden">
-        <div class="modal-content-room-code">
-            <div id="modalRoomCodeDisplay" style="text-align: center;">-</div>
-        </div>
-    </div>
-
-    <!-- Socket.IO 클라이언트 라이브러리 -->
-    <script src="/socket.io/socket.io.js"></script>
-    
-    <!-- 공통 유틸리티 -->
-    <script src="utils.js"></script>
-    
-    <!-- admin-client.js -->
-    <script src="admin-client.js"></script>
-
-    <!-- 최종 결과 모달 -->
-    <div id="finalResultsModal" class="modal-overlay hidden"></div>
-</body>
-</html>
+                    </html>

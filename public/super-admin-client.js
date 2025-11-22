@@ -6,11 +6,11 @@ const socket = io();
 // This handler is for super-admin-specific logic that runs on connection.
 
 // TODO: For production, this key should be securely fetched or managed, not hardcoded.
-const SUPER_ADMIN_KEY = 'superadmin'; 
+const SUPER_ADMIN_KEY = 'superadmin';
 
 socket.on('connect', () => {
     console.log('Super Admin 클라이언트 연결됨.');
-    
+
     // 서버의 전용 룸에 참가하여 실시간 업데이트를 구독
     socket.emit('join_super_admin_room');
 
@@ -35,7 +35,7 @@ socket.on('room_list_update', (roomList) => {
     roomList.forEach(room => {
         const card = document.createElement('div');
         card.className = 'room-card';
-        
+
         const statusText = room.gameStarted ? `Round ${room.currentRound} - ${getPhaseKorean(room.currentPhase)}` : '대기중';
 
         card.innerHTML = `
@@ -64,7 +64,7 @@ socket.on('users_list_update', (users) => {
     users.forEach(user => {
         const card = document.createElement('div');
         card.className = 'user-card'; // Use new user-card class
-        
+
         const createdAt = new Date(user.created_at).toLocaleString();
 
         card.innerHTML = `
@@ -140,60 +140,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Rankings display
-socket.on('rankings_update', (rankings) => {
-    displayRankings(rankings);
-});
 
-function displayRankings(rankings) {
-    const container = document.getElementById('rankingsContainer');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    const countries = {
-        spain: { name: '스페인', icon: '🇪🇸' },
-        netherlands: { name: '네덜란드', icon: '🇳🇱' },
-        england: { name: '영국', icon: '🇬🇧' },
-        france: { name: '프랑스', icon: '🇫🇷' }
-    };
-    
-    for (const [countryKey, countryInfo] of Object.entries(countries)) {
-        const countryRankings = rankings[countryKey] || [];
-        
-        const card = document.createElement('div');
-        card.style.cssText = 'background: var(--color-surface); border: 1px solid var(--color-text-light); border-radius: var(--radius-lg); padding: var(--space-16);';
-        
-        let html = `<h3 style="margin-bottom: 0.5rem;">${countryInfo.icon} ${countryInfo.name}</h3>`;
-        
-        if (countryRankings.length === 0) {
-            html += '<p style="color: var(--color-text-light); font-size: 0.9rem;">기록 없음</p>';
-        } else {
-            html += '<table style="width: 100%; border-collapse: collapse;">';
-            html += '<thead><tr style="border-bottom: 1px solid var(--color-text-light);"><th style="text-align: left; padding: 0.5rem;">순위</th><th style="text-align: left;">이름</th><th style="text-align: right;">승</th><th style="text-align: right;">PA</th></tr></thead>';
-            html += '<tbody>';
-            
-            countryRankings.slice(0, 3).forEach((player, index) => {
-                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
-                html += `
-                    <tr style="border-bottom: 1px solid rgba(180,180,180,0.3);">
-                        <td style="padding: 0.5rem;">${medal}</td>
-                        <td>${player.name}</td>
-                        <td style="text-align: right;">${player.wins}</td>
-                        <td style="text-align: right;">${player.maxPa}</td>
-                    </tr>
-                `;
-            });
-            
-            html += '</tbody></table>';
-        }
-        
-        card.innerHTML = html;
-        container.appendChild(card);
-    }
-}
-
-// Request rankings on page load
-setTimeout(() => {
-    socket.emit('get_rankings');
-}, 500);
