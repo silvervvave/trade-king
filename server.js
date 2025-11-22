@@ -211,6 +211,42 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('force_close_room', async (data) => {
+    try {
+      const { roomId } = data;
+      if (!roomId) {
+        socket.emit('error', { message: 'Room ID is required' });
+        return;
+      }
+
+      // Delete from Redis
+      await redisClient.del(`room:${roomId}`);
+
+      // Delete from Supabase
+      const { error } = await supabase.from('rooms').delete().eq('room_id', roomId);
+      if (error) {
+        logger.error('Error deleting room from Supabase:', error);
+      }
+
+      // Notify all clients in the room
+      io.to(roomId).emit('room_closed_success', { roomId });
+
+      // Disconnect all sockets in the room
+      const socketsInRoom = await io.in(roomId).fetchSockets();
+      for (const s of socketsInRoom) {
+        s.leave(roomId);
+        if (s.roomId === roomId) {
+          s.roomId = null;
+        }
+      }
+
+      logger.info(`[Room Deleted] ${roomId} by admin`);
+    } catch (error) {
+      logger.error('Error in force_close_room:', error);
+      socket.emit('error', { message: 'Failed to close room' });
+    }
+  });
+
   // --- Trade Handlers ---
   socket.on('trade_selection', async (data) => {
     const { roomId } = socket;

@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (adminRoomId && confirm('현재 방을 삭제하고 초기화면으로 돌아가시겠습니까?')) {
                 socket.emit('force_close_room', { roomId: adminRoomId });
             } else if (!adminRoomId) {
-                window.location.reload();
+                window.location.href = '/admin';
             }
         });
     }
@@ -178,7 +178,7 @@ socket.on('room_closed_success', (data) => {
         localStorage.removeItem('adminRoomId');
         adminRoomId = null;
         setTimeout(() => {
-            window.location.reload();
+            window.location.href = '/admin';
         }, 1500);
     }
 });
