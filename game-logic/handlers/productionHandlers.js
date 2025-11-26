@@ -1,5 +1,5 @@
 const { countryConfig } = require('../../config');
-const { _getPlayerAndTeam, updateTeamMembers, broadcastTeamsUpdate, _handleReroll } = require('./common');
+const { _getPlayerAndTeam, updateTeamMembers, broadcastTeamsUpdate } = require('./common');
 const { determineRPSResult } = require('../utils');
 const { COUNTRIES, RPS_WIN_PA_CHANGE, RPS_LOSE_PA_CHANGE, PHASES } = require('../constants');
 const logger = require('../utils/logger');
@@ -66,12 +66,7 @@ function playRPS(io, socket, data, room, roomId) {
     broadcastTeamsUpdate(io, room, roomId);
 }
 
-function rerollRPS(io, socket, data, room, roomId) {
-    _handleReroll(io, socket, room, roomId, PHASES.PRODUCTION);
-}
-
 module.exports = {
     completeProductionBatch,
     playRPS,
-    rerollRPS
 };

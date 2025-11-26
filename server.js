@@ -341,14 +341,6 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('reroll_rps', async (data) => {
-    const { roomId } = socket;
-    if (!roomId) return;
-    await withGameState(roomId, (gameState) => {
-      productionHandlers.rerollRPS(io, socket, data, gameState, roomId);
-    });
-  });
-
   socket.on('complete_production_batch', async (data) => {
     const { roomId } = socket;
     if (!roomId) return;
@@ -371,14 +363,6 @@ io.on('connection', (socket) => {
     if (!roomId) return;
     await withGameState(roomId, (gameState) => {
       eventHandlers.playFinalRPS(io, socket, data, gameState, roomId);
-    });
-  });
-
-  socket.on('reroll_final_rps', async (data) => {
-    const { roomId } = socket;
-    if (!roomId) return;
-    await withGameState(roomId, (gameState) => {
-      eventHandlers.rerollFinalRPS(io, socket, data, gameState, roomId);
     });
   });
 

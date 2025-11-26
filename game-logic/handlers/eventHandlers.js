@@ -1,6 +1,6 @@
 const { EVENT_CONFIG } = require('../../config');
 const { determineEvent, determineRPSResult } = require('../utils');
-const { _getPlayerAndTeam, updateTeamMembers, _handleReroll } = require('./common');
+const { _getPlayerAndTeam, updateTeamMembers } = require('./common');
 const { PHASES, COUNTRIES, FINAL_RPS_WIN_GOODS_CHANGE, FINAL_RPS_LOSE_GOODS_CHANGE } = require('../constants');
 
 function drawEvent(io, socket, data, room, roomId) {
@@ -37,7 +37,7 @@ function playFinalRPS(io, socket, data, room, roomId) {
         return socket.emit('error', { message: error });
     }
 
-    if (team.finalRpsPlayedThisRound || !team.tradeSelection || team.camusariHappened) return;
+    if (team.finalRpsPlayedThisRound || !team.tradeSelection || team.camusariHappened || !team.eventDrawnThisRound) return;
 
     const computerChoice = ['✌️', '✊', '✋'][Math.floor(Math.random() * 3)];
     let result = determineRPSResult(data.choice, computerChoice);
@@ -65,12 +65,7 @@ function playFinalRPS(io, socket, data, room, roomId) {
     // calculateArrivalResults(io, team, room, roomId); // REMOVED: Calculation is now deferred to the end of the phase.
 }
 
-function rerollFinalRPS(io, socket, data, room, roomId) {
-    _handleReroll(io, socket, room, roomId, PHASES.ARRIVAL);
-}
-
 module.exports = {
     drawEvent,
     playFinalRPS,
-    rerollFinalRPS
 };

@@ -308,7 +308,6 @@ class UIManager {
         }
         this.updatePlayerStats();
         this.updateTokenDisplay();
-        this.updateRerollButtons();
         this.updateAllTeamsStatus(this.game.teams);
         this.updateMyTeamStatus(this.game.teams);
         this.setupPhaseScreen(gameState.currentPhase);
@@ -334,21 +333,6 @@ class UIManager {
     }
 
     updateTokenDisplay() {
-        const rerollInfo = document.getElementById('rerollTokenInfo');
-        if (rerollInfo) {
-            if (this.game.gameState && this.game.player && this.game.player.country === 'england') {
-                rerollInfo.style.display = 'block';
-                rerollInfo.innerHTML = `
-                    <div class="token-info">
-                                <span class="token-icon"></span>
-                                <span class="token-text">절대권력: ${this.game.team.rpsRerolls}개</span>
-                    </div>
-                `;
-            } else {
-                rerollInfo.style.display = 'none';
-            }
-        }
-        
         const mercantilismInfo = document.getElementById('mercantilismTokenInfo');
         if (mercantilismInfo) {
             if (this.game.gameState && this.game.player && this.game.player.country === 'france') {
@@ -363,36 +347,6 @@ class UIManager {
             } else {
                 mercantilismInfo.style.display = 'none';
             }
-        }
-    }
-
-    updateRerollButtons() {
-        if (!this.game.gameState || !this.game.team || !this.game.player) {
-            return;
-        }
-
-        const team = this.game.team;
-        const player = this.game.player;
-
-        const isEngland = player.country === 'england';
-        const hasTokens = team.rpsRerolls > 0;
-        const alreadyUsed = team.rerollUsedThisRound;
-        const canReroll = isEngland && hasTokens && !alreadyUsed;
-
-        // Production Reroll Button
-        const rerollBtn = document.getElementById('rerollRPSBtn');
-        if (rerollBtn) {
-            // Show the button only if the player can reroll AND the initial RPS has been played.
-            const show = canReroll && team.rpsPlayedThisRound;
-            rerollBtn.classList.toggle('hidden', !show);
-        }
-
-        // Final Reroll Button
-        const finalRerollBtn = document.getElementById('rerollFinalRPSBtn');
-        if (finalRerollBtn) {
-            // Show the button only if the player can reroll AND the final RPS has been played.
-            const show = canReroll && team.finalRpsPlayedThisRound;
-            finalRerollBtn.classList.toggle('hidden', !show);
         }
     }
 

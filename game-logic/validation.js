@@ -45,18 +45,12 @@ const schemas = {
     roomId: z.string().length(4),
     choice: z.enum(Object.values(RPS_CHOICES)),
   }),
-  reroll_rps: z.object({
-    roomId: z.string().length(4),
-  }),
   draw_event: z.object({
     roomId: z.string().length(4),
   }),
   play_final_rps: z.object({
     roomId: z.string().length(4),
     choice: z.enum(Object.values(RPS_CHOICES)),
-  }),
-  reroll_final_rps: z.object({
-    roomId: z.string().length(4),
   }),
   reset_game: z.object({
     roomId: z.string().length(4),

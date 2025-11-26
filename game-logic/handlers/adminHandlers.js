@@ -16,7 +16,6 @@ function initializeNewRound(room) {
         // Existing logic
         t.eventDrawnThisRound = false;
         t.finalRpsPlayedThisRound = false;
-        t.rerollUsedThisRound = false;
         t.camusariHappened = false; // 카무사리 상태 초기화
         t.eventText = '';
         t.eventResultClass = '';
@@ -25,16 +24,12 @@ function initializeNewRound(room) {
         t.rpsPlayedThisRound = false; // 생산 단계 RPS 실행 여부 초기화
         t.finalRpsResultData = null; // 도착 단계 RPS 결과 초기화
         t.arrivalCalculationDone = false; // 보상 계산 플래그 초기화
-        if (t.country === COUNTRIES.ENGLAND) {
-            t.rpsRerolls = 1;
-        }
     });
 }
 
 function resetProductionPhase(room) {
     Object.values(room.teams).forEach(t => {
         // Reset production phase state
-        t.rerollUsedThisRound = false;
         t.rpsPaChange = 0;
         t.rpsResult = null;
         t.batchCount = 0; // Reset batch count for the new production phase

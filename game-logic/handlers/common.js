@@ -27,42 +27,6 @@ function updateTeamMembers(io, team, room, roomId) {
     broadcastTeamsUpdate(io, room, roomId);
 }
 
-function _handleReroll(io, socket, room, roomId, phase) {
-    const { player, team, error } = _getPlayerAndTeam(room, socket.id);
-    if (error) {
-        return socket.emit('error', { message: error });
-    }
-
-    if (team.country !== COUNTRIES.ENGLAND || team.rpsRerolls <= 0) {
-        return socket.emit('error', { message: '리롤 토큰을 사용할 수 없습니다.' });
-    }
-
-    if (team.rerollUsedThisRound) {
-        return socket.emit('error', { message: '이번 라운드에 리롤 토큰을 사용했습니다.' });
-    }
-
-    team.rerollUsedThisRound = true;
-    team.rpsRerolls--;
-
-    const isProduction = phase === PHASES.PRODUCTION;
-    if (isProduction) {
-        team.totalPA = Math.max(0, team.totalPA - (team.rpsPaChange || 0));
-        team.rpsPaChange = 0;
-        team.rpsPlayedThisRound = false;
-        team.rpsResult = null; // 이전 RPS 결과 초기화
-    } else { // arrival
-        team.finalRpsPlayedThisRound = false;
-        team.rpsGoodsChange = 0;
-    }
-
-    socket.emit('action_result', {
-        message: '리롤 토큰을 사용했습니다. 다시 선택하세요!',
-        teamState: team,
-        action: isProduction ? 'rps_reroll' : 'final_rps_reroll'
-    });
-    broadcastTeamsUpdate(io, room, roomId);
-}
-
 function distributeInvestmentReturns(io, team, room, roomId, goodsMultiplier, rpsGoodsChange, destination) {
     if (team.investmentsReceived.length > 0) {
         if (team.camusariHappened) {
@@ -163,5 +127,4 @@ module.exports = {
     updateTeamMembers,
     distributeInvestmentReturns,
     calculateArrivalResults,
-    _handleReroll
 };

@@ -157,14 +157,12 @@ class GameClient {
 
         // Phase-specific Actions
         addClick('produceBtn', () => this.produce());
-        addClick('rerollRPSBtn', () => this.rerollRPS());
         addClick('confirmTradeBtn', () => this.confirmTrade());
         addClick('cancelTradeBtn', () => this.ui.cancelTrade());
         addClick('skipTradeBtn', () => this.confirmTrade('none'));
         addClick('resetTradeBtn', () => this.resetTrade());
         addClick('resetInvestmentsBtn', () => this.resetInvestments());
         addClick('drawEventBtn', () => this.drawEvent());
-        addClick('rerollFinalRPSBtn', () => this.rerollFinalRPS());
 
         // Event delegation for dynamically created elements or multiple elements
         document.body.addEventListener('click', (event) => {
@@ -423,29 +421,6 @@ class GameClient {
         }
     }
 
-    reroll(type) {
-        if (!this.player.country) return;
-
-        if (this.player.country !== 'england') {
-            return this.ui.showNotification('영국만 리롤 토큰을 사용할 수 있습니다!');
-        }
-
-        if (this.team.rpsRerolls <= 0) {
-            return this.ui.showNotification('리롤 토큰이 없습니다!');
-        }
-
-        if (confirm(`리롤 토큰을 사용하시겠습니까?\n\n남은 토큰: ${this.team.rpsRerolls}개`)) {
-            const eventName = type === 'final' ? 'reroll_final_rps' : 'reroll_rps';
-            if (this.emitSocket(eventName)) {
-                this.ui.showNotification('리롤 토큰을 사용했습니다!');
-            }
-        }
-    }
-
-    rerollRPS() {
-        this.reroll('rps');
-    }
-
     confirmTrade(tradeTypeOverride) {
         let tradeType = tradeTypeOverride || this.selectedTradeDestination;
         let amount = 0;
@@ -521,6 +496,9 @@ class GameClient {
     }
 
     playFinalRPS(choice) {
+        if (!this.team.eventDrawnThisRound) {
+            return this.ui.showNotification('이벤트 카드를 먼저 뽑아야 합니다!');
+        }
         if (this.emitSocket('play_final_rps', { choice })) {
             this.ui.showNotification(`${this.ui.getRPSEmoji(choice)} 선택 완료!`);
 
@@ -534,10 +512,6 @@ class GameClient {
                 }
             });
         }
-    }
-
-    rerollFinalRPS() {
-        this.reroll('final');
     }
 
     clearSessionAndReset() {
