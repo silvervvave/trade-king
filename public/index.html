@@ -77,45 +77,6 @@
                 <!-- JavaScript로 동적 생성 -->
             </div>
         </div>
-        <button class="game-btn btn-secondary" id="backToRoomCodeBtn" style="margin-top: 20px;">&#x2190; 다시 선택</button>
-    </div>
-
-    <!-- 국가 설명 모달 -->
-    <div id="countryDescriptionModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <input type="text" id="roomCodeInput" placeholder="방 코드 (4자리)" maxlength="4">
-        </div>
-        <button class="game-btn btn-primary" id="submitRoomCodeBtn">준비 완료</button>
-    </div>
-    </div>
-
-    <!-- 국가 선택 화면 -->
-    <div id="countrySelection" class="screen hidden">
-        <div class="selection-container">
-            <h2>국가 선택</h2>
-            <div class="country-grid">
-                <!-- JavaScript로 동적 생성 -->
-            </div>
-        </div>
-    </div>
-
-    <!-- 국가 설명 모달 -->
-    <div id="countryDescriptionModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <input type="text" id="roomCodeInput" placeholder="방 코드 (4자리)" maxlength="4">
-        </div>
-        <button class="game-btn btn-primary" id="submitRoomCodeBtn">준비 완료</button>
-    </div>
-    </div>
-
-    <!-- 국가 선택 화면 -->
-    <div id="countrySelection" class="screen hidden">
-        <div class="selection-container">
-            <h2>국가 선택</h2>
-            <div class="country-grid">
-                <!-- JavaScript로 동적 생성 -->
-            </div>
-        </div>
     </div>
 
     <!-- 국가 설명 모달 -->
@@ -136,6 +97,7 @@
             <h2>게임 대기중...</h2>
             <p class="info-text">관리자가 게임을 시작하면 자동으로 시작돼요</p>
             <div class="loading-spinner"></div>
+            <button class="game-btn btn-secondary" id="reselectTeamBtn" style="margin-top: 20px;">&#x2190; 다시 선택</button>
         </div>
     </div>
 
@@ -362,7 +324,6 @@
         <!-- 게임 정보 모달 -->
         <div id="gameInfoModal" class="modal-overlay hidden">
             <div class="modal-content">
-                <span class="modal-close-btn">&times;</span>
                 <h2>게임 정보</h2>
                 <div class="info-grid">
                     <p>방 코드:</p>

@@ -76,9 +76,14 @@ class UIManager {
             gameInfoBtn.addEventListener('click', () => this.showGameInfoModal());
         }
 
-        const modalCloseBtn = document.querySelector('#gameInfoModal .modal-close-btn');
-        if (modalCloseBtn) {
-            modalCloseBtn.addEventListener('click', () => this.hideGameInfoModal());
+        const gameInfoModal = document.getElementById('gameInfoModal');
+        if (gameInfoModal) {
+            gameInfoModal.addEventListener('click', (event) => {
+                // Close modal only if the click is directly on the overlay, not its content
+                if (event.target === gameInfoModal) {
+                    this.hideGameInfoModal();
+                }
+            });
         }
 
         const allTeamsStatusToggle = document.getElementById('allTeamsStatusToggle');

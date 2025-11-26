@@ -135,17 +135,40 @@ async function joinGame(io, socket, data, redisClient, supabase) {
         }
 
         if (foundPlayer && playerTeam) {
-            // --- RECONNECTION LOGIC ---
-            logger.info(`[재접속 - joinGame] ${name} (${studentId})님이 ${roomId} 방에 다시 연결합니다. (팀: ${playerTeam.country})`);
+            // --- TEAM SWITCH & RECONNECTION LOGIC ---
+            if (playerTeam.country !== country) {
+                // --- TEAM SWITCH ---
+                logger.info(`[팀 변경] ${name} (${studentId})님이 ${playerTeam.country} 팀에서 ${country} 팀으로 이동합니다.`);
+                
+                // 1. Remove from old team
+                const memberIndex = playerTeam.members.findIndex(m => m.studentId === studentId);
+                if (memberIndex !== -1) {
+                    playerTeam.members.splice(memberIndex, 1);
+                }
+                if (oldSocketId && gameState.players[oldSocketId]) {
+                    delete gameState.players[oldSocketId];
+                }
 
-            if (oldSocketId && gameState.players[oldSocketId]) {
-                delete gameState.players[oldSocketId];
+                // 2. Add to new team (logic is similar to new player join)
+                if (!gameState.teams[country]) {
+                    const config = countryConfig[country];
+                    gameState.teams[country] = createInitialTeamState(country, config);
+                }
+                const newTeam = gameState.teams[country];
+                newTeam.members.push({ id: socket.id, studentId, name, connected: true });
+                gameState.players[socket.id] = { studentId, name, team: country };
+
+            } else {
+                // --- RECONNECTION to the same team ---
+                logger.info(`[재접속 - joinGame] ${name} (${studentId})님이 ${roomId} 방에 다시 연결합니다. (팀: ${playerTeam.country})`);
+                if (oldSocketId && gameState.players[oldSocketId]) {
+                    delete gameState.players[oldSocketId];
+                }
+                foundPlayer.id = socket.id;
+                foundPlayer.connected = true;
+                foundPlayer.name = name; // Update name in case it changed
+                gameState.players[socket.id] = { studentId: foundPlayer.studentId, name: foundPlayer.name, team: playerTeam.country };
             }
-
-            foundPlayer.id = socket.id;
-            foundPlayer.connected = true;
-            foundPlayer.name = name; // Update name in case it changed
-            gameState.players[socket.id] = { studentId: foundPlayer.studentId, name: foundPlayer.name, team: playerTeam.country };
 
             socket.join(roomId);
             socket.roomId = roomId;

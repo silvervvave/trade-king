@@ -484,13 +484,11 @@ function updateAdminDashboard(state) {
 // 플레이어 목록 표시
 function updateTeamsDisplay(teams) {
     const dashboardContainer = document.querySelector('#allTeamsStatusContainer .teams-grid-container');
-    const sidebarContainer = document.getElementById('sidebarTeamsContainer');
 
-    if (!dashboardContainer || !sidebarContainer) return;
+    if (!dashboardContainer) return;
 
     // Clear previous content
     dashboardContainer.innerHTML = '';
-    sidebarContainer.innerHTML = '';
 
     const teamArray = Object.values(teams);
     teamArray.sort((a, b) => a.name.localeCompare(b.name));
@@ -504,24 +502,6 @@ function updateTeamsDisplay(teams) {
     }
 
     teamArray.forEach(team => {
-        // --- Simplified card for sidebar ---
-        const playersHtmlSimple = team.members.map(member => `
-            <div class="member-status">
-                <span class="status-indicator ${member.connected ? 'connected' : 'disconnected'}"></span>
-                ${member.name}
-            </div>
-        `).join('');
-
-        const sidebarCard = document.createElement('div');
-        sidebarCard.className = 'team-status-card-simple';
-        sidebarCard.innerHTML = `
-            <h4>${team.icon} ${team.name}</h4>
-            <div class="player-list-vertical">
-                ${playersHtmlSimple}
-            </div>
-        `;
-        sidebarContainer.appendChild(sidebarCard);
-
         // --- Detailed card for dashboard ---
         const detailCard = document.createElement('div');
         detailCard.className = 'team-status-card';
