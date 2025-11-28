@@ -198,47 +198,8 @@ socket.on('game_state_update', (state) => {
 });
 
 socket.on('teams_update', (data) => {
-    const teams = data.teams || {};
-    updateTeamsDisplay(teams);
-    updateSidebarPlayerList(teams);
+    updateTeamsDisplay(data.teams || {});
 });
-
-function updateSidebarPlayerList(teams) {
-    const sidebarList = document.getElementById('sidebarPlayerList');
-    if (!sidebarList) return;
-
-    sidebarList.innerHTML = ''; // Clear previous list
-
-    const teamArray = Object.values(teams);
-    teamArray.sort((a, b) => a.name.localeCompare(b.name));
-
-    if (teamArray.length === 0) {
-        sidebarList.innerHTML = '<p class="info-text">아직 참여한 플레이어가 없습니다.</p>';
-        return;
-    }
-
-    teamArray.forEach(team => {
-        if (team.members && team.members.length > 0) {
-            const teamDiv = document.createElement('div');
-            teamDiv.className = 'sidebar-team-section';
-
-            let playersHtml = team.members.map(member => `
-                <div class="sidebar-player-item">
-                    <span class="status-indicator ${member.connected ? 'connected' : 'disconnected'}"></span>
-                    ${member.name}
-                </div>
-            `).join('');
-
-            teamDiv.innerHTML = `
-                <h3 class="sidebar-team-name">${team.icon} ${team.name}</h3>
-                <div class="sidebar-player-list">
-                    ${playersHtml}
-                </div>
-            `;
-            sidebarList.appendChild(teamDiv);
-        }
-    });
-}
 
 socket.on('player_trade_selection', (data) => {
     console.log(`${data.playerName}의 출항 선택:`, data.selection);
