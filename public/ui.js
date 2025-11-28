@@ -236,8 +236,6 @@ class UIManager {
         const teamState = this.game.team;
         // [FIX] Add a guard for teamState itself, as it might be null during state transitions.
         if (!teamState) {
-            // If there's no team state, we can't update stats, so we should clear them or return.
-            // Returning is safer to avoid clearing stats during a temporary state update.
             return;
         }
         const config = this.game.countryConfig[this.game.player.country];
@@ -248,15 +246,28 @@ class UIManager {
             if (el) el.textContent = text;
         };
 
-        // Update main stats
         updateText('totalPA', teamState.totalPA);
         updateText('silkCount', teamState.silk);
         updateText('pepperCount', teamState.pepper);
         updateText('productPACount', teamState.productPACount);
         updateText('currentProduction', teamState.productPACount);
-
-        // Update click reward info text
         updateText('click-reward-info', `${config.clicksPerBatch}클릭 보상: ${config.paPerBatch} PA`);
+
+        const modalPlayerName = document.getElementById('modalPlayerName');
+        if (modalPlayerName) modalPlayerName.textContent = this.game.localPlayerName || '-';
+
+        // [FIX] Update reset buttons visibility
+        const resetTradeBtn = document.getElementById('resetTradeBtn');
+        if (resetTradeBtn) {
+            const tradeSelection = teamState.tradeSelection;
+            resetTradeBtn.classList.toggle('hidden', !tradeSelection);
+        }
+
+        const resetInvestmentsBtn = document.getElementById('resetInvestmentsBtn');
+        if (resetInvestmentsBtn) {
+            const investmentsMade = teamState.investmentsMade || [];
+            resetInvestmentsBtn.classList.toggle('hidden', investmentsMade.length === 0);
+        }
     }
 
     updateTradeSelectionDisplay() {
@@ -265,13 +276,29 @@ class UIManager {
 
         const tradeSelection = this.game.team.tradeSelection;
         if (tradeSelection) {
-            const destinationText = tradeSelection.type === 'china' ? '중국' : '인도';
+            let destinationText = '';
+            if (tradeSelection.type === 'china') {
+                destinationText = '중국';
+            } else if (tradeSelection.type === 'india') {
+                destinationText = '인도';
+            } else {
+                destinationText = '출항하지 않음';
+            }
+
             tradeSelectionDiv.innerHTML = `
                 <p>선택 완료: ${destinationText} (${tradeSelection.amount} PA)</p>
                 <p>결정 플레이어: ${tradeSelection.playerName}</p>
             `;
+            mercantilismInfo.style.display = 'block';
+            const remainingUses = 10 - (this.game.team.mercantilismUses || 0);
+            mercantilismInfo.innerHTML = `
+                <div class="token-info">
+                    <span class="token-icon"></span>
+                    <span class="token-text">중상주의: ${remainingUses}회</span>
+                </div>
+                `;
         } else {
-            tradeSelectionDiv.innerHTML = '<p>선택 대기중...</p>';
+            mercantilismInfo.style.display = 'none';
         }
     }
 
@@ -286,38 +313,6 @@ class UIManager {
         document.getElementById('gameInfoModal').classList.add('hidden');
     }
 
-    updateGameState(gameState) {
-        // Ensure all panels are hidden before showing the correct one to prevent overlap
-        document.querySelectorAll('.game-area-panel').forEach(panel => {
-            panel.classList.add('hidden');
-        });
-
-        console.log('UI: updateGameState - gameState.gameStarted:', gameState.gameStarted, 'currentPhase:', gameState.currentPhase);
-        if (gameState.gameStarted) {
-            this.showScreen('gameScreen');
-            document.getElementById('gameNav').classList.remove('hidden');
-            this.updateNav(gameState.currentPhase);
-            this.showArea(this.getPhaseAreaId(gameState.currentPhase));
-        } else {
-            // If game is not started, ensure we are on a pre-game screen
-            if (!document.getElementById('initialChoiceScreen').classList.contains('hidden') ||
-                !document.getElementById('nameInputScreen').classList.contains('hidden') ||
-                !document.getElementById('roomCodeInputScreen').classList.contains('hidden') ||
-                !document.getElementById('countrySelection').classList.contains('hidden') ||
-                !document.getElementById('waitingScreen').classList.contains('hidden')) {
-                // Do nothing, stay on current pre-game screen
-            } else {
-                // Fallback to initial choice screen if somehow on gameScreen without gameStarted
-                this.showScreen('initialChoiceScreen');
-            }
-        }
-        this.updatePlayerStats();
-        this.updateTokenDisplay();
-        this.updateAllTeamsStatus(this.game.teams);
-        this.updateMyTeamStatus(this.game.teams);
-        this.setupPhaseScreen(gameState.currentPhase);
-    }
-
     getPhaseAreaId(phase) {
         const phaseToArea = {
             'production': 'productionArea',
@@ -326,14 +321,14 @@ class UIManager {
             'arrival': 'arrivalArea',
             'ended': 'resultsArea'
         };
-        return phaseToArea[phase] || 'productionArea'; // Default to production area
+        return phaseToArea[phase] || 'productionArea';
     }
 
     updateConnectionStatus(isConnected) {
         const statusElement = document.getElementById('connectionStatus');
         if (statusElement) {
             statusElement.textContent = isConnected ? '온라인' : '오프라인';
-            statusElement.className = isConnected ? 'connected' : 'disconnected'; // Add class for styling
+            statusElement.className = isConnected ? 'connected' : 'disconnected';
         }
     }
 
@@ -355,6 +350,44 @@ class UIManager {
         }
     }
 
+    updateGameState(gameState) {
+        // Ensure all panels are hidden before showing the correct one to prevent overlap
+        document.querySelectorAll('.game-area-panel').forEach(panel => {
+            panel.classList.add('hidden');
+        });
+
+        console.log('UI: updateGameState - gameState.gameStarted:', gameState.gameStarted, 'currentPhase:', gameState.currentPhase);
+        if (gameState.gameStarted) {
+            this.showScreen('gameScreen');
+            document.getElementById('gameNav').classList.remove('hidden');
+            this.updateNav(gameState.currentPhase);
+            this.showArea(this.getPhaseAreaId(gameState.currentPhase));
+
+            // Update Round Display
+            const roundEl = document.getElementById('currentRound');
+            if (roundEl) {
+                roundEl.textContent = `라운드: ${gameState.currentRound}`;
+            }
+        } else {
+            // If game is not started, ensure we are on a pre-game screen
+            if (!document.getElementById('initialChoiceScreen').classList.contains('hidden') ||
+                !document.getElementById('nameInputScreen').classList.contains('hidden') ||
+                !document.getElementById('roomCodeInputScreen').classList.contains('hidden') ||
+                !document.getElementById('countrySelection').classList.contains('hidden') ||
+                !document.getElementById('waitingScreen').classList.contains('hidden')) {
+                // Do nothing, stay on current pre-game screen
+            } else {
+                // Fallback to initial choice screen if somehow on gameScreen without gameStarted
+                this.showScreen('initialChoiceScreen');
+            }
+        }
+        this.updatePlayerStats();
+        this.updateTokenDisplay();
+        this.updateAllTeamsStatus(this.game.teams);
+        this.updateMyTeamStatus(this.game.teams);
+        this.setupPhaseScreen(gameState.currentPhase);
+    }
+
     showArea(areaId) {
         const phaseToArea = {
             'production': 'productionArea',
@@ -372,9 +405,9 @@ class UIManager {
         }
 
         console.log('영역 전환:', areaId);
-        
+
         const gameAreas = ['productionArea', 'tradeArea', 'investmentArea', 'arrivalArea', 'resultsArea'];
-        
+
         gameAreas.forEach(id => {
             const element = document.getElementById(id);
             if (element) {
@@ -385,7 +418,7 @@ class UIManager {
                 }
             }
         });
-        
+
         this.currentVisibleArea = areaId;
         this.updateNavHighlight(areaId);
     }
@@ -468,7 +501,7 @@ class UIManager {
         if (rpsResultData && rpsResultData.result && rpsResultDiv) {
             rpsResultDiv.className = 'result-display ' + rpsResultData.result;
             rpsResultDiv.innerHTML = `<p>나: ${this.getRPSEmoji(rpsResultData.playerChoice)} vs 상대: ${this.getRPSEmoji(rpsResultData.opponentChoice)}</p><p>결과: ${this.getRPSResultKorean(rpsResultData.result)}</p>`;
-            
+
             rpsButtons.forEach(btn => {
                 btn.disabled = true;
                 btn.style.opacity = '0.5';
@@ -561,7 +594,7 @@ class UIManager {
         validVoyages.forEach(voyage => {
             const slide = document.createElement('div');
             slide.className = 'carousel-slide';
-            
+
             const card = this.createInvestmentCard(voyage);
             slide.appendChild(card);
             container.appendChild(slide);
@@ -606,7 +639,7 @@ class UIManager {
         const team = this.game.team;
 
         const drawEventBtn = document.querySelector('.event-section button');
-        if(drawEventBtn) {
+        if (drawEventBtn) {
             drawEventBtn.disabled = team.eventDrawnThisRound;
         }
 
@@ -620,7 +653,7 @@ class UIManager {
         if (arrivalStatusContainer) {
             arrivalStatusContainer.innerHTML = '';
         }
-        
+
         this.updateTokenDisplay();
         this.renderArrivalResults();
         this.renderMyArrivalSummary();
@@ -658,7 +691,7 @@ class UIManager {
                 const baseAmount = tradeSelection.amount;
                 const goodsMultiplier = teamState.eventMultipliers?.goodsMultiplier ?? 1;
                 const paMultiplier = teamState.eventMultipliers?.paMultiplier ?? 1;
-                
+
                 let goodsAcquired = Math.floor((baseAmount / 10) * goodsMultiplier);
                 const paReturn = baseAmount * paMultiplier;
 
@@ -668,7 +701,7 @@ class UIManager {
                     goodsAcquired = Math.max(0, goodsAcquired + rpsGoodsChange);
                     rpsBonusText = ` (가위바위보 ${rpsGoodsChange >= 0 ? '+' : ''}${rpsGoodsChange})`;
                 }
-                
+
                 summaryHtml = `
                     <div class="result-preview">
                         <p>예상 수익: <strong>${goodsName} ${goodsAcquired}개${rpsBonusText}</strong></p>
@@ -800,7 +833,7 @@ class UIManager {
         container.addEventListener('scroll', () => {
             // Check if container has been cleared
             if (container.children.length === 0) return;
-            
+
             if (container.scrollLeft >= totalOriginalWidth * 2) {
                 container.scrollLeft -= totalOriginalWidth;
             } else if (container.scrollLeft <= 0) {
@@ -851,7 +884,7 @@ class UIManager {
             productionClickArea.classList.remove('production-box-filled');
             if (productionClickText) productionClickText.textContent = 'CLICK';
         }
-        
+
         // Handle fill effect based on click count
         if (productionFill) {
             const clickCount = teamState.clickCount;
@@ -870,13 +903,13 @@ class UIManager {
         if (!resultsArea) return;
 
         this.showArea('resultsArea');
-        
+
         const resultsPanel = resultsArea.querySelector('.results-panel');
         if (!resultsPanel) return;
 
         resultsPanel.innerHTML = templates.finalResults(data);
     }
-    
+
     getRPSResultKorean(result) {
         const map = {
             'win': '승리',
@@ -897,98 +930,51 @@ class UIManager {
         }, 3000); // 3초 후 제거
     }
 
-        getRPSEmoji(choice) {
-
-            return choice;
-
-        }
-
-    
-
-        // Player Stats Display
-
-        displayPlayerStats(stats) {
-
-            const container = document.getElementById('playerStatsContainer');
-
-            if (!container) return;
-
-    
-
-            const countries = this.game.countryConfig || {};
-
-            const statsEntries = Object.entries(stats);
-
-    
-
-            let html = '<h2>개인 전적</h2>';
-
-    
-
-            if (statsEntries.length === 0) {
-
-                html += '<p class="info-text">아직 플레이 기록이 없습니다.</p>';
-
-            } else {
-
-                html += '<div class="player-stats-grid">';
-
-                for (const countryKey in countries) {
-
-                    const country = countries[countryKey];
-
-                    const stat = stats[countryKey] || { wins: 0, maxPa: 0 }; // Default stats if not present
-
-    
-
-                    html += `
-
-                        <div class="stat-card">
-
-                            <div class="stat-card-header">
-
-                                <span class="country-icon">${country.icon}</span>
-
-                                <h3>${country.name}</h3>
-
-                            </div>
-
-                            <div class="stat-card-body">
-
-                                <div class="stat-item">
-
-                                    <span class="stat-label">승리</span>
-
-                                    <span class="stat-value">${stat.wins}</span>
-
-                                </div>
-
-                                <div class="stat-item">
-
-                                    <span class="stat-label">최대 PA</span>
-
-                                    <span class="stat-value">${stat.maxPa}</span>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    `;
-
-                }
-
-                html += '</div>';
-
-            }
-
-    
-
-            container.innerHTML = html;
-
-            container.classList.remove('hidden');
-
-        }
-
+    getRPSEmoji(choice) {
+        return choice;
     }
+
+    // Player Stats Display
+    displayPlayerStats(stats) {
+        const container = document.getElementById('playerStatsContainer');
+        if (!container) return;
+
+        const countries = this.game.countryConfig || {};
+        const statsEntries = Object.entries(stats);
+
+        let html = '<h2>개인 전적</h2>';
+
+        if (statsEntries.length === 0) {
+            html += '<p class="info-text">아직 플레이 기록이 없습니다.</p>';
+        } else {
+            html += '<div class="player-stats-grid">';
+            for (const countryKey in countries) {
+                const country = countries[countryKey];
+                const stat = stats[countryKey] || { wins: 0, maxPa: 0 }; // Default stats if not present
+
+                html += `
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="country-icon">${country.icon}</span>
+                            <h3>${country.name}</h3>
+                        </div>
+                        <div class="stat-card-body">
+                            <div class="stat-item">
+                                <span class="stat-label">승리</span>
+                                <span class="stat-value">${stat.wins}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">최대 PA</span>
+                                <span class="stat-value">${stat.maxPa}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
+        container.classList.remove('hidden');
+    }
+}

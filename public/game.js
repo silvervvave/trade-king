@@ -348,18 +348,6 @@ class GameClient {
             this.ui.updateTradeSelectionDisplay();
             this.ui.renderProductionResults();
             this.ui.renderArrivalResults();
-
-            const resetTradeBtn = document.getElementById('resetTradeBtn');
-            if (resetTradeBtn) {
-                const tradeSelection = this.team.tradeSelection;
-                resetTradeBtn.classList.toggle('hidden', !tradeSelection);
-            }
-
-            const resetInvestmentsBtn = document.getElementById('resetInvestmentsBtn');
-            if (resetInvestmentsBtn) {
-                const investmentsMade = this.team.investmentsMade || [];
-                resetInvestmentsBtn.classList.toggle('hidden', investmentsMade.length === 0);
-            }
         } catch (error) {
             console.error('Error updating UI from server stats:', error);
         }
@@ -439,6 +427,13 @@ class GameClient {
         }
 
         if (this.emitSocket('trade_selection', { type: tradeType, amount: amount })) {
+            // [FIX] Optimistic update for immediate feedback
+            this.team.tradeSelection = {
+                type: tradeType,
+                amount: amount,
+                playerName: this.localPlayerName
+            };
+
             this.ui.updateTradeSelectionDisplay();
             this.ui.updatePlayerStats();
             this.ui.showNotification('출항 선택이 완료되었습니다!');
@@ -460,6 +455,11 @@ class GameClient {
         }
 
         if (this.emitSocket('make_investment', { targetCountry: targetCountry, amount: amount })) {
+            // [FIX] Optimistic update
+            this.team.totalPA -= amount;
+            if (!this.team.investmentsMade) this.team.investmentsMade = [];
+            this.team.investmentsMade.push({ toTeam: targetCountry, amount: amount });
+
             this.ui.updatePlayerStats();
             const config = this.countryConfig[targetCountry];
             this.ui.showNotification(`${config.name}에 ${amount} PA 투자 완료!`);
@@ -470,6 +470,10 @@ class GameClient {
     resetTrade() {
         if (this.emitSocket('reset_trade')) {
             if (this.team.tradeSelection) {
+                // [FIX] Optimistic update
+                this.team.totalPA += this.team.tradeSelection.amount;
+                this.team.tradeSelection = null;
+
                 this.ui.updateTradeSelectionDisplay();
                 this.ui.updatePlayerStats();
             }
@@ -484,18 +488,32 @@ class GameClient {
                     totalRefund += investment.amount;
                 });
 
+                // [FIX] Optimistic update
+                this.team.totalPA += totalRefund;
+                this.team.investmentsMade = [];
+
                 this.ui.updatePlayerStats();
             }
         }
     }
 
     drawEvent() {
+        // [FIX] Prevent drawing event if resting
+        if (this.team.tradeSelection && this.team.tradeSelection.type === 'none') {
+            return this.ui.showNotification('출항하지 않아 이벤트를 뽑을 수 없습니다.');
+        }
+
         if (this.emitSocket('draw_event')) {
             this.ui.showNotification('이벤트 카드를 뽑았습니다!');
         }
     }
 
     playFinalRPS(choice) {
+        // [FIX] Prevent RPS if resting
+        if (this.team.tradeSelection && this.team.tradeSelection.type === 'none') {
+            return this.ui.showNotification('출항하지 않아 가위바위보를 할 수 없습니다.');
+        }
+
         if (!this.team.eventDrawnThisRound) {
             return this.ui.showNotification('이벤트 카드를 먼저 뽑아야 합니다!');
         }

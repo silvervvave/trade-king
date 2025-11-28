@@ -57,7 +57,7 @@ function resetArrivalPhase(room) {
 
 function prepareInvestmentPhase(io, room, roomId) {
     const voyageInfo = Object.values(room.teams)
-        .filter(t => t.tradeSelection)
+        .filter(t => t.tradeSelection && t.tradeSelection.type !== 'none')
         .map(t => ({
             country: t.country,
             destination: t.tradeSelection.type,

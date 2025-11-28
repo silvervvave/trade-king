@@ -9,7 +9,7 @@ function drawEvent(io, socket, data, room, roomId) {
         return socket.emit('error', { message: error });
     }
 
-    if (team.eventDrawnThisRound || !team.tradeSelection) return;
+    if (team.eventDrawnThisRound || !team.tradeSelection || team.tradeSelection.type === 'none') return;
 
     const event = determineEvent(EVENT_CONFIG);
 
@@ -37,7 +37,7 @@ function playFinalRPS(io, socket, data, room, roomId) {
         return socket.emit('error', { message: error });
     }
 
-    if (team.finalRpsPlayedThisRound || !team.tradeSelection || team.camusariHappened || !team.eventDrawnThisRound) return;
+    if (team.finalRpsPlayedThisRound || !team.tradeSelection || team.tradeSelection.type === 'none' || team.camusariHappened || !team.eventDrawnThisRound) return;
 
     const computerChoice = ['✌️', '✊', '✋'][Math.floor(Math.random() * 3)];
     let result = determineRPSResult(data.choice, computerChoice);

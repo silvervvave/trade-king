@@ -10,7 +10,7 @@
 
     --color-primary: var(--color-chocolate-martini);
     --color-secondary: var(--color-cannoli-cream);
-    
+
     /* Warning/Danger colors can be kept for semantic meaning, but let's make them fit better */
     --color-warning: #FFBE98;
     --color-danger: #BE3455;
@@ -21,21 +21,21 @@
     --color-text: var(--color-chocolate-martini);
     --color-text-light: var(--color-chocolate-martini);
     --color-border: var(--color-chocolate-martini);
-    
+
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 16px;
     --spacing-lg: 24px;
     --spacing-xl: 32px;
-    
+
     --radius-sm: 4px;
     --radius-md: 8px;
     --radius-lg: 12px;
     --radius-xl: 16px;
-    
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
-    --shadow-lg: 0 10px 15px rgba(0,0,0,0.07);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.07);
 }
 
 * {
@@ -49,9 +49,11 @@ body {
     background: var(--color-background);
     min-height: 100vh;
     color: var(--color-text);
-    padding-top: 60px; /* Height of the banner */
+    padding-top: 60px;
+    /* Height of the banner */
     touch-action: manipulation;
-    overscroll-behavior-y: contain; /* Prevent pull-to-refresh */
+    overscroll-behavior-y: contain;
+    /* Prevent pull-to-refresh */
 }
 
 .hidden {
@@ -62,9 +64,11 @@ body {
    화면 컨테이너
    ============================================ */
 .screen {
-    height: calc(100vh - 60px); /* 배너 높이를 제외한 나머지 뷰포트 높이 */
+    height: calc(100vh - 60px);
+    /* 배너 높이를 제외한 나머지 뷰포트 높이 */
     display: flex;
-    align-items: center; /* 중앙 정렬로 복원 */
+    align-items: center;
+    /* 중앙 정렬로 복원 */
     justify-content: center;
     padding: var(--spacing-lg);
 }
@@ -249,9 +253,12 @@ body {
     background: var(--color-primary);
     color: var(--color-gardenia);
     width: 150px;
-    text-decoration: none; /* for <a> tag */
-    display: inline-block; /* for <a> tag */
-    line-height: 40px; /* for <a> tag */
+    text-decoration: none;
+    /* for <a> tag */
+    display: inline-block;
+    /* for <a> tag */
+    line-height: 40px;
+    /* for <a> tag */
     padding: 0;
 }
 
@@ -287,8 +294,10 @@ body {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-lg);
     margin-top: var(--spacing-xl);
-    justify-content: center; /* 그리드 항목들을 중앙에 정렬 */
-    align-content: center; /* 그리드 행들을 중앙에 정렬 */
+    justify-content: center;
+    /* 그리드 항목들을 중앙에 정렬 */
+    align-content: center;
+    /* 그리드 행들을 중앙에 정렬 */
 }
 
 .country-card {
@@ -367,7 +376,9 @@ body {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ============================================
@@ -377,14 +388,16 @@ body {
     background: var(--color-background);
     min-height: 100vh;
     padding: 0;
-    display: block; /* flex 대신 block으로 변경 */
+    display: block;
+    /* flex 대신 block으로 변경 */
 }
 
 .game-content-wrapper {
     max-width: 1200px;
     margin: 0 auto;
     padding: var(--spacing-lg);
-    margin-bottom: 180px; /* 팀 현황 창과의 간섭을 줄이기 위해 여백 추가 */
+    margin-bottom: 180px;
+    /* 팀 현황 창과의 간섭을 줄이기 위해 여백 추가 */
 }
 
 .game-nav {
@@ -436,7 +449,7 @@ body {
     align-items: center;
     gap: 0.5rem;
     padding: 6px 12px;
-        border-radius: 999px;
+    border-radius: 999px;
     background: var(--color-gardenia);
     font-weight: 700;
     color: var(--color-text);
@@ -575,7 +588,8 @@ body {
     flex-direction: column;
     justify-content: space-between;
     cursor: pointer;
-    min-height: 180px; /* 고정 높이 */
+    min-height: 180px;
+    /* 고정 높이 */
 }
 
 .destination-card:hover {
@@ -652,7 +666,8 @@ body {
     padding: var(--spacing-lg);
     transition: all 0.3s;
     height: 100%;
-    min-height: 250px; /* 고정 높이 */
+    min-height: 250px;
+    /* 고정 높이 */
 }
 
 .investment-card:hover {
@@ -798,7 +813,7 @@ body {
     border-radius: 8px;
     color: var(--color-gardenia);
     font-weight: bold;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .token-icon {
@@ -814,7 +829,7 @@ body {
     background: var(--color-primary);
     color: var(--color-gardenia);
     border-color: var(--color-border);
-    box-shadow: 0 0 12px rgba(61,30,30,0.25);
+    box-shadow: 0 0 12px rgba(61, 30, 30, 0.25);
 }
 
 .phase-indicator {
@@ -823,24 +838,34 @@ body {
 }
 
 @keyframes blink {
-    0%, 50%, 100% { transform: 1; }
-    25%, 75% { opacity: 0.5; }
+
+    0%,
+    50%,
+    100% {
+        transform: 1;
+    }
+
+    25%,
+    75% {
+        opacity: 0.5;
+    }
 }
 
 /* ============================================
    반응형 디자인
    ============================================ */
 @media (max-width: 768px) {
-    /* overflow: hidden; */ /* Removed to enable scrolling */
+    /* overflow: hidden; */
+    /* Removed to enable scrolling */
 
     .game-nav {
         flex-wrap: wrap;
     }
-    
+
     .nav-btn {
         flex-basis: calc(50% - var(--spacing-xs));
     }
-    
+
     .resource-display {
         gap: var(--spacing-sm);
     }
@@ -858,7 +883,7 @@ body {
     .resource-value {
         font-size: 1.2em;
     }
-    
+
     .arrival-panel {
         grid-template-columns: 1fr;
     }
@@ -898,6 +923,7 @@ body {
         transform: translateX(100%);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -909,6 +935,7 @@ body {
         transform: translateX(0);
         opacity: 1;
     }
+
     to {
         transform: translateX(100%);
         opacity: 0;
@@ -922,7 +949,8 @@ body {
     left: 50%;
     transform: translateX(-50%);
     background-color: var(--color-mocha-mousse);
-    color: var(--color-gardenia); /* 아이보리색으로 변경 */
+    color: var(--color-gardenia);
+    /* 아이보리색으로 변경 */
     padding: 12px 20px;
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
@@ -934,10 +962,25 @@ body {
 }
 
 @keyframes fadeInOut {
-    0% { opacity: 0; transform: translate(-50%, 20px); }
-    10% { opacity: 1; transform: translate(-50%, 0); }
-    90% { opacity: 1; transform: translate(-50%, 0); }
-    100% { opacity: 0; transform: translate(-50%, 20px); }
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+    }
+
+    10% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    90% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+    }
 }
 
 /* ============================================
@@ -946,13 +989,14 @@ body {
 .team-sidebar {
     position: fixed;
     top: 0;
-    right: -320px; /* 초기에는 숨김 */
+    right: -320px;
+    /* 초기에는 숨김 */
     width: 300px;
     height: 100%;
     background: rgba(61, 30, 30, 0.8);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: -2px 0 15px rgba(0,0,0,0.2);
+    box-shadow: -2px 0 15px rgba(0, 0, 0, 0.2);
     padding: var(--spacing-lg);
     transition: right 0.4s ease;
     z-index: 1000;
@@ -961,7 +1005,8 @@ body {
 }
 
 .team-sidebar.open {
-    right: 0; /* 열렸을 때 위치 */
+    right: 0;
+    /* 열렸을 때 위치 */
 }
 
 .team-sidebar h3 {
@@ -1029,11 +1074,13 @@ body {
 }
 
 #myTeamStatus .status-indicator.connected {
-    background-color: #7CFC00; /* LimeGreen for better visibility */
+    background-color: #7CFC00;
+    /* LimeGreen for better visibility */
 }
 
 #myTeamStatus .status-indicator.disconnected {
-    background-color: #FF6347; /* Tomato for better visibility */
+    background-color: #FF6347;
+    /* Tomato for better visibility */
 }
 
 /* ============================================
@@ -1113,9 +1160,13 @@ body {
     color: var(--color-primary);
 }
 
-.admin-btn { min-width: 140px; }
+.admin-btn {
+    min-width: 140px;
+}
 
-.button-group { align-items: center; }
+.button-group {
+    align-items: center;
+}
 
 .admin-btn:hover {
     transform: translateY(-2px);
@@ -1124,11 +1175,30 @@ body {
     color: var(--color-gardenia);
 }
 
-.btn-production { background-color: var(--color-primary); color: var(--color-gardenia); }
-.btn-trade { background-color: var(--color-cannoli-cream); color: var(--color-primary); }
-.btn-timer { background-color: var(--color-warning); color: var(--color-primary); }
-.btn-arrival { background-color: var(--color-gardenia); color: var(--color-primary); }
-.btn-end { background-color: var(--color-danger); color: var(--color-gardenia); }
+.btn-production {
+    background-color: var(--color-primary);
+    color: var(--color-gardenia);
+}
+
+.btn-trade {
+    background-color: var(--color-cannoli-cream);
+    color: var(--color-primary);
+}
+
+.btn-timer {
+    background-color: var(--color-warning);
+    color: var(--color-primary);
+}
+
+.btn-arrival {
+    background-color: var(--color-gardenia);
+    color: var(--color-primary);
+}
+
+.btn-end {
+    background-color: var(--color-danger);
+    color: var(--color-gardenia);
+}
 
 .timer-controls {
     display: flex;
@@ -1190,14 +1260,19 @@ body {
     width: 100%;
     background: var(--color-surface);
     padding: var(--spacing-md);
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
     border-top: 2px solid var(--color-border);
     display: flex;
-    flex-wrap: nowrap; /* 카드들이 한 줄에 정렬되도록 변경 */
-    overflow-x: auto; /* 가로 스크롤 활성화 */
-    overflow-y: hidden; /* 세로 스크롤 방지 */
-    max-height: 120px; /* 컨테이너 최대 높이를 카드 하나 높이로 제한 */
-    align-items: flex-start; /* 카드들이 컨테이너 상단에 정렬되도록 */
+    flex-wrap: nowrap;
+    /* 카드들이 한 줄에 정렬되도록 변경 */
+    overflow-x: auto;
+    /* 가로 스크롤 활성화 */
+    overflow-y: hidden;
+    /* 세로 스크롤 방지 */
+    max-height: 120px;
+    /* 컨테이너 최대 높이를 카드 하나 높이로 제한 */
+    align-items: flex-start;
+    /* 카드들이 컨테이너 상단에 정렬되도록 */
     gap: var(--spacing-md);
     z-index: 200;
     transform: translateY(100%);
@@ -1211,47 +1286,78 @@ body {
 /* New Team Status Card Styles */
 .teams-grid-container {
     display: flex;
-    flex-direction: column; /* 내부 카드들이 세로로 정렬되도록 변경 */
+    flex-direction: column;
+    /* 내부 카드들이 세로로 정렬되도록 변경 */
     gap: var(--spacing-lg);
     margin-top: var(--spacing-lg);
-    width: 100%; /* 컨테이너 너비를 100%로 설정 */
+    width: 100%;
+    /* 컨테이너 너비를 100%로 설정 */
     align-items: center;
-    max-width: none; /* 너비 제한 해제 */
+    max-width: none;
+    /* 너비 제한 해제 */
 }
 
 .team-status-card {
     background: var(--color-surface);
     border: 2px solid var(--color-border);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    /* Adjusted padding */
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
+    /* Space out the two columns */
     align-items: center;
     gap: var(--spacing-md);
     box-shadow: var(--shadow-md);
     transition: all 0.2s ease-in-out;
-    width: 100%; /* 카드가 전체 너비를 차지하도록 변경 */
-    max-width: none; /* 개별 카드 너비 제한 해제 */
+    width: auto;
+    /* Let it shrink to fit content */
+    min-width: 140px;
+    /* Minimum width for consistency */
 }
 
 .team-info-left {
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Pushes icon to top, name to bottom */
-    height: 100%; /* Make it take full height of the card */
-    min-height: 40px; /* Ensure enough space for icon and name */
+    /* Vertical stack for Flag + Name */
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    height: auto;
+}
+
+.team-status-resources {
+    display: flex;
+    flex-direction: column;
+    /* Vertical stack for Silk + Pepper */
+    align-items: flex-start;
+    /* Align text to left */
+    gap: 2px;
+    /* Tight spacing */
+    margin-left: 0;
+    /* Reset margin */
+}
+
+.team-status-resources p {
+    margin: 0;
+    font-size: 0.85em;
+    /* Slightly smaller font */
+    color: var(--color-text);
+    white-space: nowrap;
 }
 
 .team-icon-display {
-    font-size: 2.5em; /* Adjust size as needed */
+    font-size: 1.5em;
+    /* Adjusted size */
     line-height: 1;
 }
 
 .team-name-display {
     font-weight: bold;
     color: var(--color-primary);
-    font-size: 1.1em;
-    white-space: nowrap; /* Prevent wrapping */
+    font-size: 0.9em;
+    /* Adjusted size */
+    white-space: nowrap;
 }
 
 .team-status-card:hover {
@@ -1262,12 +1368,14 @@ body {
 .team-card-left {
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* Align left */
+    align-items: flex-start;
+    /* Align left */
     gap: var(--spacing-sm);
 }
 
 .team-flag {
-    font-size: 2.5em; /* Adjust size as needed */
+    font-size: 2.5em;
+    /* Adjust size as needed */
     line-height: 1;
 }
 
@@ -1275,7 +1383,8 @@ body {
     font-weight: bold;
     color: var(--color-primary);
     font-size: 1.1em;
-    white-space: nowrap; /* Prevent wrapping */
+    white-space: nowrap;
+    /* Prevent wrapping */
 }
 
 .team-card-center {
@@ -1310,14 +1419,16 @@ body {
 .team-card-right {
     display: flex;
     flex-direction: column;
-    align-items: flex-end; /* Align right */
+    align-items: flex-end;
+    /* Align right */
 }
 
 .status-box-stack {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);
-    width: 80px; /* Fixed width for the stack */
+    width: 80px;
+    /* Fixed width for the stack */
 }
 
 .status-box {
@@ -1326,7 +1437,8 @@ body {
     border: 1px dashed var(--color-border);
     text-align: center;
     font-size: 0.8em;
-    height: 30px; /* Fixed height */
+    height: 30px;
+    /* Fixed height */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1608,13 +1720,16 @@ body {
     line-height: 1.6;
     color: var(--color-text-light);
     margin-bottom: var(--spacing-lg);
-    white-space: pre-wrap; /* Allow line breaks */
+    white-space: pre-wrap;
+    /* Allow line breaks */
 }
 
 #resultModal .modal-close-btn {
-    position: static; /* Remove absolute positioning */
+    position: static;
+    /* Remove absolute positioning */
     display: block;
-    margin: 0 auto; /* Center the button */
+    margin: 0 auto;
+    /* Center the button */
     width: 50%;
     padding: var(--spacing-md);
     border: 2px solid var(--color-border);
@@ -1638,7 +1753,8 @@ body {
 .production-click-area {
     position: relative;
     width: 100%;
-    height: 200px; /* Adjust height as needed */
+    height: 200px;
+    /* Adjust height as needed */
     background-color: var(--color-gardenia);
     border: 2px solid var(--color-border);
     border-radius: var(--radius-lg);
@@ -1662,7 +1778,8 @@ body {
     width: 100%;
     height: 0%;
     background-color: var(--color-chocolate-martini);
-    /* transition: height 0.1s ease-out; */ /* Smooth fill animation */
+    /* transition: height 0.1s ease-out; */
+    /* Smooth fill animation */
     z-index: 1;
 }
 
@@ -1670,14 +1787,16 @@ body {
     position: relative;
     font-size: 3em;
     font-weight: bold;
-    color: var(--color-mocha-mousse); /* Changed to solid color */
+    color: var(--color-mocha-mousse);
+    /* Changed to solid color */
     user-select: none;
     z-index: 2;
 }
 
 /* Style for when the production box is filled */
 .production-click-area.production-box-filled {
-    background-color: var(--color-primary); /* Change background when filled */
+    background-color: var(--color-primary);
+    /* Change background when filled */
 }
 
 /* ============================================
@@ -1688,55 +1807,71 @@ body {
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 60px; /* 50% 감소 */
-    height: 20px; /* 50% 감소 */
+    width: 60px;
+    /* 50% 감소 */
+    height: 20px;
+    /* 50% 감소 */
     background-color: var(--color-primary);
     color: var(--color-gardenia);
     border: none;
-    border-top-left-radius: var(--radius-sm); /* 크기에 맞춰 조정 */
-    border-top-right-radius: var(--radius-sm); /* 크기에 맞춰 조정 */
+    border-top-left-radius: var(--radius-sm);
+    /* 크기에 맞춰 조정 */
+    border-top-right-radius: var(--radius-sm);
+    /* 크기에 맞춰 조정 */
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: var(--shadow-lg);
     cursor: pointer;
-    z-index: 1002; /* Higher than topBanner */
+    z-index: 1002;
+    /* Higher than topBanner */
     transition: all 0.3s ease-in-out;
 }
 
 .all-teams-status-toggle-bottom svg {
     stroke: var(--color-gardenia);
-    width: 16px; /* 50% 감소 */
-    height: 16px; /* 50% 감소 */
-    stroke-width: 1; /* 50% 감소 */
+    width: 16px;
+    /* 50% 감소 */
+    height: 16px;
+    /* 50% 감소 */
+    stroke-width: 1;
+    /* 50% 감소 */
 }
+
 /* ============================================
    Carousel Styles
    ============================================ */
 .carousel-container {
     position: relative;
-    padding: 0; /* Space for arrows */
+    padding: 0;
+    /* Space for arrows */
 }
 
 .carousel-slide {
-    display: none; /* Hidden by default */
+    display: none;
+    /* Hidden by default */
 }
 
 .carousel-prev,
 .carousel-next {
     position: absolute;
-    bottom: -60px; /* 2배 커진 버튼에 맞춰 조정 */
+    bottom: -60px;
+    /* 2배 커진 버튼에 맞춰 조정 */
     background-color: var(--color-surface);
     color: var(--color-primary);
     border: 2px solid var(--color-border);
     border-radius: 50%;
-    width: 44px; /* 2배 증가 */
-    height: 44px; /* 2배 증가 */
-    font-size: 20px; /* 2배 증가 */
+    width: 44px;
+    /* 2배 증가 */
+    height: 44px;
+    /* 2배 증가 */
+    font-size: 20px;
+    /* 2배 증가 */
     font-weight: bold;
     cursor: pointer;
     z-index: 10;
-    display: none; /* Hidden by default, shown by JS */
+    display: none;
+    /* Hidden by default, shown by JS */
     transition: all 0.2s;
 }
 
@@ -1748,12 +1883,14 @@ body {
 
 .carousel-prev {
     left: 50%;
-    transform: translateX(-45px); /* 2배 커진 버튼에 맞춰 조정 */
+    transform: translateX(-45px);
+    /* 2배 커진 버튼에 맞춰 조정 */
 }
 
 .carousel-next {
     left: 50%;
-    transform: translateX(45px); /* 2배 커진 버튼에 맞춰 조정 */
+    transform: translateX(45px);
+    /* 2배 커진 버튼에 맞춰 조정 */
 }
 
 /* ============================================
@@ -1762,7 +1899,8 @@ body {
 .results-panel {
     text-align: left;
     width: 100%;
-    overflow-x: auto; /* 작은 화면에서 가로 스크롤을 허용 */
+    overflow-x: auto;
+    /* 작은 화면에서 가로 스크롤을 허용 */
 }
 
 .results-panel h2 {
@@ -1835,7 +1973,8 @@ body {
 }
 
 .results-table .winner-row {
-    background-color: var(--color-warning); /* Use a distinct but fitting color for the winner */
+    background-color: var(--color-warning);
+    /* Use a distinct but fitting color for the winner */
     font-weight: bold;
 }
 
@@ -1885,7 +2024,8 @@ body {
 }
 
 .stat-card-header .country-icon {
-    font-size: 2.2em; /* Smaller icon for stats card */
+    font-size: 2.2em;
+    /* Smaller icon for stats card */
     margin-bottom: 0;
 }
 
@@ -1926,16 +2066,21 @@ body {
     .player-stats-grid {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
+
     .stat-card {
         padding: var(--spacing-sm);
     }
+
     .stat-card-header .country-icon {
         font-size: 1.8em;
     }
+
     .stat-card-header h3 {
         font-size: 1em;
     }
-    .stat-label, .stat-value {
+
+    .stat-label,
+    .stat-value {
         font-size: 0.8em;
     }
 }
