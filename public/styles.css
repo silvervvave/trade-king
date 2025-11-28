@@ -368,8 +368,10 @@ body {
 .loading-spinner {
     width: 50px;
     height: 50px;
-    border: 5px solid var(--color-border);
+    border: 5px solid transparent;
     border-top-color: var(--color-primary);
+    border-right-color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
     border-radius: 50%;
     margin: var(--spacing-xl) auto;
     animation: spin 1s linear infinite;
@@ -396,7 +398,7 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: var(--spacing-lg);
-    margin-bottom: 180px;
+    margin-bottom: 100px;
     /* 팀 현황 창과의 간섭을 줄이기 위해 여백 추가 */
 }
 
@@ -913,6 +915,12 @@ body {
     .country-stats li {
         font-size: 0.75em;
     }
+
+    .carousel-prev,
+    .carousel-next {
+        bottom: 5px;
+        top: auto;
+    }
 }
 
 /* ============================================
@@ -1008,6 +1016,82 @@ body {
     right: 0;
     /* 열렸을 때 위치 */
 }
+
+/* ============================================
+   Generic & Admin Sidebar
+   ============================================ */
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: -320px;
+    /* Hidden by default */
+    width: 300px;
+    height: 100%;
+    background: rgba(61, 30, 30, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: -2px 0 15px rgba(0, 0, 0, 0.2);
+    padding: var(--spacing-lg);
+    transition: right 0.4s ease;
+    z-index: 2000;
+    /* Ensure it's on top */
+    border-left: 1px solid rgba(255, 255, 240, 0.2);
+    overflow-y: auto;
+}
+
+.sidebar.open {
+    right: 0;
+    /* Shown when .open is added */
+}
+
+.sidebar h2 {
+    color: var(--color-gardenia);
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 1px solid rgba(255, 255, 240, 0.2);
+    padding-bottom: var(--spacing-md);
+}
+
+.sidebar-team-section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.sidebar-team-name {
+    font-size: 1.2em;
+    color: var(--color-gardenia);
+    font-weight: bold;
+    margin-bottom: var(--spacing-md);
+}
+
+.sidebar-player-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.sidebar-player-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-cannoli-cream);
+    font-size: 1em;
+}
+
+.sidebar-player-item .status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.sidebar-player-item .status-indicator.connected {
+    background-color: var(--color-success);
+    /* Green */
+}
+
+.sidebar-player-item .status-indicator.disconnected {
+    background-color: var(--color-danger);
+    /* Red */
+}
+
 
 .team-sidebar h3 {
     color: var(--color-gardenia);
@@ -1266,9 +1350,7 @@ body {
     flex-wrap: nowrap;
     /* 카드들이 한 줄에 정렬되도록 변경 */
     overflow-x: auto;
-    /* 가로 스크롤 활성화 */
     overflow-y: hidden;
-    /* 세로 스크롤 방지 */
     max-height: 120px;
     /* 컨테이너 최대 높이를 카드 하나 높이로 제한 */
     align-items: flex-start;
@@ -1807,35 +1889,34 @@ body {
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 60px;
-    /* 50% 감소 */
-    height: 20px;
-    /* 50% 감소 */
+    width: 120px;
+    /* Doubled from 60px */
+    height: 40px;
+    /* Doubled from 20px */
     background-color: var(--color-primary);
     color: var(--color-gardenia);
     border: none;
     border-top-left-radius: var(--radius-sm);
-    /* 크기에 맞춰 조정 */
     border-top-right-radius: var(--radius-sm);
-    /* 크기에 맞춰 조정 */
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: var(--shadow-lg);
     cursor: pointer;
     z-index: 1002;
-    /* Higher than topBanner */
-    transition: all 0.3s ease-in-out;
+    transition: transform 0.3s ease-in-out;
 }
 
 .all-teams-status-toggle-bottom svg {
-    stroke: var(--color-gardenia);
-    width: 16px;
-    /* 50% 감소 */
-    height: 16px;
-    /* 50% 감소 */
-    stroke-width: 1;
-    /* 50% 감소 */
+    width: 32px;
+    /* Doubled from 16px (inferred from previous state) */
+    height: 32px;
+    /* Doubled from 16px (inferred from previous state) */
+    transition: transform 0.3s ease-in-out;
+}
+
+.all-teams-status-toggle-bottom.open svg {
+    transform: rotate(180deg);
 }
 
 /* ============================================
@@ -1843,8 +1924,8 @@ body {
    ============================================ */
 .carousel-container {
     position: relative;
-    padding: 0;
-    /* Space for arrows */
+    padding-bottom: 80px;
+    /* Added space for buttons */
 }
 
 .carousel-slide {
@@ -1855,18 +1936,15 @@ body {
 .carousel-prev,
 .carousel-next {
     position: absolute;
-    bottom: -60px;
-    /* 2배 커진 버튼에 맞춰 조정 */
+    bottom: 20px;
+    /* Positioned inside the new padding area */
     background-color: var(--color-surface);
     color: var(--color-primary);
     border: 2px solid var(--color-border);
     border-radius: 50%;
     width: 44px;
-    /* 2배 증가 */
     height: 44px;
-    /* 2배 증가 */
     font-size: 20px;
-    /* 2배 증가 */
     font-weight: bold;
     cursor: pointer;
     z-index: 10;
@@ -1884,13 +1962,11 @@ body {
 .carousel-prev {
     left: 50%;
     transform: translateX(-45px);
-    /* 2배 커진 버튼에 맞춰 조정 */
 }
 
 .carousel-next {
     left: 50%;
     transform: translateX(45px);
-    /* 2배 커진 버튼에 맞춰 조정 */
 }
 
 /* ============================================

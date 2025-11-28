@@ -19,6 +19,14 @@ function broadcastTeamsUpdate(io, room, roomId) {
 }
 
 function updateTeamMembers(io, team, room, roomId) {
+    // Calculate productPACount: maximum total PA that this country can produce (fixed value)
+    const config = countryConfig[team.country];
+    if (config) {
+        team.productPACount = config.maxBatchCount * config.paPerBatch;
+    } else {
+        team.productPACount = 0;
+    }
+
     team.members.forEach(member => {
         if (member.connected) {
             io.to(member.id).emit('team_update', team);

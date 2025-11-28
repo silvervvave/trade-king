@@ -28,17 +28,30 @@ class SocketHandler {
             localStorage.setItem('localPlayerName', data.name);
             localStorage.setItem('countryStats', JSON.stringify(data.countryStats || {}));
 
-            // Fetch config from the new API endpoint
+            // Fetch config first, as it's needed in both cases
             try {
                 const response = await fetch('/api/config');
                 this.game.countryConfig = await response.json();
             } catch (error) {
                 console.error('Failed to fetch country config:', error);
                 this.game.ui.showNotification('게임 설정을 불러오는 데 실패했습니다.');
+                const submitBtn = document.getElementById('submitNameBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '입력 완료';
+                }
                 return; // Stop if config fails
             }
 
-            this.game.ui.showScreen('roomCodeInputScreen');
+            // If server indicates an active room, show reconnect prompt
+            if (data.roomId) {
+                this.game.playerRoomId = data.roomId;
+                localStorage.setItem('playerRoomId', data.roomId);
+                this.game.showReconnectionPrompt();
+            } else {
+                // Otherwise, proceed to room code input
+                this.game.ui.showScreen('roomCodeInputScreen');
+            }
 
             const submitBtn = document.getElementById('submitNameBtn');
             if (submitBtn) {
@@ -163,6 +176,7 @@ class SocketHandler {
                     }
                 }
                 this.game.gameState.player.country = playerCountry;
+                this.game.player.country = playerCountry; // Ensure client-side player object is also updated
 
                 this.game.teams = newState.teams;
                 this.game.playerRegistered = true;
@@ -175,6 +189,11 @@ class SocketHandler {
             } else {
                 // Partial state update (e.g., phase change, game start)
                 this.game.gameState = { ...this.game.gameState, ...newState };
+            }
+
+            // New round detection
+            if (newState.currentRound && newState.currentRound > this.game.gameState.currentRound) {
+                this.game.resetRoundState();
             }
 
             // Always update the main UI components with the new (or merged) state
@@ -233,14 +252,12 @@ class SocketHandler {
             this.game.team.rpsResult = data;
             this.game.team.rpsPlayedThisRound = true; // Optimistic update
             this.game.ui.renderProductionResults();
-            this.game.ui.updateRerollButtons();
         });
 
         this.socket.on('final_rps_result', (data) => {
             this.game.team.finalRpsResultData = data;
             this.game.team.finalRpsPlayedThisRound = true; // Optimistic update
             this.game.ui.setupArrivalScreen();
-            this.game.ui.updateRerollButtons();
         });
 
         this.socket.on('event_result', (data) => {

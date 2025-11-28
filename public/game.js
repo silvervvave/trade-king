@@ -103,17 +103,30 @@ class GameClient {
     }
 
     confirmReconnect() {
-        this.socket.emit('join_game', {
+        this.socket.emit('reconnect_player', {
             roomId: this.playerRoomId,
             studentId: this.localStudentId,
-            name: this.localPlayerName,
-            country: null  // 서버가 기존 country 복원
+            name: this.localPlayerName
         });
     }
 
     clearSessionData() {
         localStorage.removeItem('playerRoomId');
         this.playerRoomId = null;
+    }
+
+    resetRoundState() {
+        console.log("Resetting round state for new round.");
+        this.team.rpsResult = null;
+        this.team.tradeSelection = null;
+        this.team.investmentsMade = [];
+        this.team.eventDrawnThisRound = false;
+        this.team.finalRpsPlayedThisRound = false;
+        this.team.eventText = '';
+        this.team.eventResultClass = '';
+        this.team.finalRpsResult = '';
+        this.team.finalRpsResultData = null;
+        this.selectedTradeDestination = null;
     }
 
     emitSocket(eventName, payload) {
@@ -344,7 +357,6 @@ class GameClient {
         try {
             this.ui.updatePlayerStats();
             this.ui.updateTokenDisplay();
-            this.ui.updateRerollButtons();
             this.ui.updateTradeSelectionDisplay();
             this.ui.renderProductionResults();
             this.ui.renderArrivalResults();

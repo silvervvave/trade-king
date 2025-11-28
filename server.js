@@ -135,7 +135,7 @@ io.on('connection', (socket) => {
   socket.on('get_room_info', (data) => safeHandler(io, socket, playerHandlers.getRoomInfo, data, redisClient));
 
   socket.on('login_or_register', async (data) => {
-    await playerHandlers.loginOrRegister(socket, data, supabase);
+    await playerHandlers.loginOrRegister(socket, data, supabase, redisClient);
   });
 
   socket.on('register_player', async (data) => {

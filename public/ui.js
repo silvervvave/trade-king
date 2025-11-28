@@ -91,16 +91,14 @@ class UIManager {
         if (allTeamsStatusToggle && allTeamsStatusContainer) {
             const setStatusContainerOpen = (isOpen) => {
                 allTeamsStatusContainer.classList.toggle('open', isOpen);
+                allTeamsStatusToggle.classList.toggle('open', isOpen);
                 localStorage.setItem('allTeamsStatusOpen', isOpen);
 
                 if (isOpen) {
-                    // Use a small timeout to allow the container to start rendering and transitioning
-                    setTimeout(() => {
-                        const containerHeight = allTeamsStatusContainer.offsetHeight;
-                        allTeamsStatusToggle.style.bottom = `${containerHeight}px`;
-                    }, 50);
+                    const containerHeight = allTeamsStatusContainer.offsetHeight;
+                    allTeamsStatusToggle.style.transform = `translate(-50%, -${containerHeight}px)`;
                 } else {
-                    allTeamsStatusToggle.style.bottom = '10px'; // Back to initial position
+                    allTeamsStatusToggle.style.transform = 'translateX(-50%)';
                 }
             };
 
@@ -250,7 +248,9 @@ class UIManager {
         updateText('silkCount', teamState.silk);
         updateText('pepperCount', teamState.pepper);
         updateText('productPACount', teamState.productPACount);
-        updateText('currentProduction', teamState.productPACount);
+        // Calculate current production based on completed batches
+        const currentProduction = (teamState.batchCount || 0) * config.paPerBatch;
+        updateText('currentProduction', currentProduction);
         updateText('click-reward-info', `${config.clicksPerBatch}클릭 보상: ${config.paPerBatch} PA`);
 
         const modalPlayerName = document.getElementById('modalPlayerName');
@@ -274,7 +274,9 @@ class UIManager {
         const tradeSelectionDiv = document.getElementById('tradeSelection');
         if (!tradeSelectionDiv) return;
 
+        const mercantilismInfo = document.getElementById('mercantilismTokenInfo');
         const tradeSelection = this.game.team.tradeSelection;
+
         if (tradeSelection) {
             let destinationText = '';
             if (tradeSelection.type === 'china') {
@@ -289,16 +291,26 @@ class UIManager {
                 <p>선택 완료: ${destinationText} (${tradeSelection.amount} PA)</p>
                 <p>결정 플레이어: ${tradeSelection.playerName}</p>
             `;
-            mercantilismInfo.style.display = 'block';
-            const remainingUses = 10 - (this.game.team.mercantilismUses || 0);
-            mercantilismInfo.innerHTML = `
-                <div class="token-info">
-                    <span class="token-icon"></span>
-                    <span class="token-text">중상주의: ${remainingUses}회</span>
-                </div>
-                `;
+
+            if (mercantilismInfo) {
+                if (this.game.player.country === 'france') {
+                    mercantilismInfo.style.display = 'block';
+                    const remainingUses = 10 - (this.game.team.mercantilismUses || 0);
+                    mercantilismInfo.innerHTML = `
+                        <div class="token-info">
+                            <span class="token-icon"></span>
+                            <span class="token-text">중상주의: ${remainingUses}회</span>
+                        </div>
+                    `;
+                } else {
+                    mercantilismInfo.style.display = 'none';
+                }
+            }
         } else {
-            mercantilismInfo.style.display = 'none';
+            tradeSelectionDiv.innerHTML = '<p>선택 대기중...</p>';
+            if (mercantilismInfo) {
+                mercantilismInfo.style.display = 'none';
+            }
         }
     }
 
@@ -369,16 +381,19 @@ class UIManager {
                 roundEl.textContent = `라운드: ${gameState.currentRound}`;
             }
         } else {
-            // If game is not started, ensure we are on a pre-game screen
-            if (!document.getElementById('initialChoiceScreen').classList.contains('hidden') ||
-                !document.getElementById('nameInputScreen').classList.contains('hidden') ||
-                !document.getElementById('roomCodeInputScreen').classList.contains('hidden') ||
-                !document.getElementById('countrySelection').classList.contains('hidden') ||
-                !document.getElementById('waitingScreen').classList.contains('hidden')) {
-                // Do nothing, stay on current pre-game screen
+            // If game is not started, decide which pre-game screen to show based on player progress
+            if (this.game.player.country) {
+                // Player has selected a country and is waiting for the game to start
+                this.showScreen('waitingScreen');
+            } else if (this.game.playerRoomId) {
+                // Player has joined a room, but not yet selected a country
+                this.showScreen('countrySelection');
+            } else if (this.game.localPlayerName) {
+                // Player has logged in, but not yet joined a room
+                this.showScreen('roomCodeInputScreen');
             } else {
-                // Fallback to initial choice screen if somehow on gameScreen without gameStarted
-                this.showScreen('initialChoiceScreen');
+                // Player has not logged in yet
+                this.showScreen('nameInputScreen');
             }
         }
         this.updatePlayerStats();
@@ -497,6 +512,10 @@ class UIManager {
         const rpsResultData = this.game.team.rpsResult;
         const rpsResultDiv = document.getElementById('rpsResult');
         const rpsButtons = document.querySelectorAll('.rps-btn');
+
+        rpsButtons.forEach(btn => { // Clear 'selected' class for new round
+            btn.classList.remove('selected');
+        });
 
         if (rpsResultData && rpsResultData.result && rpsResultDiv) {
             rpsResultDiv.className = 'result-display ' + rpsResultData.result;
@@ -645,6 +664,7 @@ class UIManager {
 
         const finalRpsButtons = document.querySelectorAll('.final-rps-btn');
         finalRpsButtons.forEach(btn => {
+            btn.classList.remove('selected'); // 이전 선택 클래스 제거
             btn.disabled = team.finalRpsPlayedThisRound;
             btn.style.opacity = team.finalRpsPlayedThisRound ? '0.5' : '1';
         });

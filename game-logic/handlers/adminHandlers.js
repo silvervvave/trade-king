@@ -6,6 +6,7 @@ const { broadcastTeamsUpdate, calculateArrivalResults } = require('./common');
 const logger = require('../utils/logger');
 
 function initializeNewRound(room) {
+    logger.info(`[New Round] Room ${room.roomId}: Initializing new round ${room.currentRound + 1}`);
     room.currentRound++;
     Object.values(room.teams).forEach(t => {
         // Logic from resetTradePhase
@@ -88,7 +89,6 @@ function startPhase(io, socket, data, room, roomId) {
             calculateArrivalResults(io, team, room, roomId);
         });
         // 모든 계산이 끝난 후, 한 번에 모든 클라이언트에 업데이트된 정보를 브로드캐스트합니다.
-        broadcastTeamsUpdate(io, room, roomId);
 
         // If the *next* phase is TRADE, it means a new round is starting.
         if (phase === PHASES.TRADE) {

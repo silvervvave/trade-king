@@ -330,7 +330,7 @@ async function getRoomInfo(io, socket, data, redisClient) {
  * @param {Object} supabase - Supabase client
  * @returns {Promise<Object>} Object indicating if a new user was created
  */
-async function loginOrRegister(socket, data, supabase) {
+async function loginOrRegister(socket, data, supabase, redisClient) {
     const { studentId, name } = data;
     let newUserCreated = false;
 
@@ -381,12 +381,43 @@ async function loginOrRegister(socket, data, supabase) {
             newUserCreated = true;
         }
 
-        // 4. Emit success to client without token
-        socket.emit('login_success', {
+        // 4. Find active room for the player
+        let activeRoomId = null;
+        try {
+            const roomKeys = await redisClient.keys('room:*');
+            for (const key of roomKeys) {
+                const gameStateJSON = await redisClient.get(key);
+                if (gameStateJSON) {
+                    const gameState = JSON.parse(gameStateJSON);
+                    const teams = Object.values(gameState.teams || {});
+                    for (const team of teams) {
+                        if (team.members && team.members.some(m => m.studentId === studentId)) {
+                            activeRoomId = key.split(':')[1];
+                            break;
+                        }
+                    }
+                }
+                if (activeRoomId) break;
+            }
+        } catch (redisError) {
+            logger.error('Error searching for active room in Redis:', redisError);
+            // Do not block login if Redis search fails, just proceed without roomId
+        }
+
+
+        // 5. Emit success to client
+        const successPayload = {
             studentId: user.student_id,
             name: user.name,
             countryStats: user.country_stats || {}
-        });
+        };
+
+        if (activeRoomId) {
+            successPayload.roomId = activeRoomId;
+            logger.info(`[로그인 성공] 사용자 ${name} (${studentId})가 활성 방 ${activeRoomId}에서 발견되었습니다.`);
+        }
+
+        socket.emit('login_success', successPayload);
         logger.info(`[로그인 성공] 학번: ${studentId}, 이름: ${name}`);
         return { newUserCreated };
 
