@@ -1,4 +1,4 @@
-const { redisClient } = require('../redisClient');
+const { redisClient } = require('./redisClient');
 const supabase = require('../supabaseClient');
 
 const SUPER_ADMIN_ROOM = 'super-admin-room';

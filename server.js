@@ -15,6 +15,7 @@ const productionHandlers = require('./game-logic/handlers/productionHandlers');
 const eventHandlers = require('./game-logic/handlers/eventHandlers');
 const adminHandlers = require('./game-logic/handlers/adminHandlers');
 const rankingHandlers = require('./game-logic/handlers/rankingHandlers');
+const superAdminHandlers = require('./game-logic/handlers/superAdminHandlers');
 const TimerManager = require('./game-logic/timer');
 const { withGameState } = require('./game-logic/utils/gameStateUtil');
 
@@ -369,6 +370,27 @@ io.on('connection', (socket) => {
   // --- Super Admin Rankings ---
   socket.on('get_rankings', async () => {
     await rankingHandlers.getRankings(socket, supabase);
+  });
+
+  // --- Super Admin Handlers ---
+  socket.on('join_super_admin_room', () => {
+    superAdminHandlers.joinSuperAdminRoom(socket);
+  });
+
+  socket.on('get_room_list', async () => {
+    await superAdminHandlers.getRoomList(io);
+  });
+
+  socket.on('get_users', async () => {
+    await superAdminHandlers.getUsers(io);
+  });
+
+  socket.on('delete_user', async (data) => {
+    await superAdminHandlers.deleteUser(io, socket, data, supabase);
+  });
+
+  socket.on('delete_multiple_users', async (data) => {
+    await superAdminHandlers.deleteMultipleUsers(io, socket, data, supabase);
   });
 
   // --- Disconnect ---

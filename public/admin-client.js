@@ -15,25 +15,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (timerMinutesInput) timerMinutesInput.value = '1';
     if (timerSecondsInput) timerSecondsInput.value = '0';
 
-    // Sidebar toggle
-    toggleButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        sidebar.classList.toggle('open');
-    });
+    // Sidebar toggle (only if sidebar exists)
+    if (sidebar && toggleButton) {
+        toggleButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('open');
+        });
 
-    document.addEventListener('click', (e) => {
-        if (sidebar.classList.contains('open') && !sidebar.contains(e.target)) {
-            sidebar.classList.remove('open');
-        }
-    });
+        document.addEventListener('click', (e) => {
+            if (sidebar.classList.contains('open') && !sidebar.contains(e.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+    }
 
-    // Room code modal toggle
-    roomCodeInfoBox.addEventListener('click', () => {
-        if (adminRoomId) {
-            modalRoomCodeDisplay.textContent = adminRoomId;
-            roomCodeModal.classList.remove('hidden');
-        }
-    });
+    // Room code modal toggle  
+    if (roomCodeInfoBox && roomCodeModal && modalRoomCodeDisplay) {
+        roomCodeInfoBox.addEventListener('click', () => {
+            if (adminRoomId) {
+                modalRoomCodeDisplay.textContent = adminRoomId;
+                roomCodeModal.classList.remove('hidden');
+            }
+        });
+    }
 
     roomCodeModal.addEventListener('click', (e) => {
         if (e.target === roomCodeModal) {

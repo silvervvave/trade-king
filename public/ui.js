@@ -519,7 +519,11 @@ class UIManager {
 
         if (rpsResultData && rpsResultData.result && rpsResultDiv) {
             rpsResultDiv.className = 'result-display ' + rpsResultData.result;
-            rpsResultDiv.innerHTML = `<p>나: ${this.getRPSEmoji(rpsResultData.playerChoice)} vs 상대: ${this.getRPSEmoji(rpsResultData.opponentChoice)}</p><p>결과: ${this.getRPSResultKorean(rpsResultData.result)}</p>`;
+            let resultText = this.getRPSResultKorean(rpsResultData.result);
+            if (rpsResultData.result === 'win') resultText += ' (+8 PA)';
+            else if (rpsResultData.result === 'lose') resultText += ' (-6 PA)';
+
+            rpsResultDiv.innerHTML = `<p>나: ${this.getRPSEmoji(rpsResultData.playerChoice)} vs 상대: ${this.getRPSEmoji(rpsResultData.opponentChoice)}</p><p>결과: ${resultText}</p>`;
 
             rpsButtons.forEach(btn => {
                 btn.disabled = true;
