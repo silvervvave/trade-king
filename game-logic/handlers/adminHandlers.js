@@ -224,7 +224,7 @@ async function updatePlayerStatistics(finalResults, room) {
         const team = room.teams[country];
         if (!team) continue;
 
-        const finalPa = Math.floor(team.totalPA);
+        const finalPa = Math.floor(team.totalAssets);
         const didWin = country === winningCountry;
 
         playerUpdates.push({
