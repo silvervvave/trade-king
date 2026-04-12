@@ -1,16 +1,16 @@
-const { redisClient } = require('./redisClient');
-const supabase = require('../supabaseClient');
+const store = require('./store');
+// Supabase removed
 
 const SUPER_ADMIN_ROOM = 'super-admin-room';
 
 async function broadcastRoomListUpdate(io) {
     try {
-        const roomKeys = await redisClient.keys('room:*');
+        const roomKeys = await store.keys('room:*');
         if (roomKeys.length === 0) {
             io.to(SUPER_ADMIN_ROOM).emit('room_list_update', []);
             return;
         }
-        const gameStatesJSON = await redisClient.mGet(roomKeys);
+        const gameStatesJSON = await Promise.all(roomKeys.map(key => store.get(key)));
         const roomList = gameStatesJSON
             .filter(stateJSON => stateJSON) // Filter out null/deleted states
             .map((stateJSON, index) => {
@@ -32,14 +32,13 @@ async function broadcastRoomListUpdate(io) {
 
 async function broadcastUserListUpdate(io) {
     try {
-        const { data: users, error } = await supabase
-            .from('users')
-            .select('student_id, name, created_at')
-            .order('created_at', { ascending: true });
-
-        if (error) {
-            throw new Error(`Supabase fetch users error for broadcast: ${error.message}`);
-        }
+        let users = [];
+        // 인메모리 유저 사용 (global.memoryUsers)
+        users = Object.values(global.memoryUsers || {}).map(u => ({
+            student_id: u.student_id,
+            name: u.name,
+            created_at: new Date().toISOString()
+        }));
         io.to(SUPER_ADMIN_ROOM).emit('users_list_update', users);
     } catch (error) {
         console.error('Error broadcasting user list update:', error);

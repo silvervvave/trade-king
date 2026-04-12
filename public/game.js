@@ -42,33 +42,45 @@ class GameClient {
         this.socket = new SocketHandler(this);
 
         this.initializeUI();
-        this.handleReconnect();
+        // handleReconnect()는 socket 'connect' 이벤트에서만 호출됩니다.
+        // 생성자에서 중복 호출하면 소켓 연결 전 emit이 큐잉되어 2번 실행되는 버그 발생.
     }
 
     handleReconnect() {
         if (this.playerRoomId && this.localStudentId && this.localPlayerName) {
-            console.log('저장된 세션 발견:', {
-                roomId: this.playerRoomId,
-                studentId: this.localStudentId,
-                name: this.localPlayerName
-            });
-
-            // 먼저 방이 존재하는지 확인
-            this.socket.emit('check_room_exists', { roomId: this.playerRoomId }, (response) => {
-                if (response.exists) {
-                    // 방이 존재하면 재접속 확인 모달 표시
-                    this.showReconnectionPrompt();
-                } else {
-                    // 방이 없으면 localStorage 정리
-                    this.clearSessionData();
-                    this.ui.showNotification('이전 게임이 종료되었습니다.');
-                }
-            });
+            if (this.playerRegistered) {
+                // 게임 중 소켓 재연결 — 자동으로 무음 재접속
+                console.log('게임 중 재접속 시도:', this.playerRoomId);
+                this.silentReconnect();
+            } else {
+                // 페이지 최초 로드 — 방 존재 확인 후 프롬프트
+                console.log('저장된 세션 발견:', this.playerRoomId);
+                this.socket.emit('check_room_exists', { roomId: this.playerRoomId }, (response) => {
+                    if (response && response.exists) {
+                        this.showReconnectionPrompt();
+                    } else {
+                        this.clearSessionData();
+                        this.ui.showNotification('이전 게임이 종료되었습니다.');
+                    }
+                });
+            }
         }
     }
 
+    silentReconnect() {
+        const savedCountry = localStorage.getItem('playerCountry');
+        this.socket.emit('join_game', {
+            roomId: this.playerRoomId,
+            studentId: this.localStudentId,
+            name: this.localPlayerName,
+            country: savedCountry || null
+        });
+    }
+
     showReconnectionPrompt() {
-        // 모달 HTML 생성
+        // 이미 모달이 있으면 중복 생성 방지
+        if (document.getElementById('reconnectionModal')) return;
+
         const modal = document.createElement('div');
         modal.id = 'reconnectionModal';
         modal.className = 'modal-overlay';
@@ -89,7 +101,6 @@ class GameClient {
 
         document.body.appendChild(modal);
 
-        // 이벤트 리스너
         document.getElementById('reconnectYesBtn').addEventListener('click', () => {
             this.confirmReconnect();
             modal.remove();
@@ -103,15 +114,19 @@ class GameClient {
     }
 
     confirmReconnect() {
-        this.socket.emit('reconnect_player', {
+        // join_game 단일 진입점 사용 (country: null → 기존 팀으로 자동 복귀)
+        const savedCountry = localStorage.getItem('playerCountry');
+        this.socket.emit('join_game', {
             roomId: this.playerRoomId,
             studentId: this.localStudentId,
-            name: this.localPlayerName
+            name: this.localPlayerName,
+            country: savedCountry || null
         });
     }
 
     clearSessionData() {
         localStorage.removeItem('playerRoomId');
+        localStorage.removeItem('playerCountry');
         this.playerRoomId = null;
     }
 
@@ -328,6 +343,7 @@ class GameClient {
         });
 
         this.playerRegistered = true;
+        localStorage.setItem('playerCountry', this.player.country);
 
         this.ui.showScreen('waitingScreen');
 

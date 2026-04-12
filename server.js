@@ -3,18 +3,18 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
+// @supabase/supabase-js 제거됨
 const basicAuth = require('express-basic-auth');
 const logger = require('./game-logic/utils/logger');
 const { countryConfig } = require('./config'); // may be used elsewhere
 const { generateRoomId, createNewGameState } = require('./game-logic/rooms');
-const { redisClient } = require('./game-logic/redisClient');
+const store = require('./game-logic/store');
 const playerHandlers = require('./game-logic/handlers/playerHandlers');
 const tradeHandlers = require('./game-logic/handlers/tradeHandlers');
 const productionHandlers = require('./game-logic/handlers/productionHandlers');
 const eventHandlers = require('./game-logic/handlers/eventHandlers');
 const adminHandlers = require('./game-logic/handlers/adminHandlers');
-const rankingHandlers = require('./game-logic/handlers/rankingHandlers');
+// 랭킹 시스템 삭제됨
 const superAdminHandlers = require('./game-logic/handlers/superAdminHandlers');
 const TimerManager = require('./game-logic/timer');
 const { withGameState } = require('./game-logic/utils/gameStateUtil');
@@ -28,16 +28,7 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-// Validate required environment variables (REDIS_URL optional)
-function validateEnv() {
-  const required = ['SUPABASE_URL', 'SUPABASE_KEY'];
-  const missing = required.filter((key) => !process.env[key]);
-  if (missing.length) {
-    logger.error('Missing required environment variables:', missing.join(', '));
-    process.exit(1);
-  }
-}
-validateEnv();
+// validateEnv 제거됨
 
 const app = express();
 const server = http.createServer(app);
@@ -50,11 +41,7 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// Supabase client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
-
+// Supabase 제거됨
 // Timer manager
 const timerManager = new TimerManager(io);
 
@@ -100,20 +87,15 @@ io.on('connection', (socket) => {
   logger.info(`New client connected: ${socket.id}`);
 
   // --- Player Handlers ---
-  socket.on('join_game', (data) => safeHandler(io, socket, playerHandlers.joinGame, data, redisClient, supabase));
+  socket.on('join_game', (data) => safeHandler(io, socket, playerHandlers.joinGame, data, store));
 
-  socket.on('reconnect_player', async (data) => {
-    const { roomId } = data;
-    const result = await withGameState(roomId, (gameState) => {
-      playerHandlers.reconnectPlayer(io, socket, data, gameState, roomId);
-    });
-    if (result === null) socket.emit('room_not_found');
-  });
+  // reconnect_player, register_player는 join_game으로 통합되어 제거되었습니다.
+  // 재접속 시 join_game에 country: null을 전달하면 기존 팀으로 자동 복귀합니다.
 
   socket.on('check_room_exists', async (data, callback) => {
     try {
       const { roomId } = data;
-      const exists = await redisClient.exists(`room:${roomId}`);
+      const exists = await store.exists(`room:${roomId}`);
       const response = { exists: !!exists, roomId };
 
       if (typeof callback === 'function') {
@@ -133,18 +115,10 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('get_room_info', (data) => safeHandler(io, socket, playerHandlers.getRoomInfo, data, redisClient));
+  socket.on('get_room_info', (data) => safeHandler(io, socket, playerHandlers.getRoomInfo, data, store));
 
   socket.on('login_or_register', async (data) => {
-    await playerHandlers.loginOrRegister(socket, data, supabase, redisClient);
-  });
-
-  socket.on('register_player', async (data) => {
-    const { roomId } = socket;
-    if (!roomId) return;
-    await withGameState(roomId, (gameState) => {
-      playerHandlers.registerPlayer(io, socket, data, gameState, roomId);
-    });
+    await playerHandlers.loginOrRegister(socket, data, store);
   });
 
   // --- Admin Handlers ---
@@ -153,12 +127,7 @@ io.on('connection', (socket) => {
       const roomId = await generateRoomId();
       const gameState = createNewGameState();
       gameState.adminSocketId = socket.id;
-      await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));
-      const { error } = await supabase.from('rooms').insert([{ room_id: roomId, game_state: gameState }]);
-      if (error) {
-        logger.error('DB Insert Error:', error);
-        throw new Error('Supabase insert failed');
-      }
+      await store.set(`room:${roomId}`, JSON.stringify(gameState));
       socket.join(roomId);
       socket.roomId = roomId;
       if (typeof callback === 'function') callback({ success: true, roomId });
@@ -204,7 +173,7 @@ io.on('connection', (socket) => {
     const { roomId } = socket;
     if (!roomId) return;
     await withGameState(roomId, async (gameState) => {
-      await adminHandlers.endGame(io, socket, data, gameState, roomId, redisClient, supabase);
+      await adminHandlers.endGame(io, socket, data, gameState, roomId, store, null);
     });
   });
 
@@ -224,14 +193,8 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // Delete from Redis
-      await redisClient.del(`room:${roomId}`);
-
-      // Delete from Supabase
-      const { error } = await supabase.from('rooms').delete().eq('room_id', roomId);
-      if (error) {
-        logger.error('Error deleting room from Supabase:', error);
-      }
+      // Delete from Memory
+      await store.del(`room:${roomId}`);
 
       // Notify all clients in the room
       io.to(roomId).emit('room_closed_success', { roomId });
@@ -260,7 +223,7 @@ io.on('connection', (socket) => {
         return;
       }
 
-      const gameStateJSON = await redisClient.get(`room:${roomId}`);
+      const gameStateJSON = await store.get(`room:${roomId}`);
       if (!gameStateJSON) {
         socket.emit('admin_reclaimed', { success: false, message: 'Room not found' });
         return;
@@ -268,7 +231,7 @@ io.on('connection', (socket) => {
 
       const gameState = JSON.parse(gameStateJSON);
       gameState.adminSocketId = socket.id;
-      await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));
+      await store.set(`room:${roomId}`, JSON.stringify(gameState));
 
       socket.join(roomId);
       socket.roomId = roomId;
@@ -367,10 +330,7 @@ io.on('connection', (socket) => {
     });
   });
 
-  // --- Super Admin Rankings ---
-  socket.on('get_rankings', async () => {
-    await rankingHandlers.getRankings(socket, supabase);
-  });
+  // 랭킹 시스템 삭제됨
 
   // --- Super Admin Handlers ---
   socket.on('join_super_admin_room', () => {
@@ -386,11 +346,11 @@ io.on('connection', (socket) => {
   });
 
   socket.on('delete_user', async (data) => {
-    await superAdminHandlers.deleteUser(io, socket, data, supabase);
+    await superAdminHandlers.deleteUser(io, socket, data, null);
   });
 
   socket.on('delete_multiple_users', async (data) => {
-    await superAdminHandlers.deleteMultipleUsers(io, socket, data, supabase);
+    await superAdminHandlers.deleteMultipleUsers(io, socket, data, null);
   });
 
   // --- Disconnect ---
@@ -398,18 +358,18 @@ io.on('connection', (socket) => {
     const roomId = socket.roomId;
     if (roomId) {
       try {
-        const gameStateJSON = await redisClient.get(`room:${roomId}`);
+        const gameStateJSON = await store.get(`room:${roomId}`);
         if (gameStateJSON) {
           const gameState = JSON.parse(gameStateJSON);
-          const shouldDelete = await playerHandlers.disconnect(io, socket, gameState, roomId, supabase);
+          const shouldDelete = await playerHandlers.disconnect(io, socket, gameState, roomId, null);
 
-          // Only delete from Redis if explicitly told to (not when grace period is active)
+          // Only delete from store if explicitly told to (not when grace period is active)
           if (shouldDelete) {
-            await redisClient.del(`room:${roomId}`);
-            logger.info(`[즉시 삭제] ${roomId} 방이 Redis에서 삭제되었습니다.`);
+            await store.del(`room:${roomId}`);
+            logger.info(`[즉시 삭제] ${roomId} 방이 삭제되었습니다.`);
           } else {
-            // Update Redis state (grace period timer might be running)
-            await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));
+            // Update store state (grace period timer might be running)
+            await store.set(`room:${roomId}`, JSON.stringify(gameState));
           }
         }
       } catch (error) {
@@ -422,10 +382,9 @@ io.on('connection', (socket) => {
 
 async function startServer() {
   try {
-    await redisClient.connect();
+    await store.connect();
   } catch (err) {
-    logger.error('Failed to connect to Redis (continuing without Redis):', err);
-    // Continue without exiting; Redis-dependent features will fail gracefully.
+    logger.error('Failed to initialize memory store:', err);
   }
   server.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`);

@@ -103,7 +103,6 @@ socket.on('connect', () => {
                 showNotification('이전 방이 삭제되었습니다.');
                 document.getElementById('roomCreationSection').classList.remove('hidden');
                 document.getElementById('roomReentrySection').classList.remove('hidden');
-                document.getElementById('rankingsSection').classList.remove('hidden');
                 document.getElementById('mainDashboard').classList.add('hidden');
             }
         });
@@ -111,7 +110,6 @@ socket.on('connect', () => {
         console.log('[클라이언트] 저장된 adminRoomId 없음. \'reclaim_admin\' 이벤트 전송 안 함.');
         document.getElementById('roomCreationSection').classList.remove('hidden');
         document.getElementById('roomReentrySection').classList.remove('hidden');
-        document.getElementById('rankingsSection').classList.remove('hidden');
         document.getElementById('mainDashboard').classList.add('hidden');
     }
 });
@@ -130,7 +128,6 @@ function showAdminReconnectionPrompt(roomId) {
         adminRoomId = null;
         document.getElementById('roomCreationSection').classList.remove('hidden');
         document.getElementById('roomReentrySection').classList.remove('hidden');
-        document.getElementById('rankingsSection').classList.remove('hidden');
         document.getElementById('mainDashboard').classList.add('hidden');
         showNotification('새 방을 생성하거나 기존 방에 재입장하세요.');
     }
@@ -145,7 +142,6 @@ socket.on('room_created', (data) => {
     document.getElementById('bannerRoomCode').textContent = adminRoomId;
     document.getElementById('roomCreationSection').classList.add('hidden');
     document.getElementById('roomReentrySection').classList.add('hidden'); // Hide reentry section
-    document.getElementById('rankingsSection').classList.add('hidden');
     document.getElementById('mainDashboard').classList.remove('hidden');
 
     showNotification(`방 ${adminRoomId} 생성 완료! 학생들에게 코드를 공유하세요.`);
@@ -160,7 +156,6 @@ socket.on('admin_reclaimed', (data) => {
         showNotification(`관리자 권한을 재확보했습니다: 방 ${adminRoomId}`);
         document.getElementById('roomCreationSection').classList.add('hidden');
         document.getElementById('roomReentrySection').classList.add('hidden'); // Hide reentry section
-        document.getElementById('rankingsSection').classList.add('hidden');
         document.getElementById('mainDashboard').classList.remove('hidden');
         document.getElementById('bannerRoomCode').textContent = adminRoomId;
     } else {
@@ -171,7 +166,6 @@ socket.on('admin_reclaimed', (data) => {
         // If reclaim fails, show room creation/reentry sections
         document.getElementById('roomCreationSection').classList.remove('hidden');
         document.getElementById('roomReentrySection').classList.remove('hidden');
-        document.getElementById('rankingsSection').classList.remove('hidden');
         document.getElementById('mainDashboard').classList.add('hidden');
     }
 });
@@ -564,167 +558,6 @@ function updateTeamsDisplay(teams) {
 
 
 
-// Rankings display
-socket.on('rankings_update', (rankings) => {
-    console.log('[클라이언트] 랭킹 업데이트 수신:', rankings);
-    displayRankings(rankings);
-});
-
-function displayRankings(rankings) {
-    console.log('[클라이언트] 랭킹 표시 시작');
-    const container = document.getElementById('rankingsContainer');
-    if (!container) {
-        console.error('[클라이언트] rankingsContainer를 찾을 수 없음');
-        return;
-    }
-
-    container.innerHTML = '';
-
-    const countries = {
-        spain: { name: '스페인', icon: '🇪🇸', color: '#FFC107' }, // Yellow/Gold
-        netherlands: { name: '네덜란드', icon: '🇳🇱', color: '#FF9800' }, // Orange
-        england: { name: '영국', icon: '🇬🇧', color: '#F44336' }, // Red
-        france: { name: '프랑스', icon: '🇫🇷', color: '#2196F3' } // Blue
-    };
-
-    // Add specific styles for ranking cards if not present
-    if (!document.getElementById('rankingStyles')) {
-        const style = document.createElement('style');
-        style.id = 'rankingStyles';
-        style.textContent = `
-            .rankings-grid {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1.5rem;
-            }
-            .ranking-card {
-                background: var(--color-surface);
-                border: 1px solid var(--color-text-light);
-                border-radius: var(--radius-lg);
-                overflow: hidden;
-                box-shadow: var(--shadow-sm);
-                transition: transform 0.2s ease, box-shadow 0.2s ease;
-            }
-            .ranking-card:hover {
-                transform: translateY(-2px);
-                box-shadow: var(--shadow-md);
-            }
-            .ranking-header {
-                padding: 1rem;
-                background: rgba(0,0,0,0.03);
-                border-bottom: 1px solid var(--color-text-light);
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-            .ranking-header h3 {
-                margin: 0;
-                font-size: 1.1rem;
-            }
-            .ranking-list {
-                padding: 0.5rem 0;
-            }
-            .ranking-item {
-                display: flex;
-                align-items: center;
-                padding: 0.75rem 1rem;
-                border-bottom: 1px solid rgba(0,0,0,0.05);
-            }
-            .ranking-item:last-child {
-                border-bottom: none;
-            }
-            .rank-badge {
-                width: 28px;
-                height: 28px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: bold;
-                margin-right: 1rem;
-                font-size: 0.9rem;
-                background: #eee;
-                color: #555;
-            }
-            .rank-1 { background: #FFD700; color: #B46A00; } /* Gold */
-            .rank-2 { background: #C0C0C0; color: #505050; } /* Silver */
-            .rank-3 { background: #CD7F32; color: #6F3C12; } /* Bronze */
-            
-            .player-info {
-                flex-grow: 1;
-            }
-            .player-name {
-                font-weight: 600;
-                display: block;
-            }
-            .player-stats {
-                font-size: 0.85rem;
-                color: #666;
-            }
-            .empty-ranking {
-                padding: 2rem;
-                text-align: center;
-                color: #999;
-                font-style: italic;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    for (const [countryKey, countryInfo] of Object.entries(countries)) {
-        const countryRankings = rankings[countryKey] || [];
-
-        const card = document.createElement('div');
-        card.className = 'ranking-card';
-        card.style.borderTop = `4px solid ${countryInfo.color}`;
-
-        let html = `
-            <div class="ranking-header">
-                <span style="font-size: 1.5rem;">${countryInfo.icon}</span>
-                <h3>${countryInfo.name}</h3>
-            </div>
-        `;
-
-        if (countryRankings.length === 0) {
-            html += '<div class="empty-ranking">아직 기록이 없습니다</div>';
-        } else {
-            html += '<div class="ranking-list">';
-
-            countryRankings.slice(0, 3).forEach((player, index) => {
-                const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
-                const rankDisplay = index + 1;
-
-                html += `
-                    <div class="ranking-item">
-                        <div class="rank-badge ${rankClass}">${rankDisplay}</div>
-                        <div class="player-info">
-                            <span class="player-name">${player.name}</span>
-                            <span class="player-stats">최고 자산: ${player.maxPa.toLocaleString()} PA</span>
-                        </div>
-                        <div style="text-align: right;">
-                            <span style="font-weight: bold; color: var(--color-primary);">${player.wins}승</span>
-                        </div>
-                    </div>
-                `;
-            });
-
-            html += '</div>';
-        }
-
-        card.innerHTML = html;
-        container.appendChild(card);
-    }
-}
-
-// Request rankings on page load
-setTimeout(() => {
-    if (socket.connected) {
-        socket.emit('get_rankings');
-    } else {
-        socket.once('connect', () => {
-            socket.emit('get_rankings');
-        });
-    }
-}, 1000);
+// 랭킹 표시 기능 삭제됨
 
 

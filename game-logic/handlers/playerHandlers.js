@@ -91,19 +91,14 @@ function registerPlayer(io, socket, data, room, roomId) {
  * @param {Object} io - Socket.io server instance
  * @param {Object} socket - Socket.io socket instance
  * @param {Object} data - Data containing roomId, studentId, name, and country
- * @param {Object} redisClient - Redis client for state management
- * @param {Object} supabase - Supabase client for database operations
+ * @param {Object} store - In-memory store for state management
  */
-async function joinGame(io, socket, data, redisClient, supabase) {
+async function joinGame(io, socket, data, store, _supabase_ignored) {
     const { roomId, studentId, name, country } = data;
-
-    if (!country) {
-        socket.emit('error', { message: '국가를 선택해야 합니다.' });
-        return;
-    }
+    // country는 재접속 시 null일 수 있음 (기존 팀으로 자동 복귀)
 
     try {
-        const gameStateJSON = await redisClient.get(`room:${roomId}`);
+        const gameStateJSON = await store.get(`room:${roomId}`);
         if (!gameStateJSON) {
             socket.emit('room_not_found');
             logger.warn(`[Join Game] ${name} (${studentId}) tried to join non-existent room ${roomId}.`);
@@ -123,7 +118,7 @@ async function joinGame(io, socket, data, redisClient, supabase) {
             logger.info(`[유예 기간 취소] 방 ${roomId}에 플레이어가 재접속하여 삭제가 취소되었습니다.`);
         }
 
-        // Check if player with studentId already exists in any team for reconnection
+        // Check if player with studentId already exists in any team
         for (const team of Object.values(gameState.teams)) {
             const member = team.members.find(m => m.studentId === studentId);
             if (member) {
@@ -135,9 +130,9 @@ async function joinGame(io, socket, data, redisClient, supabase) {
         }
 
         if (foundPlayer && playerTeam) {
-            // --- TEAM SWITCH & RECONNECTION LOGIC ---
-            if (playerTeam.country !== country) {
-                // --- TEAM SWITCH ---
+            // --- 기존 플레이어 발견: 재접속 또는 팀 변경 ---
+            if (country && country !== playerTeam.country) {
+                // --- TEAM SWITCH (country가 명시적으로 지정되고 현재 팀과 다를 때만) ---
                 logger.info(`[팀 변경] ${name} (${studentId})님이 ${playerTeam.country} 팀에서 ${country} 팀으로 이동합니다.`);
                 
                 // 1. Remove from old team
@@ -149,7 +144,7 @@ async function joinGame(io, socket, data, redisClient, supabase) {
                     delete gameState.players[oldSocketId];
                 }
 
-                // 2. Add to new team (logic is similar to new player join)
+                // 2. Add to new team
                 if (!gameState.teams[country]) {
                     const config = countryConfig[country];
                     gameState.teams[country] = createInitialTeamState(country, config);
@@ -159,14 +154,14 @@ async function joinGame(io, socket, data, redisClient, supabase) {
                 gameState.players[socket.id] = { studentId, name, team: country };
 
             } else {
-                // --- RECONNECTION to the same team ---
-                logger.info(`[재접속 - joinGame] ${name} (${studentId})님이 ${roomId} 방에 다시 연결합니다. (팀: ${playerTeam.country})`);
+                // --- RECONNECTION (country가 null이거나 같은 팀) ---
+                logger.info(`[재접속] ${name} (${studentId})님이 ${roomId} 방의 ${playerTeam.country} 팀에 재접속합니다.`);
                 if (oldSocketId && gameState.players[oldSocketId]) {
                     delete gameState.players[oldSocketId];
                 }
                 foundPlayer.id = socket.id;
                 foundPlayer.connected = true;
-                foundPlayer.name = name; // Update name in case it changed
+                foundPlayer.name = name;
                 gameState.players[socket.id] = { studentId: foundPlayer.studentId, name: foundPlayer.name, team: playerTeam.country };
             }
 
@@ -175,9 +170,16 @@ async function joinGame(io, socket, data, redisClient, supabase) {
 
             socket.emit('game_state_update', gameState);
             broadcastTeamsUpdate(io, gameState, roomId);
+
+        } else if (!country) {
+            // --- 기존 세션 없음 + 국가 미지정: 세션 만료 처리 ---
+            logger.warn(`[세션 만료] ${name} (${studentId})의 세션이 방 ${roomId}에 없습니다.`);
+            socket.emit('session_expired', { message: '기존 게임 세션을 찾을 수 없습니다. 새로 참가해주세요.' });
+            return;
+
         } else {
-            // --- NEW PLAYER JOIN LOGIC ---
-            logger.info(`[신규 참가 - joinGame] ${name}(${studentId})님이 ${roomId} 방의 ${country} 팀에 참가합니다.`);
+            // --- NEW PLAYER JOIN ---
+            logger.info(`[신규 참가] ${name}(${studentId})님이 ${roomId} 방의 ${country} 팀에 참가합니다.`);
 
             if (!countryConfig[country]) {
                 socket.emit('error', { message: '유효하지 않은 국가입니다.' });
@@ -193,8 +195,6 @@ async function joinGame(io, socket, data, redisClient, supabase) {
             const existingMember = team.members.find(m => m.studentId === studentId);
 
             if (existingMember) {
-                // This case should not happen if the reconnection logic above is correct,
-                // but as a safeguard, we handle it. It's more of a team change scenario.
                 logger.warn(`[신규 참가 경고] ${name}(${studentId})가 이미 ${country} 팀에 존재합니다. 정보를 업데이트합니다.`);
                 if (gameState.players[existingMember.id]) {
                     delete gameState.players[existingMember.id];
@@ -232,69 +232,14 @@ async function joinGame(io, socket, data, redisClient, supabase) {
     }
 }
 
-function reconnectPlayer(io, socket, data, gameState, roomId) {
-    // The studentId and name are now expected to be in the data object directly
-    const { studentId, name } = data;
+// reconnectPlayer는 joinGame으로 통합되어 제거되었습니다.
+// join_game에 country: null을 전달하면 기존 팀으로 자동 재접속됩니다.
 
-    // Cancel grace period if active
-    if (gameState.gracePeriodTimeout) {
-        clearTimeout(gameState.gracePeriodTimeout);
-        gameState.gracePeriodTimeout = null;
-        gameState.gracePeriodStartedAt = null;
-        logger.info(`[유예 기간 취소] 방 ${roomId}에 플레이어가 재접속하여 삭제가 취소되었습니다.`);
-    }
-
-    let foundPlayer = null;
-    let playerTeam = null;
-    let oldSocketId = null;
-
-    // Find the player and their old socket ID by studentId
-    for (const team of Object.values(gameState.teams)) {
-        const member = team.members.find(m => m.studentId === studentId); // Use studentId for identification
-        if (member) {
-            foundPlayer = member;
-            playerTeam = team;
-            oldSocketId = member.id; // The ID stored in the member object is the old socket ID
-            break;
-        }
-    }
-
-    if (foundPlayer && playerTeam) {
-        // Clean up old player entry if it exists
-        if (oldSocketId && gameState.players[oldSocketId]) {
-            delete gameState.players[oldSocketId];
-        }
-
-        // Update player data with new socket ID
-        foundPlayer.id = socket.id;
-        foundPlayer.connected = true;
-        gameState.players[socket.id] = { studentId: foundPlayer.studentId, name: foundPlayer.name, team: playerTeam.country }; // Store studentId
-
-        socket.join(roomId);
-        socket.roomId = roomId;
-
-        logger.info(`[재접속] ${foundPlayer.name}님이 ${roomId} 방에 다시 연결되었습니다.`);
-
-        // Send full state to reconnected client
-        socket.emit('game_state_update', gameState);
-
-        // Notify others
-        io.to(roomId).emit('teams_update', { teams: gameState.teams });
-
-    } else {
-        // This case should ideally not be reached if safeHandler already validated the token
-        // and the user is expected to be in a room.
-        // However, if the user is authenticated but not in this specific room,
-        // or if their team member entry was somehow removed, this handles it.
-        socket.emit('error', { message: '인증된 사용자이지만, 이 방에서 플레이어 정보를 찾을 수 없습니다.' });
-    }
-}
-
-async function getRoomInfo(io, socket, data, redisClient) {
+async function getRoomInfo(io, socket, data, store) {
     const { roomId, studentId, name } = data; // studentId and name are for logging
 
     try {
-        const gameStateJSON = await redisClient.get(`room:${roomId}`);
+        const gameStateJSON = await store.get(`room:${roomId}`);
         if (!gameStateJSON) {
             socket.emit('room_not_found');
             logger.warn(`[Get Room Info] ${name} (${studentId}) requested info for non-existent room ${roomId}.`);
@@ -330,7 +275,7 @@ async function getRoomInfo(io, socket, data, redisClient) {
  * @param {Object} supabase - Supabase client
  * @returns {Promise<Object>} Object indicating if a new user was created
  */
-async function loginOrRegister(socket, data, supabase, redisClient) {
+async function loginOrRegister(socket, data, store) {
     const { studentId, name } = data;
     let newUserCreated = false;
 
@@ -342,68 +287,25 @@ async function loginOrRegister(socket, data, supabase, redisClient) {
     }
 
     try {
-        // 1. Check if user exists
-        const { data: existingUser, error: selectError } = await supabase
-            .from('users')
-            .select('id, student_id, name, country_stats')
-            .eq('student_id', studentId)
-            .single();
-
-        if (selectError && selectError.code !== 'PGRST116') { // PGRST116: row not found
-            throw new Error(`Supabase select error: ${selectError.message}`);
-        }
-
-        let user = existingUser;
-
-        if (user) {
-            // 2. User exists, verify name
-            if (user.name !== name) {
+        let user;
+        
+        // 인메모리로 처리
+        // 전역 인메모리 저장소 초기화 (한 번만)
+        if (!global.memoryUsers) global.memoryUsers = {};
+        
+        if (global.memoryUsers[studentId]) {
+            if (global.memoryUsers[studentId].name !== name) {
                 socket.emit('login_failure', { message: '학번과 이름이 일치하지 않습니다.' });
                 return { newUserCreated: false };
             }
+            user = global.memoryUsers[studentId];
         } else {
-            // 3. User does not exist, create new user
-            const { data: newUser, error: insertError } = await supabase
-                .from('users')
-                .insert({ student_id: studentId, name: name })
-                .select('id, student_id, name, country_stats')
-                .single();
-
-            if (insertError) {
-                // Handle potential race condition where user was created between select and insert
-                if (insertError.code === '23505') { // Unique violation
-                    socket.emit('login_failure', { message: '이미 등록된 학번입니다. 이름을 정확히 입력하세요.' });
-                    return { newUserCreated: false };
-                }
-                throw new Error(`Supabase insert error: ${insertError.message}`);
-            }
-            user = newUser;
+            user = { student_id: studentId, name: name, country_stats: {} };
+            global.memoryUsers[studentId] = user;
             newUserCreated = true;
         }
 
-        // 4. Find active room for the player
-        let activeRoomId = null;
-        try {
-            const roomKeys = await redisClient.keys('room:*');
-            for (const key of roomKeys) {
-                const gameStateJSON = await redisClient.get(key);
-                if (gameStateJSON) {
-                    const gameState = JSON.parse(gameStateJSON);
-                    const teams = Object.values(gameState.teams || {});
-                    for (const team of teams) {
-                        if (team.members && team.members.some(m => m.studentId === studentId)) {
-                            activeRoomId = key.split(':')[1];
-                            break;
-                        }
-                    }
-                }
-                if (activeRoomId) break;
-            }
-        } catch (redisError) {
-            logger.error('Error searching for active room in Redis:', redisError);
-            // Do not block login if Redis search fails, just proceed without roomId
-        }
-
+        const activeRoomId = null;
 
         // 5. Emit success to client
         const successPayload = {
@@ -428,70 +330,49 @@ async function loginOrRegister(socket, data, supabase, redisClient) {
     }
 }
 
-async function getUsers(socket, supabase) {
+async function getUsers(socket) {
     try {
-        const { data: users, error } = await supabase
-            .from('users')
-            .select('student_id, name, created_at')
-            .order('created_at', { ascending: true });
-
-        if (error) {
-            throw new Error(`Supabase fetch users error: ${error.message}`);
-        }
-
-        socket.emit('users_list_update', users);
+        socket.emit('users_list_update', Object.values(global.memoryUsers || {}));
     } catch (error) {
         logger.error('Failed to get users list', error);
         socket.emit('error', { message: '사용자 목록을 획득 실패' });
     }
 }
 
-async function deleteUser(socket, data, supabase) {
+async function deleteUser(socket, data) {
     const { studentId } = data;
     try {
-        const { error } = await supabase
-            .from('users')
-            .delete()
-            .eq('student_id', studentId);
-
-        if (error) {
-            throw new Error(`Supabase delete user error: ${error.message}`);
+        if (global.memoryUsers && global.memoryUsers[studentId]) {
+            delete global.memoryUsers[studentId];
         }
-
         socket.emit('user_deleted_success', { studentId, message: '사용자가 성공적으로 삭제되었습니다.' });
-        logger.info(`[사용자 삭제] 학번: ${studentId}`);
     } catch (error) {
         logger.error(`Failed to delete user ${studentId}`, error);
         socket.emit('user_deleted_failure', { studentId, message: '사용자 삭제에 실패했습니다.' });
     }
 }
 
-async function deleteMultipleUsers(socket, data, supabase) {
+async function deleteMultipleUsers(socket, data) {
     const { studentIds } = data;
     if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
         return socket.emit('user_deleted_failure', { message: '삭제할 사용자 ID가 없습니다.' });
     }
 
     try {
-        const { error } = await supabase
-            .from('users')
-            .delete()
-            .in('student_id', studentIds);
-
-        if (error) {
-            throw new Error(`Supabase multi-delete user error: ${error.message}`);
+        if (global.memoryUsers) {
+            studentIds.forEach(id => {
+                delete global.memoryUsers[id];
+            });
         }
-
         const successMsg = `${studentIds.length}명의 사용자가 성공적으로 삭제되었습니다.`;
         socket.emit('user_deleted_success', { message: successMsg });
-        logger.info(`[다중 사용자 삭제] 학번: ${studentIds.join(', ')}`);
     } catch (error) {
         logger.error(`Failed to delete multiple users`, error);
         socket.emit('user_deleted_failure', { message: '여러 사용자 삭제에 실패했습니다.' });
     }
 }
 
-async function disconnect(io, socket, room, roomId, supabase) {
+async function disconnect(io, socket, room, roomId, _supabase_ignored) {
     try {
         if (!room) return false;
 
@@ -503,12 +384,8 @@ async function disconnect(io, socket, room, roomId, supabase) {
                 const member = team.members.find(m => m.id === socket.id);
                 if (member) {
                     member.connected = false;
-                    // Do NOT delete from room.players immediately. Reconnect will update it.
-                    // delete room.players[socket.id]; // Removed this line
                 }
             }
-            // The player entry in room.players will be updated by reconnectPlayer or cleaned up if the room is deleted.
-            // io.to(roomId).emit('player_disconnected', { playerName: playerInfo.name }); // This emit might need adjustment if player is not fully gone
             broadcastTeamsUpdate(io, room, roomId);
         }
 
@@ -533,20 +410,11 @@ async function disconnect(io, socket, room, roomId, supabase) {
 
                 const timeoutId = setTimeout(async () => {
                     try {
-                        // Delete from Supabase
-                        const { error } = await supabase.from('rooms').delete().eq('room_id', roomId);
-                        if (error) {
-                            logger.error(`[유예 기간 만료 - DB 삭제 실패] ${roomId}`, error);
-                        } else {
-                            logger.info(`[유예 기간 만료 삭제] 방 ${roomId}이(가) 유예 기간 경과로 데이터베이스에서 삭제됩니다.`);
-                        }
-
-                        // Delete from Redis
-                        const { redisClient } = require('../redisClient');
-                        await redisClient.del(`room:${roomId}`);
-                        logger.info(`[유예 기간 만료 삭제] 방 ${roomId}이(가) Redis에서 삭제되었습니다.`);
-                    } catch (dbError) {
-                        logger.error(`[유예 기간 만료 - 삭제 중 예외 발생] ${roomId}`, dbError);
+                        const store = require('../../store');
+                        await store.del(`room:${roomId}`);
+                        logger.info(`[유예 기간 만료 삭제] 방 ${roomId}이(가) 스토어에서 삭제되었습니다.`);
+                    } catch (storeError) {
+                        logger.error(`[유예 기간 만료 - 삭제 중 예외 발생] ${roomId}`, storeError);
                     }
                 }, GRACE_PERIOD_MS);
 
@@ -572,7 +440,6 @@ async function disconnect(io, socket, room, roomId, supabase) {
 module.exports = {
     registerPlayer,
     joinGame,
-    reconnectPlayer,
     getRoomInfo,
     loginOrRegister,
     getUsers,

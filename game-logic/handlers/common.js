@@ -19,10 +19,11 @@ function broadcastTeamsUpdate(io, room, roomId) {
 }
 
 function updateTeamMembers(io, team, room, roomId) {
-    // Calculate productPACount: maximum total PA that this country can produce (fixed value)
+    // Calculate productPACount: maximum total PA that this country can produce (라운드 보너스 반영)
     const config = countryConfig[team.country];
     if (config) {
-        team.productPACount = config.maxBatchCount * config.paPerBatch;
+        const bonusBatches = Math.max(0, ((room.currentRound || 1) - 1)) * 2;
+        team.productPACount = (config.maxBatchCount + bonusBatches) * config.paPerBatch;
     } else {
         team.productPACount = 0;
     }

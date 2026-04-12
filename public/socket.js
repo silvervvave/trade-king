@@ -178,6 +178,11 @@ class SocketHandler {
                 this.game.gameState.player.country = playerCountry;
                 this.game.player.country = playerCountry; // Ensure client-side player object is also updated
 
+                // 재접속 시 country를 localStorage에 저장
+                if (playerCountry) {
+                    localStorage.setItem('playerCountry', playerCountry);
+                }
+
                 this.game.teams = newState.teams;
                 this.game.playerRegistered = true;
                 if (playerCountry && newState.teams[playerCountry]) {
@@ -276,6 +281,20 @@ class SocketHandler {
         this.socket.on('registration_success', (data) => {
             // playerRoomId is already set from the room_check_result
             localStorage.setItem('playerRoomId', this.game.playerRoomId);
+        });
+
+        this.socket.on('session_expired', (data) => {
+            console.warn('세션 만료:', data.message);
+            this.game.clearSessionData();
+            this.game.ui.showNotification(data.message || '세션이 만료되었습니다. 새로 참가해주세요.');
+            this.game.ui.showScreen('nameInputScreen');
+        });
+
+        this.socket.on('room_deleted', (data) => {
+            console.log('방 삭제됨:', data.message);
+            this.game.clearSessionData();
+            this.game.ui.showNotification(data.message || '방이 삭제되었습니다.');
+            this.game.ui.showScreen('nameInputScreen');
         });
     }
 

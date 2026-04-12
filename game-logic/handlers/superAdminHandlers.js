@@ -14,14 +14,15 @@ async function getUsers(io) {
     await broadcastUserListUpdate(io);
 }
 
-async function deleteUser(io, socket, data, supabase) {
+async function deleteUser(io, socket, data, _supabase_ignored) {
     const { studentId, superAdminKey } = data;
     // Basic validation (In production, verify superAdminKey more robustly)
     if (!studentId) return;
 
     try {
-        const { error } = await supabase.from('users').delete().eq('student_id', studentId);
-        if (error) throw error;
+        if (global.memoryUsers && global.memoryUsers[studentId]) {
+            delete global.memoryUsers[studentId];
+        }
 
         socket.emit('user_deleted_success', { studentId });
         await broadcastUserListUpdate(io);
@@ -32,13 +33,16 @@ async function deleteUser(io, socket, data, supabase) {
     }
 }
 
-async function deleteMultipleUsers(io, socket, data, supabase) {
+async function deleteMultipleUsers(io, socket, data, _supabase_ignored) {
     const { studentIds, superAdminKey } = data;
     if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) return;
 
     try {
-        const { error } = await supabase.from('users').delete().in('student_id', studentIds);
-        if (error) throw error;
+        if (global.memoryUsers) {
+            studentIds.forEach(id => {
+                delete global.memoryUsers[id];
+            });
+        }
 
         socket.emit('user_deleted_success', { message: `${studentIds.length}명의 사용자가 삭제되었습니다.` });
         await broadcastUserListUpdate(io);

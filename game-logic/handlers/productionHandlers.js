@@ -17,8 +17,10 @@ function completeProductionBatch(io, socket, data, room, roomId) {
         return socket.emit('error', { message: '국가 정보를 찾을 수 없습니다.' });
     }
 
-    // Check if the team can still produce more batches
-    if (team.batchCount < config.maxBatchCount) {
+    // Check if the team can still produce more batches (라운드마다 +2 배치 추가)
+    const bonusBatches = Math.max(0, (room.currentRound - 1)) * 2;
+    const effectiveMaxBatch = config.maxBatchCount + bonusBatches;
+    if (team.batchCount < effectiveMaxBatch) {
         team.batchCount++;
         team.totalPA += config.paPerBatch;
 

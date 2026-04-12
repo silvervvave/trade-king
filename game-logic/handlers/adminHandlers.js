@@ -149,7 +149,7 @@ function resetGame(io, socket, data, room, roomId) {
     io.to(roomId).emit('game_state_update', safeRoomState);
 }
 
-async function endGame(io, socket, data, room, roomId, redisClient, supabase) {
+async function endGame(io, socket, data, room, roomId, store, _supabase_ignored) {
     if (socket.id !== room.adminSocketId) return;
 
     // Cancel grace period timer if it exists
@@ -183,22 +183,11 @@ async function endGame(io, socket, data, room, roomId, redisClient, supabase) {
 
     io.to(roomId).emit('game_ended', finalResults);
 
-    // Update player statistics in Supabase
-    await updatePlayerStatistics(finalResults, room);
-
     // Immediately delete room after game ends (admin-initiated termination)
     try {
-        // Delete from Supabase
-        const { error: dbError } = await supabase.from('rooms').delete().eq('room_id', roomId);
-        if (dbError) {
-            logger.error(`[게임 종료 - DB 삭제 실패] ${roomId}`, dbError);
-        } else {
-            logger.info(`[게임 종료 - 방 삭제] ${roomId} 방이 게임 종료로 데이터베이스에서 삭제되었습니다.`);
-        }
-
-        // Delete from Redis
-        await redisClient.del(`room:${roomId}`);
-        logger.info(`[게임 종료 - 방 삭제] ${roomId} 방이 Redis에서 삭제되었습니다.`);
+        // Delete from store
+        await store.del(`room:${roomId}`);
+        logger.info(`[게임 종료 - 방 삭제] ${roomId} 방이 스토어에서 삭제되었습니다.`);
 
         // Notify all clients that the room has been deleted
         io.to(roomId).emit('room_deleted', { message: '게임이 종료되어 방이 삭제되었습니다.' });
@@ -207,83 +196,7 @@ async function endGame(io, socket, data, room, roomId, redisClient, supabase) {
     }
 }
 
-async function updatePlayerStatistics(finalResults, room) {
-    const supabase = require('../../supabaseClient');
-
-    // Determine winning team (rank 1)
-    const winningTeam = finalResults.rankings[0];
-    const winningCountry = winningTeam.country;
-
-    // Collect all players with their countries and final PA
-    const playerUpdates = [];
-
-    for (const player of Object.values(room.players)) {
-        const country = player.team;
-        if (!country) continue;
-
-        const team = room.teams[country];
-        if (!team) continue;
-
-        const finalPa = Math.floor(team.totalAssets);
-        const didWin = country === winningCountry;
-
-        playerUpdates.push({
-            studentId: player.studentId,
-            country: country,
-            finalPa: finalPa,
-            didWin: didWin
-        });
-    }
-
-    // Update each player's country_stats in parallel
-    await Promise.all(playerUpdates.map(async (update) => {
-        try {
-            // Fetch current country_stats
-            const { data: user, error: fetchError } = await supabase
-                .from('users')
-                .select('country_stats')
-                .eq('student_id', update.studentId)
-                .single();
-
-            if (fetchError) {
-                logger.error(`[통계 업데이트 실패] ${update.studentId}: ${fetchError.message}`);
-                return;
-            }
-
-            // Initialize country_stats if null
-            let countryStats = user.country_stats || {};
-
-            // Initialize country if not exists
-            if (!countryStats[update.country]) {
-                countryStats[update.country] = { wins: 0, maxPa: 0 };
-            }
-
-            // Update wins if player won
-            if (update.didWin) {
-                countryStats[update.country].wins++;
-            }
-
-            // Update maxPa if current PA is higher
-            if (update.finalPa > countryStats[update.country].maxPa) {
-                countryStats[update.country].maxPa = update.finalPa;
-            }
-
-            // Save back to database
-            const { error: updateError } = await supabase
-                .from('users')
-                .update({ country_stats: countryStats })
-                .eq('student_id', update.studentId);
-
-            if (updateError) {
-                logger.error(`[통계 저장 실패] ${update.studentId}: ${updateError.message}`);
-            } else {
-                logger.info(`[통계 업데이트] ${update.studentId} (${update.country}): wins=${countryStats[update.country].wins}, maxPa=${countryStats[update.country].maxPa}`);
-            }
-        } catch (err) {
-            logger.error(`[통계 업데이트 예외] ${update.studentId}: ${err.message}`);
-        }
-    }));
-}
+// removed updatePlayerStatistics function
 
 function resetProduction(io, socket, data, room, roomId) {
     if (socket.id !== room.adminSocketId) return;

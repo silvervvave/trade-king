@@ -52,21 +52,7 @@
             </button>
         </div>
 
-        <!-- 실시간 랭킹 섹션 (초기 화면에 표시) -->
-        <div id="rankingsSection" class="control-panel">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h2 style="margin-bottom: 0; border-bottom: none;">실시간 랭킹</h2>
-                <button class="admin-btn" onclick="socket.emit('get_rankings')"
-                    style="min-width: auto; padding: 0.5rem 1rem; font-size: 0.9rem;">
-                    새로고침
-                </button>
-            </div>
-            <div id="rankingsContainer" class="rankings-grid">
-                <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--color-text-light);">
-                    랭킹 데이터를 로딩 중
-                </div>
-            </div>
-        </div>
+        <!-- 실시간 랭킹 섹션 삭제됨 -->
 
         <!-- 메인 대시보드 (초기에는 숨김) -->
         <div id="mainDashboard" class="hidden">

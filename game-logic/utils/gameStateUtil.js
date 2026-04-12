@@ -1,4 +1,4 @@
-const { redisClient } = require('../redisClient');
+const store = require('../store');
 const logger = require('./logger');
 
 /**
@@ -9,7 +9,7 @@ const logger = require('./logger');
  */
 async function withGameState(roomId, callback) {
     try {
-        const gameStateJSON = await redisClient.get(`room:${roomId}`);
+        const gameStateJSON = await store.get(`room:${roomId}`);
         if (!gameStateJSON) {
             // Room might not exist or has expired
             return null;
@@ -28,7 +28,7 @@ async function withGameState(roomId, callback) {
         await callback(gameState);
 
         // Save the updated state
-        await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));
+        await store.set(`room:${roomId}`, JSON.stringify(gameState));
 
     } catch (error) {
         logger.error(`Error in withGameState for room ${roomId}:`, error);

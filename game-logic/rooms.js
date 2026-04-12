@@ -1,4 +1,4 @@
-const { redisClient } = require('./redisClient');
+const store = require('./store');
 
 async function generateRoomId(length = 4) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -13,7 +13,7 @@ async function generateRoomId(length = 4) {
 
     try {
       // Redis에서 'room:{ID}' 키가 존재하는지 확인
-      const exists = await redisClient.exists(`room:${result}`);
+      const exists = await store.exists(`room:${result}`);
       if (!exists) {
         return result; // 키가 존재하지 않으면, 유니크한 것으로 간주
       }
