@@ -223,8 +223,8 @@ async function joinGame(io, socket, data, store, _supabase_ignored) {
             broadcastTeamsUpdate(io, gameState, roomId);
         }
 
-        // Persist the updated state back to Redis
-        await redisClient.set(`room:${roomId}`, JSON.stringify(gameState));
+        // Persist the updated state back to the store
+        await store.set(`room:${roomId}`, JSON.stringify(gameState));
 
     } catch (error) {
         logger.error(`[Join Game 오류] Room: ${roomId}, User: ${name}`, error);
@@ -339,12 +339,9 @@ async function getUsers(socket) {
     }
 }
 
-async function deleteUser(socket, data) {
-    const { studentId } = data;
+async function deleteUser(socket, { studentId }) {
     try {
-        if (global.memoryUsers && global.memoryUsers[studentId]) {
-            delete global.memoryUsers[studentId];
-        }
+        if (global.memoryUsers) delete global.memoryUsers[studentId];
         socket.emit('user_deleted_success', { studentId, message: '사용자가 성공적으로 삭제되었습니다.' });
     } catch (error) {
         logger.error(`Failed to delete user ${studentId}`, error);
@@ -352,22 +349,16 @@ async function deleteUser(socket, data) {
     }
 }
 
-async function deleteMultipleUsers(socket, data) {
-    const { studentIds } = data;
-    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+async function deleteMultipleUsers(socket, { studentIds }) {
+    if (!studentIds?.length) {
         return socket.emit('user_deleted_failure', { message: '삭제할 사용자 ID가 없습니다.' });
     }
-
+    
     try {
-        if (global.memoryUsers) {
-            studentIds.forEach(id => {
-                delete global.memoryUsers[id];
-            });
-        }
-        const successMsg = `${studentIds.length}명의 사용자가 성공적으로 삭제되었습니다.`;
-        socket.emit('user_deleted_success', { message: successMsg });
+        if (global.memoryUsers) studentIds.forEach(id => delete global.memoryUsers[id]);
+        socket.emit('user_deleted_success', { message: `${studentIds.length}명의 사용자가 성공적으로 삭제되었습니다.` });
     } catch (error) {
-        logger.error(`Failed to delete multiple users`, error);
+        logger.error('Failed to delete multiple users', error);
         socket.emit('user_deleted_failure', { message: '여러 사용자 삭제에 실패했습니다.' });
     }
 }
@@ -410,7 +401,7 @@ async function disconnect(io, socket, room, roomId, _supabase_ignored) {
 
                 const timeoutId = setTimeout(async () => {
                     try {
-                        const store = require('../../store');
+                        const store = require('../store');
                         await store.del(`room:${roomId}`);
                         logger.info(`[유예 기간 만료 삭제] 방 ${roomId}이(가) 스토어에서 삭제되었습니다.`);
                     } catch (storeError) {
