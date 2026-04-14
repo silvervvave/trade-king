@@ -33,7 +33,7 @@ async function deleteUser(io, socket, data, _supabase_ignored) {
     }
 }
 
-async function deleteMultipleUsers(io, socket, data, _supabase_ignored) {
+async function deleteMultipleUsers(io, socket, data) {
     const { studentIds, superAdminKey } = data;
     if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) return;
 

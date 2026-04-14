@@ -272,7 +272,7 @@ async function getRoomInfo(io, socket, data, store) {
  * 
  * @param {Object} socket - Socket.io socket instance
  * @param {Object} data - Data containing studentId and name
- * @param {Object} supabase - Supabase client
+ * @param {Object} store - In-memory store
  * @returns {Promise<Object>} Object indicating if a new user was created
  */
 async function loginOrRegister(socket, data, store) {

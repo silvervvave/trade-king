@@ -41,7 +41,6 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// Supabase 제거됨
 // Timer manager
 const timerManager = new TimerManager(io);
 

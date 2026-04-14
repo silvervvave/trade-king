@@ -1,5 +1,4 @@
 const store = require('./store');
-// Supabase removed
 
 const SUPER_ADMIN_ROOM = 'super-admin-room';
 

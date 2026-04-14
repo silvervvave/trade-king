@@ -149,7 +149,7 @@ function resetGame(io, socket, data, room, roomId) {
     io.to(roomId).emit('game_state_update', safeRoomState);
 }
 
-async function endGame(io, socket, data, room, roomId, store, _supabase_ignored) {
+async function endGame(io, socket, data, room, roomId, store) {
     if (socket.id !== room.adminSocketId) return;
 
     // Cancel grace period timer if it exists
